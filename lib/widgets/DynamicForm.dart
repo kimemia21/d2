@@ -1,6 +1,6 @@
-import 'package:application/widgets/AddButton.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:application/widgets/AddButton.dart';
 
 class POSDynamicWidgetForm extends StatefulWidget {
   const POSDynamicWidgetForm({Key? key}) : super(key: key);
@@ -13,10 +13,9 @@ class _POSDynamicWidgetFormState extends State<POSDynamicWidgetForm>
     with SingleTickerProviderStateMixin {
   String? selectedCategory;
   List<String> categories = ['Food', 'Beverages', 'Snacks', 'Merchandise'];
-  TextEditingController SellingpriceController = TextEditingController();
-  TextEditingController NameController = TextEditingController();
-  TextEditingController BuyingPriceController = TextEditingController();
-
+  TextEditingController sellingPriceController = TextEditingController();
+  TextEditingController nameController = TextEditingController();
+  TextEditingController buyingPriceController = TextEditingController();
   TextEditingController quantityController = TextEditingController();
   late AnimationController _animationController;
   late Animation<double> _animation;
@@ -44,6 +43,10 @@ class _POSDynamicWidgetFormState extends State<POSDynamicWidgetForm>
   @override
   void dispose() {
     _animationController.dispose();
+    sellingPriceController.dispose();
+    nameController.dispose();
+    buyingPriceController.dispose();
+    quantityController.dispose();
     super.dispose();
   }
 
@@ -53,10 +56,8 @@ class _POSDynamicWidgetFormState extends State<POSDynamicWidgetForm>
       builder: (BuildContext context) {
         String newCategory = '';
         return AlertDialog(
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          title:
-              Text('Add New Category', style: TextStyle(color: primaryColor)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: Text('Add New Category', style: TextStyle(color: primaryColor)),
           content: TextField(
             onChanged: (value) {
               newCategory = value;
@@ -95,8 +96,7 @@ class _POSDynamicWidgetFormState extends State<POSDynamicWidgetForm>
       builder: (BuildContext context) {
         String newValue = '';
         return AlertDialog(
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           title: Text('Edit $field', style: TextStyle(color: primaryColor)),
           content: TextField(
             onChanged: (value) {
@@ -122,7 +122,7 @@ class _POSDynamicWidgetFormState extends State<POSDynamicWidgetForm>
               onPressed: () {
                 setState(() {
                   if (field == 'Price') {
-                    SellingpriceController.text = newValue;
+                    sellingPriceController.text = newValue;
                   } else if (field == 'Quantity') {
                     quantityController.text = newValue;
                   }
@@ -140,42 +140,49 @@ class _POSDynamicWidgetFormState extends State<POSDynamicWidgetForm>
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title:
-            Text('POS System', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: Text('POS System', style: TextStyle(fontWeight: FontWeight.bold)),
         backgroundColor: primaryColor,
         elevation: 0,
       ),
       backgroundColor: backgroundColor,
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              FadeTransition(
-                opacity: _animation,
-                child: SlideTransition(
-                  position: Tween<Offset>(
-                    begin: Offset(0, -0.1),
-                    end: Offset.zero,
-                  ).animate(_animation),
-                  child: buildProductCard(),
-                ),
-              ),
-              SizedBox(height: 20),
-              Center(
-                child: FadeTransition(
-                  opacity: _animation,
-                  child: SlideTransition(
-                    position: Tween<Offset>(
-                      begin: Offset(0, 0.1),
-                      end: Offset.zero,
-                    ).animate(_animation),
-                    child: AddButton(),
+      body: Center(
+        child: Container(
+        
+          width: MediaQuery.of(context).size.width*0.5,
+           alignment: Alignment.topCenter,
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+               // mainAxisAlignment: MainAxisAlignment.center,
+                 crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  FadeTransition(
+                    opacity: _animation,
+                    child: SlideTransition(
+                      position: Tween<Offset>(
+                        begin: Offset(0, -0.1),
+                        end: Offset.zero,
+                      ).animate(_animation),
+                      child: buildProductCard(),
+                    ),
                   ),
-                ),
+                  SizedBox(height: 20),
+                  Center(
+                    child: FadeTransition(
+                      opacity: _animation,
+                      child: SlideTransition(
+                        position: Tween<Offset>(
+                          begin: Offset(0, 0.1),
+                          end: Offset.zero,
+                        ).animate(_animation),
+                        child: AddButton(),
+                      ),
+                    ),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
         ),
       ),
@@ -221,8 +228,7 @@ class _POSDynamicWidgetFormState extends State<POSDynamicWidgetForm>
                         selectedCategory = newValue;
                       });
                     },
-                    items: categories
-                        .map<DropdownMenuItem<String>>((String value) {
+                    items: categories.map<DropdownMenuItem<String>>((String value) {
                       return DropdownMenuItem<String>(
                         value: value,
                         child: Text(value),
@@ -244,95 +250,13 @@ class _POSDynamicWidgetFormState extends State<POSDynamicWidgetForm>
               ],
             ),
             SizedBox(height: 20),
-            buildTextField('Product Name', NameController, Icons.motorcycle,
-                type: TextInputType.text),
+            buildTextField('Product Name', nameController, Icons.shopping_bag, type: TextInputType.text),
             SizedBox(height: 20),
-            buildTextField(
-                'Buying Price', BuyingPriceController, Icons.attach_money),
+            buildTextField('Buying Price', buyingPriceController, Icons.attach_money),
             SizedBox(height: 20),
-            buildTextField(
-                'Selling  Price', SellingpriceController, Icons.attach_money),
+            buildTextField('Selling Price', sellingPriceController, Icons.attach_money),
             SizedBox(height: 20),
-            buildTextField('Quantity', quantityController, Icons.shopping_cart),
-            SizedBox(height: 20),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget buildTotalCard() {
-    double price = double.tryParse(SellingpriceController.text) ?? 0;
-    int quantity = int.tryParse(quantityController.text) ?? 0;
-    double total = price * quantity;
-
-    return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      color: cardColor,
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Total',
-              style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: primaryColor),
-            ),
-            SizedBox(height: 16),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text('Subtotal:',
-                    style: TextStyle(fontSize: 16, color: Colors.grey[600])),
-                Text('\$${total.toStringAsFixed(2)}',
-                    style:
-                        TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-              ],
-            ),
-            SizedBox(height: 8),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text('Tax (10%):',
-                    style: TextStyle(fontSize: 16, color: Colors.grey[600])),
-                Text('\$${(total * 0.1).toStringAsFixed(2)}',
-                    style:
-                        TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-              ],
-            ),
-            Divider(height: 24, thickness: 1),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text('Total:',
-                    style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: primaryColor)),
-                Text('\$${(total * 1.1).toStringAsFixed(2)}',
-                    style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: accentColor)),
-              ],
-            ),
-            SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: () {
-                // Implement checkout logic here
-              },
-              child: Text('Checkout', style: TextStyle(fontSize: 18)),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: accentColor,
-                padding: EdgeInsets.symmetric(vertical: 12),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8)),
-              ),
-            ),
+            buildTextField('Quantity', quantityController, Icons.inventory),
           ],
         ),
       ),
@@ -342,24 +266,73 @@ class _POSDynamicWidgetFormState extends State<POSDynamicWidgetForm>
   Widget buildTextField(
       String label, TextEditingController controller, IconData icon,
       {TextInputType type = TextInputType.number}) {
-    return TextFormField(
-      controller: controller,
-      decoration: InputDecoration(
-        labelText: label,
-        prefixIcon: Icon(icon, color: primaryColor),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide(color: primaryColor),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide(color: accentColor, width: 2),
+    return TweenAnimationBuilder(
+      duration: Duration(milliseconds: 300),
+      tween: Tween<double>(begin: 0, end: 1),
+      builder: (context, double value, child) {
+        return Opacity(
+          opacity: value,
+          child: Transform.translate(
+            offset: Offset(0, (1 - value) * 20),
+            child: child,
+          ),
+        );
+      },
+      child: Focus(
+        onFocusChange: (hasFocus) {
+          setState(() {});
+        },
+        child: AnimatedContainer(
+          duration: Duration(milliseconds: 300),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(8),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.1),
+                blurRadius: 8,
+                offset: Offset(0, 4),
+              ),
+            ],
+          ),
+          child: TextFormField(
+            controller: controller,
+            decoration: InputDecoration(
+              labelText: label,
+              labelStyle: TextStyle(
+                color: controller.text.isNotEmpty ? accentColor : Colors.grey,
+              ),
+              prefixIcon: Icon(icon, color: primaryColor),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide(color: primaryColor),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide(color: accentColor, width: 2),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide(color: Colors.grey.shade300),
+              ),
+              filled: true,
+              fillColor: controller.text.isNotEmpty
+                  ? Colors.grey.shade50
+                  : Colors.transparent,
+            ),
+            keyboardType: type,
+            inputFormatters: type == TextInputType.number
+                ? [FilteringTextInputFormatter.digitsOnly]
+                : [],
+            style: TextStyle(
+              color: primaryColor,
+              fontWeight: FontWeight.w500,
+            ),
+            onChanged: (value) {
+              setState(() {});
+            },
+          ),
         ),
       ),
-      keyboardType: type,
-      inputFormatters: type == TextInputType.number
-          ? [FilteringTextInputFormatter.digitsOnly]
-          : [],
     );
   }
 }

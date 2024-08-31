@@ -1,3 +1,5 @@
+import 'package:application/widgets/Globals.dart';
+import 'package:application/widgets/ProductPage.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -5,10 +7,12 @@ class InventoryManagementPage extends StatefulWidget {
   const InventoryManagementPage({Key? key}) : super(key: key);
 
   @override
-  _InventoryManagementPageState createState() => _InventoryManagementPageState();
+  _InventoryManagementPageState createState() =>
+      _InventoryManagementPageState();
 }
 
-class _InventoryManagementPageState extends State<InventoryManagementPage> with SingleTickerProviderStateMixin {
+class _InventoryManagementPageState extends State<InventoryManagementPage>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
@@ -33,7 +37,8 @@ class _InventoryManagementPageState extends State<InventoryManagementPage> with 
     );
 
     _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(_controller);
-    _slideAnimation = Tween<Offset>(begin: Offset(0, 0.5), end: Offset.zero).animate(
+    _slideAnimation =
+        Tween<Offset>(begin: Offset(0, 0.5), end: Offset.zero).animate(
       CurvedAnimation(parent: _controller, curve: Curves.easeOut),
     );
 
@@ -50,7 +55,8 @@ class _InventoryManagementPageState extends State<InventoryManagementPage> with 
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Inventory Management',
+        title: Text(
+          'Inventory Management',
           style: GoogleFonts.roboto(
             fontWeight: FontWeight.w800,
             color: Colors.white,
@@ -68,39 +74,49 @@ class _InventoryManagementPageState extends State<InventoryManagementPage> with 
             itemCount: _inventoryItems.length,
             itemBuilder: (context, index) {
               final item = _inventoryItems[index];
-              return Card(
-                elevation: 4,
-                margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                child: ListTile(
-                  leading: Icon(item['icon'], size: 40, color: Colors.red.shade800),
-                  title: Text(item['name'],
-                    style: GoogleFonts.roboto(fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
-                  subtitle: Text('Quantity: ${item['quantity']}',
-                    style: GoogleFonts.roboto(fontSize: 14),
-                  ),
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      IconButton(
-                        icon: Icon(Icons.remove_circle, color: Colors.red),
-                        onPressed: () {
-                          // Decrease quantity
-                          setState(() {
-                            if (item['quantity'] > 0) item['quantity']--;
-                          });
-                        },
-                      ),
-                      IconButton(
-                        icon: Icon(Icons.add_circle, color: Colors.green),
-                        onPressed: () {
-                          // Increase quantity
-                          setState(() {
-                            item['quantity']++;
-                          });
-                        },
-                      ),
-                    ],
+              return GestureDetector(
+                onTap: () {
+                  Navigator.push(context,
+                      MaterialPageRoute(builder: (context) => ProductPage(productName: "Helemets", productData: Globals.helmetData)));
+                },
+                child: Card(
+                  elevation: 4,
+                  margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  child: ListTile(
+                    leading: Icon(item['icon'],
+                        size: 40, color: Colors.red.shade800),
+                    title: Text(
+                      item['name'],
+                      style: GoogleFonts.roboto(
+                          fontSize: 18, fontWeight: FontWeight.bold),
+                    ),
+                    subtitle: Text(
+                      'Quantity: ${item['quantity']}',
+                      style: GoogleFonts.roboto(fontSize: 14),
+                    ),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        IconButton(
+                          icon: Icon(Icons.remove_circle, color: Colors.red),
+                          onPressed: () {
+                            // Decrease quantity
+                            setState(() {
+                              if (item['quantity'] > 0) item['quantity']--;
+                            });
+                          },
+                        ),
+                        IconButton(
+                          icon: Icon(Icons.add_circle, color: Colors.green),
+                          onPressed: () {
+                            // Increase quantity
+                            setState(() {
+                              item['quantity']++;
+                            });
+                          },
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               );

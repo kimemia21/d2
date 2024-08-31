@@ -64,7 +64,7 @@ class _POSHomepageState extends State<POSHomepage>
               onPressed: () {
                  Globals.switchScreens(
                             context: context,
-                            screen: InventoryManagementPage());
+                            screen: InventoryPage());
                 // Add functionality here
               },
               style: ElevatedButton.styleFrom(

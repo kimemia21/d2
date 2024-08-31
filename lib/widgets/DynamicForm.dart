@@ -1,3 +1,4 @@
+import 'package:application/widgets/Globals.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:application/widgets/AddButton.dart';
@@ -148,7 +149,7 @@ class _POSDynamicWidgetFormState extends State<POSDynamicWidgetForm>
       body: Center(
         child: Container(
         
-          width: MediaQuery.of(context).size.width*0.5,
+          width: MediaQuery.of(context).size.width*0.75,
            alignment: Alignment.topCenter,
           child: SingleChildScrollView(
             child: Padding(

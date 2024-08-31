@@ -1,47 +1,65 @@
+import 'package:application/widgets/DynamicForm.dart';
 import 'package:application/widgets/Globals.dart';
-import 'package:application/widgets/ProductPage.dart';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
-class InventoryManagementPage extends StatefulWidget {
-  const InventoryManagementPage({Key? key}) : super(key: key);
-
-  @override
-  _InventoryManagementPageState createState() =>
-      _InventoryManagementPageState();
+void main() {
+  runApp(MyApp());
 }
 
-class _InventoryManagementPageState extends State<InventoryManagementPage>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<double> _fadeAnimation;
-  late Animation<Offset> _slideAnimation;
+class MyApp extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      home: InventoryPage(),
+    );
+  }
+}
 
-  final List<Map<String, dynamic>> _inventoryItems = [
-    {'name': 'Tires', 'icon': Icons.tire_repair, 'quantity': 50},
-    {'name': 'Helmets', 'icon': Icons.sports_motorsports, 'quantity': 30},
-    {'name': 'Engine Oil', 'icon': Icons.oil_barrel, 'quantity': 100},
-    {'name': 'Brake Pads', 'icon': Icons.build, 'quantity': 80},
-    {'name': 'Chain', 'icon': Icons.link, 'quantity': 40},
-    {'name': 'Spark Plugs', 'icon': Icons.electric_bolt, 'quantity': 120},
-    {'name': 'Air Filters', 'icon': Icons.air, 'quantity': 60},
-    {'name': 'Batteries', 'icon': Icons.battery_full, 'quantity': 25},
-  ];
+class InventoryPage extends StatefulWidget {
+  @override
+  _InventoryPageState createState() => _InventoryPageState();
+}
+
+class _InventoryPageState extends State<InventoryPage>
+    with SingleTickerProviderStateMixin {
+  int selectedCategoryIndex = 0;
+  late AnimationController _controller;
+  late Animation<Offset> _offsetAnimation;
+
+  final List<String> categories = ['Helmets', 'Jackets', 'Gloves', 'Boots'];
+  final Map<String, List<Map<String, dynamic>>> items = {
+    'Helmets': [
+      {'name': 'Helmet A', 'quantity': 10},
+      {'name': 'Helmet B', 'quantity': 5},
+    ],
+    'Jackets': [
+      {'name': 'Jacket A', 'quantity': 7},
+      {'name': 'Jacket B', 'quantity': 2},
+    ],
+    'Gloves': [
+      {'name': 'Glove A', 'quantity': 20},
+      {'name': 'Glove B', 'quantity': 15},
+    ],
+    'Boots': [
+      {'name': 'Boot A', 'quantity': 8},
+      {'name': 'Boot B', 'quantity': 3},
+    ],
+  };
 
   @override
   void initState() {
     super.initState();
     _controller = AnimationController(
-      duration: const Duration(milliseconds: 1000),
+      duration: const Duration(milliseconds: 500),
       vsync: this,
     );
-
-    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(_controller);
-    _slideAnimation =
-        Tween<Offset>(begin: Offset(0, 0.5), end: Offset.zero).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeOut),
-    );
-
+    _offsetAnimation = Tween<Offset>(
+      begin: Offset(1.0, 0.0),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(
+      parent: _controller,
+      curve: Curves.easeInOut,
+    ));
     _controller.forward();
   }
 
@@ -54,82 +72,113 @@ class _InventoryManagementPageState extends State<InventoryManagementPage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      floatingActionButton: IconButton.filled(
+          onPressed: () => Globals.switchScreens(
+              context: context, screen: POSDynamicWidgetForm()),
+          icon: Icon(Icons.add)),
       appBar: AppBar(
-        title: Text(
-          'Inventory Management',
-          style: GoogleFonts.roboto(
-            fontWeight: FontWeight.w800,
-            color: Colors.white,
-            fontSize: 24,
-          ),
-        ),
-        centerTitle: true,
-        backgroundColor: Colors.red.shade800,
+        title: Text('Inventory'),
+        backgroundColor: Colors.blueGrey,
       ),
-      body: FadeTransition(
-        opacity: _fadeAnimation,
-        child: SlideTransition(
-          position: _slideAnimation,
-          child: ListView.builder(
-            itemCount: _inventoryItems.length,
-            itemBuilder: (context, index) {
-              final item = _inventoryItems[index];
-              return GestureDetector(
-                onTap: () {
-                  Navigator.push(context,
-                      MaterialPageRoute(builder: (context) => ProductPage(productName: "Helemets", productData: Globals.helmetData)));
-                },
-                child: Card(
-                  elevation: 4,
-                  margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  child: ListTile(
-                    leading: Icon(item['icon'],
-                        size: 40, color: Colors.red.shade800),
-                    title: Text(
-                      item['name'],
-                      style: GoogleFonts.roboto(
-                          fontSize: 18, fontWeight: FontWeight.bold),
-                    ),
-                    subtitle: Text(
-                      'Quantity: ${item['quantity']}',
-                      style: GoogleFonts.roboto(fontSize: 14),
-                    ),
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        IconButton(
-                          icon: Icon(Icons.remove_circle, color: Colors.red),
-                          onPressed: () {
-                            // Decrease quantity
-                            setState(() {
-                              if (item['quantity'] > 0) item['quantity']--;
-                            });
-                          },
+      body: Center(
+        child: Container(
+          width: MediaQuery.of(context).size.width * 0.75,
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            children: [
+              Container(
+                height: 50,
+                child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: categories.length,
+                  itemBuilder: (context, index) {
+                    return GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          selectedCategoryIndex = index;
+                        });
+                        _controller.reset();
+                        _controller.forward();
+                      },
+                      child: Container(
+                        padding: EdgeInsets.symmetric(horizontal: 20),
+                        margin: EdgeInsets.symmetric(horizontal: 5),
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: selectedCategoryIndex == index
+                              ? Colors.blueGrey
+                              : Colors.grey,
+                          borderRadius: BorderRadius.circular(25),
                         ),
-                        IconButton(
-                          icon: Icon(Icons.add_circle, color: Colors.green),
-                          onPressed: () {
-                            // Increase quantity
-                            setState(() {
-                              item['quantity']++;
-                            });
-                          },
+                        child: Text(
+                          categories[index],
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
-                      ],
-                    ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+              SizedBox(height: 20),
+              Expanded(
+                child: SlideTransition(
+                  position: _offsetAnimation,
+                  child: ListView.builder(
+                    itemCount: items[categories[selectedCategoryIndex]]!.length,
+                    itemBuilder: (context, index) {
+                      var item =
+                          items[categories[selectedCategoryIndex]]![index];
+                      return Card(
+                        elevation: 4,
+                        margin: EdgeInsets.symmetric(vertical: 8),
+                        child: ListTile(
+                          title: Text(
+                            item['name'],
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          subtitle: Text('Quantity: ${item['quantity']}'),
+                          trailing: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              ElevatedButton(
+                                onPressed: () {
+                                  // Add edit logic here
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.orange,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                ),
+                                child: Text('Edit'),
+                              ),
+                              SizedBox(width: 8),
+                              ElevatedButton(
+                                onPressed: () {
+                                  // Add restock logic here
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.green,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                ),
+                                child: Text('Restock'),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
                   ),
                 ),
-              );
-            },
+              ),
+            ],
           ),
         ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          // Add new item functionality
-        },
-        child: Icon(Icons.add),
-        backgroundColor: Colors.red.shade800,
       ),
     );
   }

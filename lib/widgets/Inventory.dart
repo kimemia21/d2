@@ -1,6 +1,7 @@
 import 'package:application/widgets/DynamicForm.dart';
 import 'package:application/widgets/Globals.dart';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 void main() {
   runApp(MyApp());
@@ -69,13 +70,187 @@ class _InventoryPageState extends State<InventoryPage>
     super.dispose();
   }
 
+  void _showRestockDialog(BuildContext context, Map<String, dynamic> item) {
+    int currentQuantity = item['quantity'];
+    TextEditingController _quantityController =
+        TextEditingController(text: currentQuantity.toString());
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(50),
+          ),
+          child: Container(
+            decoration: BoxDecoration(color: Colors.white),
+            width: MediaQuery.of(context).size.width * 0.4,
+            height: MediaQuery.of(context).size.height *
+                0.7, // Set the width to half the screen
+            child: StatefulBuilder(
+              builder: (context, setState) {
+                return AlertDialog(
+                  title: Row(
+                    children: [
+                      Icon(Icons.motorcycle, color: Colors.blue[800]),
+                      SizedBox(width: 10),
+                      Text('Restock ${item['name']}',
+                          style: TextStyle(
+                              color: Colors.blue[800],
+                              fontWeight: FontWeight.bold)),
+                    ],
+                  ),
+                  content: Container(
+                    width: double.maxFinite,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          padding: EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: Colors.grey[200],
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              IconButton(
+                                icon: Icon(Icons.remove_circle,
+                                    color: Colors.red[700], size: 30),
+                                onPressed: () {
+                                  setState(() {
+                                    if (currentQuantity > 0) currentQuantity--;
+                                    _quantityController.text =
+                                        currentQuantity.toString();
+                                  });
+                                },
+                              ),
+                              Text(
+                                '$currentQuantity',
+                                style: TextStyle(
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.blue[800]),
+                              ),
+                              IconButton(
+                                icon: Icon(Icons.add_circle,
+                                    color: Colors.green[700], size: 30),
+                                onPressed: () {
+                                  setState(() {
+                                    currentQuantity++;
+                                    _quantityController.text =
+                                        currentQuantity.toString();
+                                  });
+                                },
+                              ),
+                            ],
+                          ),
+                        ),
+                        SizedBox(height: 20),
+                        TextField(
+                          controller: _quantityController,
+                          keyboardType: TextInputType.number,
+                          decoration: InputDecoration(
+                            labelText: 'Enter Quantity',
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                              borderSide: BorderSide(color: Colors.blue[800]!),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                              borderSide: BorderSide(
+                                  color: Colors.blue[800]!, width: 2),
+                            ),
+                            prefixIcon:
+                                Icon(Icons.inventory, color: Colors.blue[800]),
+                          ),
+                          onChanged: (value) {
+                            setState(() {
+                              currentQuantity =
+                                  int.tryParse(value) ?? currentQuantity;
+                            });
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                  actions: [
+                    ElevatedButton.icon(
+                      icon: Icon(Icons.update),
+                      label: Text(
+                        'Update Stock',
+                        style: GoogleFonts.poppins(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 16),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.blue[800],
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      onPressed: () {
+                        // Update the item quantity in the original list
+                        setState(() {
+                          item['quantity'] = currentQuantity;
+                        });
+                        // Close the dialog and pass the updated quantity back to the parent
+                        Navigator.of(context).pop(currentQuantity);
+                      },
+                    ),
+                    Container(
+                      decoration: BoxDecoration(
+                        color:
+                            Colors.red[600], // Set the background color to red
+                        borderRadius: BorderRadius.circular(
+                            10), // Optional: Add some border radius
+                      ),
+                      child: TextButton.icon(
+                        icon: Icon(Icons.cancel,
+                            color: Colors.white), // Icon color white
+                        label: Text(
+                          'Cancel',
+                          style: GoogleFonts.poppins(
+                            color: Colors.white, // Text color white
+                            fontWeight: FontWeight.w600,
+                            fontSize: 16,
+                          ),
+                        ),
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                        },
+                        style: TextButton.styleFrom(
+                          padding: EdgeInsets.symmetric(
+                              vertical: 10,
+                              horizontal: 20), // Adjust padding as needed
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(
+                                10), // Match border radius with the container
+                          ),
+                        ),
+                      ),
+                    )
+                  ],
+                );
+              },
+            ),
+          ),
+        );
+      },
+    ).then((updatedQuantity) {
+      if (updatedQuantity != null) {
+        // Update the item quantity in the parent widget
+        setState(() {
+          item['quantity'] = updatedQuantity;
+        });
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      floatingActionButton: IconButton.filled(
-          onPressed: () => Globals.switchScreens(
-              context: context, screen: POSDynamicWidgetForm()),
-          icon: Icon(Icons.add)),
       appBar: AppBar(
         title: Text('Inventory'),
         backgroundColor: Colors.blueGrey,
@@ -146,6 +321,9 @@ class _InventoryPageState extends State<InventoryPage>
                               ElevatedButton(
                                 onPressed: () {
                                   // Add edit logic here
+                                  Globals.switchScreens(
+                                      context: context,
+                                      screen: POSDynamicWidgetForm());
                                 },
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: Colors.orange,
@@ -158,7 +336,7 @@ class _InventoryPageState extends State<InventoryPage>
                               SizedBox(width: 8),
                               ElevatedButton(
                                 onPressed: () {
-                                  // Add restock logic here
+                                  _showRestockDialog(context, item);
                                 },
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: Colors.green,

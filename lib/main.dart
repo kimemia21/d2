@@ -36,7 +36,7 @@ class MyApp extends StatelessWidget {
         useMaterial3: true,
         
       ),
-      home: InventoryPage()
+      home: MotorbikePOSHomePage()
     );
   }
 }

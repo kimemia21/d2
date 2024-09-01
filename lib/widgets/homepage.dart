@@ -1,4 +1,5 @@
 import 'package:application/widgets/Globals.dart';
+import 'package:application/widgets/Inventory.dart';
 import 'package:application/widgets/SellPage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
@@ -85,22 +86,29 @@ class MotorbikePOSHomePage extends StatelessWidget {
       shrinkWrap: true,
       physics: NeverScrollableScrollPhysics(),
       children: [
-        _buildActionItem(context, Icons.sell, 'Sell', Colors.red,),
+        _buildActionItem(context, Icons.sell, 'Sell', Colors.red, null),
+        //  ,sellAlert(context)
 
-        _buildActionItem(context, Icons.build, 'Inventory', Colors.blue),
-        _buildActionItem(context, Icons.inventory, 'Report', Colors.green),
+        _buildActionItem(
+            context, Icons.build, 'Inventory', Colors.blue, InventoryPage()),
+        _buildActionItem(
+            context, Icons.inventory, 'Report', Colors.green, InventoryPage()),
         // _buildActionItem(Icons.attach_money, 'Payments', Colors.orange),
       ],
     );
   }
 
-  Widget _buildActionItem(BuildContext context,  IconData icon, String label, Color color) {
+  Widget _buildActionItem(BuildContext context, IconData icon, String label,
+      Color color, Widget? screen) {
     return Card(
       elevation: 2,
       child: InkWell(
         onTap: () {
-          print("pressed");
-          sellAlert(context);
+          if (screen == null) {
+            sellAlert(context);
+          } else {
+            Globals.switchScreens(context: context, screen: screen);
+          }
         },
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,

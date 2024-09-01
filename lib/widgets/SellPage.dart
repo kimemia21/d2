@@ -6,11 +6,17 @@ void sellAlert(BuildContext context) {
     context: context,
     builder: (BuildContext context) {
       return AlertDialog(
-        content: SizedBox(
-          width: double.maxFinite,
-          child: MotorbikePOSPage(), // Your form widget
+        backgroundColor: Colors.grey[200],
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: BorderSide(color: Colors.blue[700]!, width: 2),
         ),
-      );
+        contentPadding: EdgeInsets.zero,
+        content: SizedBox(
+          width: MediaQuery.of(context).size.width * 0.7,
+          child: MotorbikePOSPage(),
+        ),
+      ).animate().scale(duration: 300.ms);
     },
   );
 }
@@ -21,13 +27,21 @@ class MotorbikePOSPage extends StatefulWidget {
 }
 
 class _MotorbikePOSPageState extends State<MotorbikePOSPage> {
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+
+  // Controllers
+  final TextEditingController sellingPriceController = TextEditingController();
+  final TextEditingController quantityController = TextEditingController();
+  final TextEditingController buyingPriceController = TextEditingController();
+  final TextEditingController clientNameController = TextEditingController();
+  final TextEditingController mpesaCodeController = TextEditingController();
+
+  // Variables
   String? selectedCategory;
   String? selectedItem;
-  TextEditingController buyingPriceController = TextEditingController();
-  TextEditingController sellingPriceController = TextEditingController();
   String paymentMethod = 'cash';
-  TextEditingController mpesaCodeController = TextEditingController();
 
+  // Data
   final List<String> categories = ['Sport', 'Cruiser', 'Touring', 'Off-road'];
   final Map<String, List<String>> items = {
     'Sport': ['Yamaha R1', 'Kawasaki Ninja', 'Honda CBR'],
@@ -38,207 +52,272 @@ class _MotorbikePOSPageState extends State<MotorbikePOSPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Motorbike POS'),
-        backgroundColor: Colors.blue[700],
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Colors.grey[300]!, Colors.grey[200]!],
+        ),
       ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              buildDropdown(
-                'Category',
-                categories,
-                selectedCategory,
-                (String? newValue) {
-                  setState(() {
-                    selectedCategory = newValue;
-                    selectedItem = null;
-                  });
-                },
-              ).animate().fadeIn(duration: 300.ms).slideX(),
-              SizedBox(height: 16),
-              if (selectedCategory != null)
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        appBar: AppBar(
+          backgroundColor: Colors.blue[700],
+          elevation: 0,
+          title: Text(
+            'New Sale',
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+          ).animate().fade(duration: 500.ms),
+          centerTitle: true,
+        ),
+        body: SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
                 buildDropdown(
-                  'Item',
-                  items[selectedCategory]!,
-                  selectedItem,
-                  (String? newValue) {
+                  label: 'Category',
+                  items: categories,
+                  value: selectedCategory,
+                  onChanged: (String? newValue) {
                     setState(() {
-                      selectedItem = newValue;
+                      selectedCategory = newValue;
+                      selectedItem = null;
                     });
                   },
-                ).animate().fadeIn(duration: 300.ms).slideX(),
-              SizedBox(height: 16),
-              buildTextField('Buying Price', buyingPriceController)
-                  .animate()
-                  .fadeIn(duration: 300.ms)
-                  .slideX(),
-              SizedBox(height: 16),
-              buildTextField('Selling Price', sellingPriceController)
-                  .animate()
-                  .fadeIn(duration: 300.ms)
-                  .slideX(),
-              SizedBox(height: 16),
-              buildPaymentMethodSelection()
-                  .animate()
-                  .fadeIn(duration: 300.ms)
-                  .slideX(),
-              SizedBox(height: 16),
-              if (paymentMethod == 'mpesa')
-                buildTextField('M-Pesa Code', mpesaCodeController)
-                    .animate()
-                    .fadeIn(duration: 300.ms)
-                    .slideX(),
-              SizedBox(height: 24),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  ElevatedButton(
-                    onPressed: () => showSellConfirmation(),
-                    child: Text('Sell'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.green,
-                      padding:
-                          EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-                    ),
-                  ).animate().scale(duration: 300.ms),
-                  ElevatedButton(
-                    onPressed: () {
-                      // Handle cancel action
+                ).animate().fadeIn(duration: 300.ms).slideX(begin: 0.1),
+                const SizedBox(height: 16),
+                if (selectedCategory != null)
+                  buildDropdown(
+                    label: 'Item',
+                    items: items[selectedCategory]!,
+                    value: selectedItem,
+                    onChanged: (String? newValue) {
+                      setState(() {
+                        selectedItem = newValue;
+                      });
                     },
-                    child: Text('Cancel'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.red,
-                      padding:
-                          EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-                    ),
-                  ).animate().scale(duration: 300.ms),
-                ],
-              ),
-            ],
+                  ).animate().fadeIn(duration: 300.ms).slideX(begin: -0.1),
+                const SizedBox(height: 16),
+                buildTextField(
+                  label: 'Buying Price',
+                  controller: buyingPriceController,
+                  icon: Icons.attach_money,
+                  readOnly: true,
+                ).animate().fadeIn(duration: 300.ms).slideX(begin: 0.1),
+                const SizedBox(height: 16),
+                buildTextField(
+                  label: 'Selling Price',
+                  controller: sellingPriceController,
+                  icon: Icons.monetization_on,
+                  inputType: TextInputType.number,
+                ).animate().fadeIn(duration: 300.ms).slideX(begin: -0.1),
+                const SizedBox(height: 16),
+                buildTextField(
+                  label: 'Quantity',
+                  controller: quantityController,
+                  icon: Icons.format_list_numbered,
+                  inputType: TextInputType.number,
+                ).animate().fadeIn(duration: 300.ms).slideX(begin: 0.1),
+                const SizedBox(height: 16),
+                buildTextField(
+                  label: 'Client Name',
+                  controller: clientNameController,
+                  icon: Icons.person,
+                  inputType: TextInputType.name,
+                ).animate().fadeIn(duration: 300.ms).slideX(begin: -0.1),
+                const SizedBox(height: 16),
+                buildPaymentMethodSelection().animate().fadeIn(duration: 300.ms).slideX(begin: 0.1),
+                if (paymentMethod == 'mpesa')
+                  const SizedBox(height: 16),
+                if (paymentMethod == 'mpesa')
+                  buildTextField(
+                    label: 'M-Pesa Code',
+                    controller: mpesaCodeController,
+                    icon: Icons.confirmation_number,
+                  ).animate().fadeIn(duration: 300.ms).slideX(begin: -0.1),
+                const SizedBox(height: 24),
+                buildActionButtons().animate().scale(duration: 300.ms),
+              ],
+            ),
           ),
         ),
       ),
     );
   }
 
-  Widget buildDropdown(String label, List<String> items, String? value,
-      void Function(String?) onChanged) {
+  Widget buildDropdown({
+    required String label,
+    required List<String> items,
+    required String? value,
+    required void Function(String?) onChanged,
+  }) {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.grey),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.blue[700]!),
+        color: Colors.white,
       ),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<String>(
-          value: value,
-          hint: Text(label),
-          isExpanded: true,
-          items: items.map((String item) {
-            return DropdownMenuItem<String>(
-              value: item,
-              child: Text(item),
-            );
-          }).toList(),
-          onChanged: onChanged,
-        ),
+      child: DropdownButtonFormField<String>(
+        value: value,
+        hint: Text(label, style: TextStyle(color: Colors.blue[700])),
+        isExpanded: true,
+        dropdownColor: Colors.white,
+        style: const TextStyle(color: Colors.black87),
+        icon: Icon(Icons.arrow_drop_down, color: Colors.blue[700]),
+        items: items.map((String item) {
+          return DropdownMenuItem<String>(
+            value: item,
+            child: Text(item),
+          );
+        }).toList(),
+        onChanged: onChanged,
+        validator: (value) => value == null ? 'Please select $label' : null,
       ),
     );
   }
 
-  Widget buildTextField(String label, TextEditingController controller) {
-    return TextField(
+  Widget buildTextField({
+    required String label,
+    required TextEditingController controller,
+    required IconData icon,
+    TextInputType inputType = TextInputType.text,
+    bool readOnly = false,
+  }) {
+    return TextFormField(
       controller: controller,
+      style: const TextStyle(color: Colors.black87),
       decoration: InputDecoration(
         labelText: label,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
+        labelStyle: TextStyle(color: Colors.blue[700]),
+        prefixIcon: Icon(icon, color: Colors.blue[700]),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.blue[700]!),
         ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.blue[700]!, width: 2),
+        ),
+        filled: true,
+        fillColor: Colors.white,
       ),
-      keyboardType: TextInputType.number,
+      keyboardType: inputType,
+      readOnly: readOnly,
+      validator: (value) {
+        if (value == null || value.isEmpty) {
+          return 'Please enter $label';
+        }
+        if (inputType == TextInputType.number && int.tryParse(value) == null) {
+          return 'Please enter a valid number';
+        }
+        return null;
+      },
     );
   }
 
   Widget buildPaymentMethodSelection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text('Payment Method',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-        Row(
-          children: [
-            Expanded(
-              child: RadioListTile<String>(
-                title: Text('Cash'),
-                value: 'cash',
-                groupValue: paymentMethod,
-                onChanged: (value) {
-                  setState(() {
-                    paymentMethod = value!;
-                  });
-                },
-              ),
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.blue[700]!),
+        color: Colors.white,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Payment Method',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: Colors.blue[700],
             ),
-            Expanded(
-              child: RadioListTile<String>(
-                title: Text('M-Pesa'),
-                value: 'mpesa',
-                groupValue: paymentMethod,
-                onChanged: (value) {
-                  setState(() {
-                    paymentMethod = value!;
-                  });
-                },
+          ),
+          Row(
+            children: [
+              Expanded(
+                child: RadioListTile<String>(
+                  title: const Text('Cash', style: TextStyle(color: Colors.black87)),
+                  value: 'cash',
+                  groupValue: paymentMethod,
+                  onChanged: (value) {
+                    setState(() {
+                      paymentMethod = value!;
+                    });
+                  },
+                  activeColor: Colors.blue[700],
+                ),
               ),
-            ),
-          ],
-        ),
-      ],
+              Expanded(
+                child: RadioListTile<String>(
+                  title: const Text('M-Pesa', style: TextStyle(color: Colors.black87)),
+                  value: 'mpesa',
+                  groupValue: paymentMethod,
+                  onChanged: (value) {
+                    setState(() {
+                      paymentMethod = value!;
+                    });
+                  },
+                  activeColor: Colors.blue[700],
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 
-  void showSellConfirmation() {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text('Confirm Sale'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Category: $selectedCategory'),
-              Text('Item: $selectedItem'),
-              Text('Buying Price: ${buyingPriceController.text}'),
-              Text('Selling Price: ${sellingPriceController.text}'),
-              Text('Payment Method: ${paymentMethod.toUpperCase()}'),
-              if (paymentMethod == 'mpesa')
-                Text('M-Pesa Code: ${mpesaCodeController.text}'),
-            ],
-          ),
-          actions: [
-            TextButton(
-              child: Text('Cancel'),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
+  Widget buildActionButtons() {
+    return Row(
+      children: [
+        Expanded(
+          child: ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.grey[400],
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              padding: const EdgeInsets.symmetric(vertical: 14),
             ),
-            TextButton(
-              child: Text('Confirm'),
-              onPressed: () {
-                // Process the sale here
-                Navigator.of(context).pop();
-                // Show a success message or navigate to a new page
-              },
+            child: const Text(
+              'Cancel',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
             ),
-          ],
-        ).animate().scale();
-      },
+          ).animate().scale(duration: 300.ms),
+        ),
+        const SizedBox(width: 16),
+        Expanded(
+          child: ElevatedButton(
+            onPressed: () {
+              if (_formKey.currentState!.validate()) {
+                // Perform the sale action
+                Navigator.pop(context);
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.blue[700],
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              padding: const EdgeInsets.symmetric(vertical: 14),
+            ),
+            child: const Text(
+              'Confirm',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            ),
+          ).animate().scale(duration: 300.ms),
+        ),
+      ],
     );
   }
 }

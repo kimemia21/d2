@@ -3,18 +3,7 @@ import 'package:application/widgets/Globals.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-void main() {
-  runApp(MyApp());
-}
 
-class MyApp extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      home: InventoryPage(),
-    );
-  }
-}
 
 class InventoryPage extends StatefulWidget {
   @override
@@ -251,6 +240,7 @@ class _InventoryPageState extends State<InventoryPage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      floatingActionButton: IconButton.filled(onPressed:() => Globals.switchScreens(context: context, screen: AddProductForm()), icon:Icon(Icons.add)),
       appBar: AppBar(
         title: Text('Inventory'),
         backgroundColor: Colors.blueGrey,
@@ -323,7 +313,7 @@ class _InventoryPageState extends State<InventoryPage>
                                   // Add edit logic here
                                   Globals.switchScreens(
                                       context: context,
-                                      screen: POSDynamicWidgetForm());
+                                      screen: AddProductForm());
                                 },
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: Colors.orange,

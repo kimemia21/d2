@@ -1,23 +1,27 @@
-import 'package:application/widgets/Globals.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:application/widgets/AddButton.dart';
+import 'package:google_fonts/google_fonts.dart';
 
-class POSDynamicWidgetForm extends StatefulWidget {
-  const POSDynamicWidgetForm({Key? key}) : super(key: key);
+class AddProductForm extends StatefulWidget {
+  const AddProductForm({Key? key}) : super(key: key);
 
   @override
-  _POSDynamicWidgetFormState createState() => _POSDynamicWidgetFormState();
+  _AddProductFormState createState() => _AddProductFormState();
 }
 
-class _POSDynamicWidgetFormState extends State<POSDynamicWidgetForm>
-    with SingleTickerProviderStateMixin {
+class _AddProductFormState extends State<AddProductForm> with SingleTickerProviderStateMixin {
   String? selectedCategory;
+  String? selectedBrand;
+
   List<String> categories = ['Food', 'Beverages', 'Snacks', 'Merchandise'];
+  List<String> brands = ['Food', 'Beverages', 'Snacks', 'Merchandise'];
+
   TextEditingController sellingPriceController = TextEditingController();
   TextEditingController nameController = TextEditingController();
+  TextEditingController brandController = TextEditingController();
   TextEditingController buyingPriceController = TextEditingController();
   TextEditingController quantityController = TextEditingController();
+
   late AnimationController _animationController;
   late Animation<double> _animation;
 
@@ -51,22 +55,23 @@ class _POSDynamicWidgetFormState extends State<POSDynamicWidgetForm>
     super.dispose();
   }
 
-  void addNewCategory() {
+  void showAddDialog(String title, List<String> items, Function(String) onAdd) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        String newCategory = '';
+        String newItem = '';
         return AlertDialog(
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          title: Text('Add New Category', style: TextStyle(color: primaryColor)),
+          title: Text(title, style: TextStyle(color: primaryColor)),
           content: TextField(
             onChanged: (value) {
-              newCategory = value;
+              newItem = value;
             },
             decoration: InputDecoration(
-              hintText: "Enter new category",
+              hintText: "Enter new $title",
               focusedBorder: UnderlineInputBorder(
-                  borderSide: BorderSide(color: accentColor)),
+                borderSide: BorderSide(color: accentColor),
+              ),
             ),
           ),
           actions: <Widget>[
@@ -80,7 +85,7 @@ class _POSDynamicWidgetFormState extends State<POSDynamicWidgetForm>
               child: Text('Add', style: TextStyle(color: primaryColor)),
               onPressed: () {
                 setState(() {
-                  categories.add(newCategory);
+                  onAdd(newItem);
                 });
                 Navigator.of(context).pop();
               },
@@ -89,6 +94,18 @@ class _POSDynamicWidgetFormState extends State<POSDynamicWidgetForm>
         );
       },
     );
+  }
+
+  void addNewCategory() {
+    showAddDialog('Category', categories, (newCategory) {
+      categories.add(newCategory);
+    });
+  }
+
+  void addNewBrand() {
+    showAddDialog('Brand', brands, (newBrand) {
+      brands.add(newBrand);
+    });
   }
 
   void editField(String field) {
@@ -106,7 +123,8 @@ class _POSDynamicWidgetFormState extends State<POSDynamicWidgetForm>
             decoration: InputDecoration(
               hintText: "Enter new $field",
               focusedBorder: UnderlineInputBorder(
-                  borderSide: BorderSide(color: accentColor)),
+                borderSide: BorderSide(color: accentColor),
+              ),
             ),
             keyboardType: TextInputType.number,
             inputFormatters: [FilteringTextInputFormatter.digitsOnly],
@@ -137,56 +155,54 @@ class _POSDynamicWidgetFormState extends State<POSDynamicWidgetForm>
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('POS System', style: TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: primaryColor,
-        elevation: 0,
-      ),
-      backgroundColor: backgroundColor,
-      body: Center(
-        child: Container(
-        
-          width: MediaQuery.of(context).size.width*0.75,
-           alignment: Alignment.topCenter,
-          child: SingleChildScrollView(
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-               // mainAxisAlignment: MainAxisAlignment.center,
-                 crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  FadeTransition(
-                    opacity: _animation,
-                    child: SlideTransition(
-                      position: Tween<Offset>(
-                        begin: Offset(0, -0.1),
-                        end: Offset.zero,
-                      ).animate(_animation),
-                      child: buildProductCard(),
-                    ),
-                  ),
-                  SizedBox(height: 20),
-                  Center(
-                    child: FadeTransition(
-                      opacity: _animation,
-                      child: SlideTransition(
-                        position: Tween<Offset>(
-                          begin: Offset(0, 0.1),
-                          end: Offset.zero,
-                        ).animate(_animation),
-                        child: AddButton(),
-                      ),
-                    ),
-                  ),
-                ],
+  Widget buildDropdownWithButton({
+    required String text,
+    required String? selectedValue,
+    required List<String> items,
+    required VoidCallback addNewItem,
+  }) {
+    return Row(
+      children: [
+        Expanded(
+          child: DropdownButtonFormField<String>(
+            value: selectedValue,
+            hint: Text(text),
+            decoration: InputDecoration(
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide(color: primaryColor),
               ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide(color: accentColor, width: 2),
+              ),
+            ),
+            onChanged: (String? newValue) {
+              setState(() {
+                selectedValue = newValue;
+              });
+            },
+            items: items.map<DropdownMenuItem<String>>((String value) {
+              return DropdownMenuItem<String>(
+                value: value,
+                child: Text(value),
+              );
+            }).toList(),
+          ),
+        ),
+        SizedBox(width: 10),
+        ElevatedButton.icon(
+          onPressed: addNewItem,
+          icon: Icon(Icons.add),
+          label: Text('New'),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: accentColor,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
             ),
           ),
         ),
-      ),
+      ],
     );
   }
 
@@ -203,55 +219,25 @@ class _POSDynamicWidgetFormState extends State<POSDynamicWidgetForm>
             Text(
               'Add Product',
               style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: primaryColor),
+                  fontSize: 20, fontWeight: FontWeight.bold, color: primaryColor),
             ),
             SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(
-                  child: DropdownButtonFormField<String>(
-                    value: selectedCategory,
-                    hint: Text('Select Category'),
-                    decoration: InputDecoration(
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: BorderSide(color: primaryColor),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: BorderSide(color: accentColor, width: 2),
-                      ),
-                    ),
-                    onChanged: (String? newValue) {
-                      setState(() {
-                        selectedCategory = newValue;
-                      });
-                    },
-                    items: categories.map<DropdownMenuItem<String>>((String value) {
-                      return DropdownMenuItem<String>(
-                        value: value,
-                        child: Text(value),
-                      );
-                    }).toList(),
-                  ),
-                ),
-                SizedBox(width: 10),
-                ElevatedButton.icon(
-                  onPressed: addNewCategory,
-                  icon: Icon(Icons.add),
-                  label: Text('New'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: accentColor,
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8)),
-                  ),
-                ),
-              ],
+            buildDropdownWithButton(
+              text: 'Select Category',
+              selectedValue: selectedCategory,
+              items: categories,
+              addNewItem: addNewCategory,
             ),
             SizedBox(height: 20),
-            buildTextField('Product Name', nameController, Icons.shopping_bag, type: TextInputType.text),
+            buildDropdownWithButton(
+              text: 'Select Brand',
+              selectedValue: selectedBrand,
+              items: brands,
+              addNewItem: addNewBrand,
+            ),
+            SizedBox(height: 20),
+            buildTextField('Product Name', nameController, Icons.shopping_bag,
+                type: TextInputType.text),
             SizedBox(height: 20),
             buildTextField('Buying Price', buyingPriceController, Icons.attach_money),
             SizedBox(height: 20),
@@ -268,41 +254,20 @@ class _POSDynamicWidgetFormState extends State<POSDynamicWidgetForm>
       String label, TextEditingController controller, IconData icon,
       {TextInputType type = TextInputType.number}) {
     return TweenAnimationBuilder(
-      duration: Duration(milliseconds: 300),
+      duration: Duration(milliseconds: 500),
       tween: Tween<double>(begin: 0, end: 1),
-      builder: (context, double value, child) {
+      builder: (context, double opacity, child) {
         return Opacity(
-          opacity: value,
-          child: Transform.translate(
-            offset: Offset(0, (1 - value) * 20),
-            child: child,
-          ),
-        );
-      },
-      child: Focus(
-        onFocusChange: (hasFocus) {
-          setState(() {});
-        },
-        child: AnimatedContainer(
-          duration: Duration(milliseconds: 300),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(8),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.1),
-                blurRadius: 8,
-                offset: Offset(0, 4),
-              ),
-            ],
-          ),
-          child: TextFormField(
+          opacity: opacity,
+          child: TextField(
             controller: controller,
+            keyboardType: type,
+            inputFormatters: type == TextInputType.number
+                ? [FilteringTextInputFormatter.digitsOnly]
+                : null,
             decoration: InputDecoration(
               labelText: label,
-              labelStyle: TextStyle(
-                color: controller.text.isNotEmpty ? accentColor : Colors.grey,
-              ),
-              prefixIcon: Icon(icon, color: primaryColor),
+              prefixIcon: Icon(icon, color: accentColor),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
                 borderSide: BorderSide(color: primaryColor),
@@ -311,26 +276,74 @@ class _POSDynamicWidgetFormState extends State<POSDynamicWidgetForm>
                 borderRadius: BorderRadius.circular(8),
                 borderSide: BorderSide(color: accentColor, width: 2),
               ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: BorderSide(color: Colors.grey.shade300),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Product Management', style: TextStyle(color: Colors.white)),
+        backgroundColor: primaryColor,
+      ),
+      body: Center(
+        child: 
+        Container(
+          width: MediaQuery.of(context).size.width*0.5,
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                children: [
+                  ScaleTransition(
+                    scale: _animation,
+                    child: buildProductCard(),
+                  ),
+                  SizedBox(height: 20),
+                  Row(
+                    children: [
+                      Container(
+                        width: 200,
+                        padding: EdgeInsets.all(10),
+                        child: ElevatedButton.icon(
+                          onPressed: () {},
+                          icon: Icon(Icons.save,color: Colors.white,),
+                          label: Text('Save Product',style: GoogleFonts.poppins(color: Colors.white),),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.green,
+                            padding: EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                        ),
+                      ),
+                      SizedBox(width: 10),
+                      Container(
+                           width: 200,
+                        padding: EdgeInsets.all(10),
+                        child: ElevatedButton.icon(
+                          onPressed: () {},
+                          icon: Icon(Icons.delete,color: Colors.white,),
+                          label: Text('Cancel',style: GoogleFonts.poppins(color: Colors.white)),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.redAccent,
+                            padding: EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
-              filled: true,
-              fillColor: controller.text.isNotEmpty
-                  ? Colors.grey.shade50
-                  : Colors.transparent,
             ),
-            keyboardType: type,
-            inputFormatters: type == TextInputType.number
-                ? [FilteringTextInputFormatter.digitsOnly]
-                : [],
-            style: TextStyle(
-              color: primaryColor,
-              fontWeight: FontWeight.w500,
-            ),
-            onChanged: (value) {
-              setState(() {});
-            },
           ),
         ),
       ),

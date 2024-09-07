@@ -8,7 +8,7 @@ class AppRequest {
   static String mainUrl = "http://127.0.0.1:8000/api";
 
   static Future <List<CategoryController>> getCategorites() async {
-    final url = "$mainUrl/brand";
+    final url = "$mainUrl/category";
     try {
       final response = await http.get(Uri.parse(url));
       if (response.statusCode == 200) {

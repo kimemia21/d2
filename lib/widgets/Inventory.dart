@@ -1,6 +1,6 @@
 import 'package:application/widgets/DynamicForm.dart';
 import 'package:application/widgets/Globals.dart';
-import 'package:application/widgets/controllers/categoryController.dart';
+import 'package:application/widgets/controllers/Serializers.dart';
 import 'package:application/widgets/requests/Request.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -256,166 +256,191 @@ class _InventoryPageState extends State<InventoryPage>
           title: Text('Inventory'),
           backgroundColor: Colors.blueGrey,
         ),
-        body: FutureBuilder<List<CategoryController>>(
-        future: AppRequest.getCategorites(), // Calls the method
-        builder: (context, snapshot) {
-          // Check for error
-          if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
-          }
-          
-          // Check for data
-          if (snapshot.connectionState == ConnectionState.done) {
-            final categories = snapshot.data;
-            
-            // Check if data is not empty
-            if (categories == null || categories.isEmpty) {
-              return Center(child: Text('No categories found.'));
+        body:
+            //    FutureBuilder<List<CategoryController>>(
+            //   future: AppRequest.getCategorites(), // Calls the method
+            //   builder: (context, snapshot) {
+            //     // Check for error
+            //     if (snapshot.hasError) {
+            //       return Center(child: Text('Error: ${snapshot.error}'));
+            //     }
+
+            //     // Check for data
+            //     if (snapshot.connectionState == ConnectionState.done) {
+            //       final categories = snapshot.data;
+
+            //       // Check if data is not empty
+            //       if (categories == null || categories.isEmpty) {
+            //         return Center(child: Text('No categories found.'));
+            //       }
+
+            //       // Build the list view of categories
+            //       return ListView.builder(
+            //         itemCount: categories.length,
+            //         itemBuilder: (context, index) {
+            //           final category = categories[index];
+            //           return ListTile(
+            //             title: Text(category.categoryName),
+            //             subtitle: Text('ID: ${category.id}'),
+            //           );
+            //         },
+            //       );
+            //     }
+
+            //     // Display loading indicator while fetching data
+            //     return Center(child: CircularProgressIndicator());
+            //   },
+            // ),
+
+            FutureBuilder<List<CategoryController>>(
+          future: AppRequest.getCategorites(),
+          //  initialData: InitialData,
+          builder: (BuildContext context, AsyncSnapshot snapshot) {
+            if (snapshot.hasError) {
+              return Center(child: Text('Error: ${snapshot.error}'));
+            } else if (snapshot.connectionState == ConnectionState.waiting) {
+              return Center(child: CircularProgressIndicator());
+            } else if (snapshot.hasData) {
+              final data = snapshot.data;
+              print("THIS IS inventory data $data");
+
+              return Center(
+                child: Container(
+                  width: MediaQuery.of(context).size.width * 0.75,
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    children: [
+                      Container(
+                        height: 50,
+                        child: ListView.builder(
+                          scrollDirection: Axis.horizontal,
+                          itemCount: data.length,
+                          itemBuilder: (context, index) {
+                            final mapped = data[index];
+                            return GestureDetector(
+                              onTap: () {
+                                setState(() {
+                                  selectedCategoryIndex = index;
+                                });
+                                _controller.reset();
+                                _controller.forward();
+                              },
+                              child: Container(
+                                padding: EdgeInsets.symmetric(horizontal: 20),
+                                margin: EdgeInsets.symmetric(horizontal: 5),
+                                alignment: Alignment.center,
+                                decoration: BoxDecoration(
+                                  color: selectedCategoryIndex == index
+                                      ? Colors.blueGrey
+                                      : Colors.grey,
+                                  borderRadius: BorderRadius.circular(25),
+                                ),
+                                child: Text(
+                                  mapped.categoryName,
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                      SizedBox(height: 20),
+                      Expanded(
+                        child: SlideTransition(
+                          position: _offsetAnimation,
+                          child: FutureBuilder<List<ProductController>>(
+                              future: AppRequest.getProducts(),
+                              builder: (BuildContext context,
+                                  AsyncSnapshot snapshot) {
+                                if (snapshot.hasError) {
+                                  return Center(
+                                    child: Text("${snapshot.error}"),
+                                  );
+                                } else if (snapshot.connectionState ==
+                                    ConnectionState.waiting) {
+                                  return Center(
+                                    child: CircularProgressIndicator(),
+                                  );
+                                } else if (snapshot.hasData) {
+                                  final map = snapshot.data;
+                                  print(map);
+                                  return ListView.builder(
+                                    itemCount:map.length, 
+                                    itemBuilder: (context, index) {
+                                      var item = items[categories[
+                                          selectedCategoryIndex]]![index];
+                                      return Card(
+                                        elevation: 4,
+                                        margin:
+                                            EdgeInsets.symmetric(vertical: 8),
+                                        child: ListTile(
+                                          title: Text(
+                                            item['name'],
+                                            style: TextStyle(
+                                                fontWeight: FontWeight.bold),
+                                          ),
+                                          subtitle: Text(
+                                              'Quantity: ${item['quantity']}'),
+                                          trailing: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              ElevatedButton(
+                                                onPressed: () {
+                                                  // Add edit logic here
+                                                  Globals.switchScreens(
+                                                      context: context,
+                                                      screen: AddProductForm());
+                                                },
+                                                style: ElevatedButton.styleFrom(
+                                                  backgroundColor:
+                                                      Colors.orange,
+                                                  shape: RoundedRectangleBorder(
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            8),
+                                                  ),
+                                                ),
+                                                child: Text('Edit'),
+                                              ),
+                                              SizedBox(width: 8),
+                                              ElevatedButton(
+                                                onPressed: () {
+                                                  _showRestockDialog(
+                                                      context, item);
+                                                },
+                                                style: ElevatedButton.styleFrom(
+                                                  backgroundColor: Colors.green,
+                                                  shape: RoundedRectangleBorder(
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            8),
+                                                  ),
+                                                ),
+                                                child: Text('Restock'),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                  );
+                                }
+                                return Text("unknow error");
+                              }),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
             }
-
-            // Build the list view of categories
-            return ListView.builder(
-              itemCount: categories.length,
-              itemBuilder: (context, index) {
-                final category = categories[index];
-                return ListTile(
-                  title: Text(category.categoryName),
-                  subtitle: Text('ID: ${category.id}'),
-                );
-              },
+            return Center(
+              child: CircularProgressIndicator(),
             );
-          }
-
-          // Display loading indicator while fetching data
-          return Center(child: CircularProgressIndicator());
-        },
-      ),
-        
-        
-        //  FutureBuilder<List<CategoryController>>(
-        //   future: brands,
-        //   //  initialData: InitialData,
-        //   builder: (BuildContext context, AsyncSnapshot snapshot) {
-        //     if (snapshot.hasError) {
-        //       return Center(child: Text('Error: ${snapshot.error}'));
-        //     }
-        //     if (snapshot.connectionState == ConnectionState.waiting) {
-        //       return Center(child: CircularProgressIndicator());
-        //     } else {
-        //       final data = snapshot.data;
-        //       return Center(
-        //         child: Container(
-        //           width: MediaQuery.of(context).size.width * 0.75,
-        //           padding: const EdgeInsets.all(16.0),
-        //           child: Column(
-        //             children: [
-        //               Container(
-        //                 height: 50,
-        //                 child: ListView.builder(
-        //                   scrollDirection: Axis.horizontal,
-        //                   itemCount: data.length,
-        //                   itemBuilder: (context, index) {
-        //                     final mapped = data[index];
-        //                     return GestureDetector(
-        //                       onTap: () {
-        //                         setState(() {
-        //                           selectedCategoryIndex = index;
-        //                         });
-        //                         _controller.reset();
-        //                         _controller.forward();
-        //                       },
-        //                       child: Container(
-        //                         padding: EdgeInsets.symmetric(horizontal: 20),
-        //                         margin: EdgeInsets.symmetric(horizontal: 5),
-        //                         alignment: Alignment.center,
-        //                         decoration: BoxDecoration(
-        //                           color: selectedCategoryIndex == index
-        //                               ? Colors.blueGrey
-        //                               : Colors.grey,
-        //                           borderRadius: BorderRadius.circular(25),
-        //                         ),
-        //                         child: Text(
-        //                           mapped.category_name,
-        //                           style: TextStyle(
-        //                             color: Colors.white,
-        //                             fontWeight: FontWeight.bold,
-        //                           ),
-        //                         ),
-        //                       ),
-        //                     );
-        //                   },
-        //                 ),
-        //               ),
-        //               SizedBox(height: 20),
-        //               Expanded(
-        //                 child: SlideTransition(
-        //                   position: _offsetAnimation,
-        //                   child: ListView.builder(
-        //                     itemCount: items[categories[selectedCategoryIndex]]!
-        //                         .length,
-        //                     itemBuilder: (context, index) {
-        //                       var item = items[
-        //                           categories[selectedCategoryIndex]]![index];
-        //                       return Card(
-        //                         elevation: 4,
-        //                         margin: EdgeInsets.symmetric(vertical: 8),
-        //                         child: ListTile(
-        //                           title: Text(
-        //                             item['name'],
-        //                             style:
-        //                                 TextStyle(fontWeight: FontWeight.bold),
-        //                           ),
-        //                           subtitle:
-        //                               Text('Quantity: ${item['quantity']}'),
-        //                           trailing: Row(
-        //                             mainAxisSize: MainAxisSize.min,
-        //                             children: [
-        //                               ElevatedButton(
-        //                                 onPressed: () {
-        //                                   // Add edit logic here
-        //                                   Globals.switchScreens(
-        //                                       context: context,
-        //                                       screen: AddProductForm());
-        //                                 },
-        //                                 style: ElevatedButton.styleFrom(
-        //                                   backgroundColor: Colors.orange,
-        //                                   shape: RoundedRectangleBorder(
-        //                                     borderRadius:
-        //                                         BorderRadius.circular(8),
-        //                                   ),
-        //                                 ),
-        //                                 child: Text('Edit'),
-        //                               ),
-        //                               SizedBox(width: 8),
-        //                               ElevatedButton(
-        //                                 onPressed: () {
-        //                                   _showRestockDialog(context, item);
-        //                                 },
-        //                                 style: ElevatedButton.styleFrom(
-        //                                   backgroundColor: Colors.green,
-        //                                   shape: RoundedRectangleBorder(
-        //                                     borderRadius:
-        //                                         BorderRadius.circular(8),
-        //                                   ),
-        //                                 ),
-        //                                 child: Text('Restock'),
-        //                               ),
-        //                             ],
-        //                           ),
-        //                         ),
-        //                       );
-        //                     },
-        //                   ),
-        //                 ),
-        //               ),
-        //             ],
-        //           ),
-        //         ),
-        //       );
-        //     }
-        //   },
-        // )
-        
-        );
+          },
+        ));
   }
 }

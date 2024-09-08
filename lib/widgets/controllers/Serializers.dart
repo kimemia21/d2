@@ -55,3 +55,49 @@ class CategoryController {
     }).toList();
   }
 }
+
+class ProductController {
+  final String product_name;
+  final String product_id;
+  final String brand;
+  final String buying_price;
+  final String selling_price;
+  final int quantity;
+  ProductController(
+      {required this.product_name,
+      required this.product_id,
+      required this.brand,
+      required this.buying_price,
+      required this.selling_price,
+      required this.quantity});
+
+  factory ProductController.fromJson(Map json) {
+    final keys = [
+      "category",
+      "brand",
+      "product_name",
+      "buying_price",
+      "selling_price",
+      "quantity"
+    ];
+    if (keys.every(json.containsKey)) {
+      return ProductController(
+          product_name: json["product_name"],
+          product_id: json["product_id"],
+          brand: json["brand"],
+          buying_price: json["buying_price"],
+          selling_price: json["selling_price"],
+          quantity: json["quantity"]);
+    } else {
+      throw Exception("Missing required keys for ProductController");
+    }
+  }
+
+  static List<ProductController> fromJsonList(List<dynamic> jsonList) {
+    print(jsonList);
+    return jsonList.map((json) {
+      return ProductController.fromJson(json);
+    }).toList();
+  }
+
+}

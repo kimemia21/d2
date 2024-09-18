@@ -1,9 +1,12 @@
-import 'package:application/widgets/DynamicForm.dart';
-import 'package:application/widgets/Globals.dart';
-import 'package:application/widgets/controllers/Serializers.dart';
-import 'package:application/widgets/requests/Request.dart';
+import 'package:application/widgets/EditProduct.dart';
+import 'package:application/widgets/controllers/ProductSerializer.dart';
+import 'package:application/widgets/homepage.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:application/widgets/AddProduct.dart';
+import 'package:application/widgets/Globals.dart';
+import 'package:application/widgets/controllers/CategorySerializers.dart';
+import 'package:application/widgets/requests/Request.dart';
 
 class InventoryPage extends StatefulWidget {
   @override
@@ -12,34 +15,22 @@ class InventoryPage extends StatefulWidget {
 
 class _InventoryPageState extends State<InventoryPage>
     with SingleTickerProviderStateMixin {
-  int selectedCategoryIndex = 0;
+  // this number is only for displaying all category
+  int selectedCategoryIndex = 100;
   late AnimationController _controller;
   late Animation<Offset> _offsetAnimation;
-
-  final List<String> categories = ['Helmets', 'Jackets', 'Gloves', 'Boots'];
-  final Map<String, List<Map<String, dynamic>>> items = {
-    'Helmets': [
-      {'name': 'Helmet A', 'quantity': 10},
-      {'name': 'Helmet B', 'quantity': 5},
-    ],
-    'Jackets': [
-      {'name': 'Jacket A', 'quantity': 7},
-      {'name': 'Jacket B', 'quantity': 2},
-    ],
-    'Gloves': [
-      {'name': 'Glove A', 'quantity': 20},
-      {'name': 'Glove B', 'quantity': 15},
-    ],
-    'Boots': [
-      {'name': 'Boot A', 'quantity': 8},
-      {'name': 'Boot B', 'quantity': 3},
-    ],
-  };
+  late Future<List<ProductController>> products;
+  late Future<List<CategoryController>> categories; // Cache the Future
 
   @override
   void initState() {
     super.initState();
-    makerequest();
+    categories = _fetchCategories(); // Only fetch once
+    products = _fetchProducts(null); // Cache initial product list
+    _initAnimation();
+  }
+
+  void _initAnimation() {
     _controller = AnimationController(
       duration: const Duration(milliseconds: 500),
       vsync: this,
@@ -60,387 +51,286 @@ class _InventoryPageState extends State<InventoryPage>
     super.dispose();
   }
 
-  void makerequest() async {
-    print("working on the data");
-    AppRequest.getCategorites();
+  Future<List<CategoryController>> _fetchCategories() async {
+    return await AppRequest.getCategorites();
   }
 
-  Future<List<CategoryController>> brands = AppRequest.getCategorites();
-
-  void _showRestockDialog(BuildContext context, Map<String, dynamic> item) {
-    int currentQuantity = item['quantity'];
-    TextEditingController _quantityController =
-        TextEditingController(text: currentQuantity.toString());
-
-    showDialog(
-      context: context,
-      builder: (context) {
-        return Dialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(50),
-          ),
-          child: Container(
-            decoration: BoxDecoration(color: Colors.white),
-            width: MediaQuery.of(context).size.width * 0.4,
-            height: MediaQuery.of(context).size.height *
-                0.7, // Set the width to half the screen
-            child: StatefulBuilder(
-              builder: (context, setState) {
-                return AlertDialog(
-                  title: Row(
-                    children: [
-                      Icon(Icons.motorcycle, color: Colors.blue[800]),
-                      SizedBox(width: 10),
-                      Text('Restock ${item['name']}',
-                          style: TextStyle(
-                              color: Colors.blue[800],
-                              fontWeight: FontWeight.bold)),
-                    ],
-                  ),
-                  content: Container(
-                    width: double.maxFinite,
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Container(
-                          padding: EdgeInsets.all(10),
-                          decoration: BoxDecoration(
-                            color: Colors.grey[200],
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              IconButton(
-                                icon: Icon(Icons.remove_circle,
-                                    color: Colors.red[700], size: 30),
-                                onPressed: () {
-                                  setState(() {
-                                    if (currentQuantity > 0) currentQuantity--;
-                                    _quantityController.text =
-                                        currentQuantity.toString();
-                                  });
-                                },
-                              ),
-                              Text(
-                                '$currentQuantity',
-                                style: TextStyle(
-                                    fontSize: 24,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.blue[800]),
-                              ),
-                              IconButton(
-                                icon: Icon(Icons.add_circle,
-                                    color: Colors.green[700], size: 30),
-                                onPressed: () {
-                                  setState(() {
-                                    currentQuantity++;
-                                    _quantityController.text =
-                                        currentQuantity.toString();
-                                  });
-                                },
-                              ),
-                            ],
-                          ),
-                        ),
-                        SizedBox(height: 20),
-                        TextField(
-                          controller: _quantityController,
-                          keyboardType: TextInputType.number,
-                          decoration: InputDecoration(
-                            labelText: 'Enter Quantity',
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10),
-                              borderSide: BorderSide(color: Colors.blue[800]!),
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10),
-                              borderSide: BorderSide(
-                                  color: Colors.blue[800]!, width: 2),
-                            ),
-                            prefixIcon:
-                                Icon(Icons.inventory, color: Colors.blue[800]),
-                          ),
-                          onChanged: (value) {
-                            setState(() {
-                              currentQuantity =
-                                  int.tryParse(value) ?? currentQuantity;
-                            });
-                          },
-                        ),
-                      ],
-                    ),
-                  ),
-                  actions: [
-                    ElevatedButton.icon(
-                      icon: Icon(Icons.update),
-                      label: Text(
-                        'Update Stock',
-                        style: GoogleFonts.poppins(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w600,
-                            fontSize: 16),
-                      ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.blue[800],
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      ),
-                      onPressed: () {
-                        // Update the item quantity in the original list
-                        setState(() {
-                          item['quantity'] = currentQuantity;
-                        });
-                        // Close the dialog and pass the updated quantity back to the parent
-                        Navigator.of(context).pop(currentQuantity);
-                      },
-                    ),
-                    Container(
-                      decoration: BoxDecoration(
-                        color:
-                            Colors.red[600], // Set the background color to red
-                        borderRadius: BorderRadius.circular(
-                            10), // Optional: Add some border radius
-                      ),
-                      child: TextButton.icon(
-                        icon: Icon(Icons.cancel,
-                            color: Colors.white), // Icon color white
-                        label: Text(
-                          'Cancel',
-                          style: GoogleFonts.poppins(
-                            color: Colors.white, // Text color white
-                            fontWeight: FontWeight.w600,
-                            fontSize: 16,
-                          ),
-                        ),
-                        onPressed: () {
-                          Navigator.of(context).pop();
-                        },
-                        style: TextButton.styleFrom(
-                          padding: EdgeInsets.symmetric(
-                              vertical: 10,
-                              horizontal: 20), // Adjust padding as needed
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(
-                                10), // Match border radius with the container
-                          ),
-                        ),
-                      ),
-                    )
-                  ],
-                );
-              },
-            ),
-          ),
-        );
-      },
-    ).then((updatedQuantity) {
-      if (updatedQuantity != null) {
-        // Update the item quantity in the parent widget
-        setState(() {
-          item['quantity'] = updatedQuantity;
-        });
-      }
-    });
+  Future<List<ProductController>> _fetchProducts(categoryId) async {
+    return await AppRequest.getProducts(categoryId);
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        floatingActionButton: IconButton.filled(
-            onPressed: () => Globals.switchScreens(
-                context: context, screen: AddProductForm()),
-            icon: Icon(Icons.add)),
-        appBar: AppBar(
-          title: Text('Inventory'),
-          backgroundColor: Colors.blueGrey,
+      floatingActionButton: IconButton.filled(
+        onPressed: () => Globals.switchScreens(
+          context: context,
+          screen: AddProductForm(),
         ),
-        body:
-            //    FutureBuilder<List<CategoryController>>(
-            //   future: AppRequest.getCategorites(), // Calls the method
-            //   builder: (context, snapshot) {
-            //     // Check for error
-            //     if (snapshot.hasError) {
-            //       return Center(child: Text('Error: ${snapshot.error}'));
-            //     }
+        icon: const Icon(Icons.add),
+      ),
+      appBar: AppBar(
+        leading: IconButton.filled(
+            onPressed: () => Globals.switchScreens(
+                context: context, screen: MotorbikePOSHomePage()),
+            icon: Icon(Icons.home)),
+        title: Text(
+          'Inventory',
+          style: GoogleFonts.poppins(color: Colors.white),
+        ),
+        backgroundColor: Colors.blueGrey,
+      ),
+      body: FutureBuilder<List<CategoryController>>(
+        future: categories, // Use cached future
+        builder: (BuildContext context, AsyncSnapshot snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          } else if (snapshot.hasError) {
+            return Center(child: Text('Error: ${snapshot.error}'));
+          } else {
+            final categories = snapshot.data;
+            return _buildCategoryView(context, categories);
+          }
+        },
+      ),
+    );
+  }
 
-            //     // Check for data
-            //     if (snapshot.connectionState == ConnectionState.done) {
-            //       final categories = snapshot.data;
+  Widget _buildCategoryView(
+      BuildContext context, List<CategoryController> categories) {
+    return Center(
+      child: Container(
+        width: MediaQuery.of(context).size.width * 0.75,
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            _buildCategorySelector(categories),
+            const SizedBox(height: 20),
+            Expanded(child: _buildProductList(context)),
+          ],
+        ),
+      ),
+    );
+  }
 
-            //       // Check if data is not empty
-            //       if (categories == null || categories.isEmpty) {
-            //         return Center(child: Text('No categories found.'));
-            //       }
-
-            //       // Build the list view of categories
-            //       return ListView.builder(
-            //         itemCount: categories.length,
-            //         itemBuilder: (context, index) {
-            //           final category = categories[index];
-            //           return ListTile(
-            //             title: Text(category.categoryName),
-            //             subtitle: Text('ID: ${category.id}'),
-            //           );
-            //         },
-            //       );
-            //     }
-
-            //     // Display loading indicator while fetching data
-            //     return Center(child: CircularProgressIndicator());
-            //   },
-            // ),
-
-            FutureBuilder<List<CategoryController>>(
-          future: AppRequest.getCategorites(),
-          //  initialData: InitialData,
-          builder: (BuildContext context, AsyncSnapshot snapshot) {
-            if (snapshot.hasError) {
-              return Center(child: Text('Error: ${snapshot.error}'));
-            } else if (snapshot.connectionState == ConnectionState.waiting) {
-              return Center(child: CircularProgressIndicator());
-            } else if (snapshot.hasData) {
-              final data = snapshot.data;
-              print("THIS IS inventory data $data");
-
-              return Center(
-                child: Container(
-                  width: MediaQuery.of(context).size.width * 0.75,
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    children: [
-                      Container(
-                        height: 50,
-                        child: ListView.builder(
-                          scrollDirection: Axis.horizontal,
-                          itemCount: data.length,
-                          itemBuilder: (context, index) {
-                            final mapped = data[index];
-                            return GestureDetector(
-                              onTap: () {
-                                setState(() {
-                                  selectedCategoryIndex = index;
-                                });
-                                _controller.reset();
-                                _controller.forward();
-                              },
-                              child: Container(
-                                padding: EdgeInsets.symmetric(horizontal: 20),
-                                margin: EdgeInsets.symmetric(horizontal: 5),
-                                alignment: Alignment.center,
-                                decoration: BoxDecoration(
-                                  color: selectedCategoryIndex == index
-                                      ? Colors.blueGrey
-                                      : Colors.grey,
-                                  borderRadius: BorderRadius.circular(25),
-                                ),
-                                child: Text(
-                                  mapped.categoryName,
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-                      SizedBox(height: 20),
-                      Expanded(
-                        child: SlideTransition(
-                          position: _offsetAnimation,
-                          child: FutureBuilder<List<ProductController>>(
-                              future: AppRequest.getProducts(),
-                              builder: (BuildContext context,
-                                  AsyncSnapshot snapshot) {
-                                if (snapshot.hasError) {
-                                  return Center(
-                                    child: Text("${snapshot.error}"),
-                                  );
-                                } else if (snapshot.connectionState ==
-                                    ConnectionState.waiting) {
-                                  return Center(
-                                    child: CircularProgressIndicator(),
-                                  );
-                                } else if (snapshot.hasData) {
-                                  final map = snapshot.data;
-                                  print(map);
-                                  return ListView.builder(
-                                    itemCount:map.length, 
-                                    itemBuilder: (context, index) {
-                                      var item = items[categories[
-                                          selectedCategoryIndex]]![index];
-                                      return Card(
-                                        elevation: 4,
-                                        margin:
-                                            EdgeInsets.symmetric(vertical: 8),
-                                        child: ListTile(
-                                          title: Text(
-                                            item['name'],
-                                            style: TextStyle(
-                                                fontWeight: FontWeight.bold),
-                                          ),
-                                          subtitle: Text(
-                                              'Quantity: ${item['quantity']}'),
-                                          trailing: Row(
-                                            mainAxisSize: MainAxisSize.min,
-                                            children: [
-                                              ElevatedButton(
-                                                onPressed: () {
-                                                  // Add edit logic here
-                                                  Globals.switchScreens(
-                                                      context: context,
-                                                      screen: AddProductForm());
-                                                },
-                                                style: ElevatedButton.styleFrom(
-                                                  backgroundColor:
-                                                      Colors.orange,
-                                                  shape: RoundedRectangleBorder(
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                            8),
-                                                  ),
-                                                ),
-                                                child: Text('Edit'),
-                                              ),
-                                              SizedBox(width: 8),
-                                              ElevatedButton(
-                                                onPressed: () {
-                                                  _showRestockDialog(
-                                                      context, item);
-                                                },
-                                                style: ElevatedButton.styleFrom(
-                                                  backgroundColor: Colors.green,
-                                                  shape: RoundedRectangleBorder(
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                            8),
-                                                  ),
-                                                ),
-                                                child: Text('Restock'),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      );
-                                    },
-                                  );
-                                }
-                                return Text("unknow error");
-                              }),
-                        ),
-                      ),
-                    ],
-                  ),
+  Widget _buildCategorySelector(List<CategoryController> categories) {
+    return Container(
+      height: 50,
+      child: Row(
+        children: [
+          // "All" Button
+          GestureDetector(
+            onTap: () {
+              setState(() {
+                selectedCategoryIndex = 100;
+                products = _fetchProducts(null);
+              });
+              _controller.reset();
+              _controller.forward();
+            },
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 15),
+              margin: const EdgeInsets.symmetric(horizontal: 5),
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: selectedCategoryIndex == 100
+                    ? Colors.blueGrey
+                    : Colors.grey,
+                borderRadius: BorderRadius.circular(25),
+              ),
+              child: Text(
+                "All",
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
                 ),
-              );
+              ),
+            ),
+          ),
+          // Category Buttons
+          Expanded(
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              itemCount: categories.length,
+              itemBuilder: (context, index) {
+                final category = categories[index];
+                return GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      selectedCategoryIndex = index;
+                      products = _fetchProducts(category.id);
+                    });
+                    _controller.reset();
+                    _controller.forward();
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 15),
+                    margin: const EdgeInsets.symmetric(horizontal: 5),
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: selectedCategoryIndex == index
+                          ? Colors.blueGrey
+                          : Colors.grey,
+                      borderRadius: BorderRadius.circular(25),
+                    ),
+                    child: Text(
+                      category.categoryName,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildProductList(BuildContext context) {
+    return SlideTransition(
+      position: _offsetAnimation,
+      child: FutureBuilder<List<ProductController>>(
+        future: products, // Use cached future
+        builder: (BuildContext context,
+            AsyncSnapshot<List<ProductController>> snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          } else if (snapshot.hasError) {
+            return Center(child: Text('Error: ${snapshot.error}'));
+          } else if (snapshot.hasData) {
+            if (snapshot.data!.isEmpty) {
+              // Display a message when no products are available
+              return _buildNoDataView();
+            } else {
+              return _buildProductListView(snapshot.data!);
             }
-            return Center(
-              child: CircularProgressIndicator(),
-            );
-          },
-        ));
+          } else {
+            return Center(child: const Text('No products available.'));
+          }
+        },
+      ),
+    );
+  }
+
+  Widget _buildNoDataView() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.info_outline,
+            size: 80,
+            color: Colors.grey,
+          ),
+          SizedBox(height: 20),
+          Text(
+            'No products available.',
+            style: TextStyle(
+              fontSize: 18,
+              color: Colors.grey,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          SizedBox(height: 10),
+          ElevatedButton(
+            onPressed: () {
+              // Action to add new products
+              Globals.switchScreens(context: context, screen: AddProductForm());
+            },
+            child: Text('Add Product'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildProductListView(List<ProductController> products) {
+    return ListView.builder(
+      itemCount: products.length,
+      itemBuilder: (context, index) {
+        final product = products[index];
+        return _buildProductCard(product);
+      },
+    );
+  }
+
+  Widget _buildProductCard(ProductController product) {
+    return Card(
+      elevation: 4,
+      margin: const EdgeInsets.symmetric(vertical: 8),
+      child: ListTile(
+        title: Text(
+          product.product_name,
+          style: const TextStyle(fontWeight: FontWeight.bold),
+        ),
+        subtitle: Text('Quantity: ${product.quantity}'),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _buildEditButton(
+                productName: product.product_name,
+                productId: product.product_id,
+                brand: product.brand,
+                buyingPrice: product.buying_price,
+                sellingPrice: product.selling_price,
+                quantity: product.quantity),
+            const SizedBox(width: 8),
+            _buildRestockButton(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEditButton({
+    required String productName,
+    required int productId,
+    required int brand,
+    required int buyingPrice,
+    required int sellingPrice,
+    required int quantity,
+  }) {
+    return ElevatedButton(
+      onPressed: () {
+        // Navigate to EditProductPage with the required parameters
+        Globals.switchScreens(
+          context: context,
+          screen: EditProductPage(
+            productName: productName,
+            productId: productId,
+            brand: brand,
+            buyingPrice: buyingPrice,
+            sellingPrice: sellingPrice,
+            quantity: quantity,
+          ),
+        );
+      },
+      style: ElevatedButton.styleFrom(
+        backgroundColor: Colors.orange,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
+        ),
+      ),
+      child: const Text('Edit'),
+    );
+  }
+
+  Widget _buildRestockButton() {
+    return ElevatedButton(
+      onPressed: () {
+        // Restock functionality here
+      },
+      style: ElevatedButton.styleFrom(
+        backgroundColor: Colors.green,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
+        ),
+      ),
+      child: const Text('Restock'),
+    );
   }
 }

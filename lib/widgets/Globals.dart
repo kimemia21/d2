@@ -1,3 +1,4 @@
+import 'package:application/widgets/state/AppBloc.dart';
 import 'package:flutter/material.dart';
 
 class Globals {
@@ -14,6 +15,7 @@ static final helmetData = <Map<String,dynamic>>{
   {"name":"Snowmobile Helmet", "totalStock": 10, "sold": 3},
   {"name":"Retro Helmet", "totalStock": 45, "sold": 22},
 };
+
 
   static Future<void> switchScreens(
       {required BuildContext context, required Widget screen}) {

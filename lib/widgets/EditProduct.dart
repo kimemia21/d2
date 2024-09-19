@@ -12,7 +12,6 @@ class EditProductPage extends StatefulWidget {
   final String productName;
   final int productId;
   final int brand;
-
   final int buyingPrice;
   final int sellingPrice;
   final int quantity;
@@ -45,10 +44,11 @@ class _EditProductPageState extends State<EditProductPage>
   List<BrandController> _brands = [];
   String? _selectedBrand;
   int? _selectedBrandId;
-  final Color primaryColor = Color(0xFF3498db); // A nice blue
-  final Color accentColor = Color(0xFFe74c3c); // A complementary red
-  final Color backgroundColor = Color(0xFFecf0f1); // Light gray background
-  final Color textColor = Color(0xFF2c3e50);
+
+  final Color primaryColor = Color(0xFF3498db); // Blue
+  final Color accentColor = Color(0xFFe74c3c); // Red
+  final Color backgroundColor = Color(0xFFecf0f1); // Light gray
+  final Color textColor = Color(0xFF2c3e50); // Dark gray
 
   @override
   void initState() {
@@ -78,7 +78,6 @@ class _EditProductPageState extends State<EditProductPage>
 
       setState(() {
         _brands = brands;
-        // Set the selected brand id based on the brand that matches the one in the widget.brand
         _selectedBrandId = brands
             .firstWhere((brand) => brand.id == widget.brand,
                 orElse: () => brands.first)
@@ -180,18 +179,16 @@ class _EditProductPageState extends State<EditProductPage>
                           ),
                         ).animate().fadeIn(duration: 600.ms).slideX(),
                         const SizedBox(height: 20),
-                        _buildTextField(_productNameController, 'Product Name',
-                            Icons.motorcycle),
+                        _buildTextField(
+                            _productNameController, 'Product Name', Icons.motorcycle),
                         const SizedBox(height: 16),
                         _buildBrandDropdown(),
                         const SizedBox(height: 16),
                         _buildTextField(_buyingPriceController, 'Buying Price',
-                            Icons.attach_money,
-                            isPrice: true),
+                            Icons.attach_money, isPrice: true),
                         const SizedBox(height: 16),
-                        _buildTextField(_sellingPriceController,
-                            'Selling Price', Icons.monetization_on,
-                            isPrice: true),
+                        _buildTextField(_sellingPriceController, 'Selling Price',
+                            Icons.monetization_on, isPrice: true),
                         const SizedBox(height: 32),
                         Center(
                           child: ElevatedButton(
@@ -263,11 +260,8 @@ class _EditProductPageState extends State<EditProductPage>
   }
 
   Widget _buildTextField(
-    TextEditingController controller,
-    String label,
-    IconData icon, {
-    bool isPrice = false,
-  }) {
+      TextEditingController controller, String label, IconData icon,
+      {bool isPrice = false}) {
     return TextFormField(
       controller: controller,
       decoration: InputDecoration(
@@ -294,13 +288,13 @@ class _EditProductPageState extends State<EditProductPage>
       ),
       validator: (value) {
         if (value == null || value.isEmpty) {
-          return 'Please enter $label';
+          return '$label is required';
         }
-        if (isPrice && double.tryParse(value) == null) {
+        if (isPrice && int.tryParse(value) == null) {
           return 'Please enter a valid number';
         }
         return null;
       },
-    ).animate().fadeIn(delay: 200.ms).slideX();
+    ).animate().fadeIn(delay: 400.ms).slideX();
   }
 }

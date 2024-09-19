@@ -3,7 +3,7 @@ import 'package:application/widgets/controllers/ProductSerializer.dart';
 import 'package:application/widgets/homepage.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:application/widgets/AddProduct.dart';
+import 'package:application/widgets/AddItem/AddProduct.dart';
 import 'package:application/widgets/Globals.dart';
 import 'package:application/widgets/controllers/CategorySerializers.dart';
 import 'package:application/widgets/requests/Request.dart';

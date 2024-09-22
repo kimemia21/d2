@@ -15,18 +15,18 @@ class InventoryPage extends StatefulWidget {
 
 class _InventoryPageState extends State<InventoryPage>
     with SingleTickerProviderStateMixin {
-  // this number is only for displaying all category
   int selectedCategoryIndex = 100;
   late AnimationController _controller;
   late Animation<Offset> _offsetAnimation;
-  late Future<List<ProductController>> products;
-  late Future<List<CategoryController>> categories; // Cache the Future
+  
+  late Stream<List<CategoryController>> categoriesStream;
+  late Stream<List<ProductController>> productsStream;
 
   @override
   void initState() {
     super.initState();
-    categories = _fetchCategories(); // Only fetch once
-    products = _fetchProducts(null); // Cache initial product list
+    categoriesStream = AppRequest.getCategoriesStream();
+    productsStream = AppRequest.getProductsStream(null);
     _initAnimation();
   }
 
@@ -51,14 +51,6 @@ class _InventoryPageState extends State<InventoryPage>
     super.dispose();
   }
 
-  Future<List<CategoryController>> _fetchCategories() async {
-    return await AppRequest.getCategorites();
-  }
-
-  Future<List<ProductController>> _fetchProducts(categoryId) async {
-    return await AppRequest.getProducts(categoryId);
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -80,24 +72,24 @@ class _InventoryPageState extends State<InventoryPage>
         ),
         backgroundColor: Colors.blueGrey,
       ),
-      body: FutureBuilder<List<CategoryController>>(
-        future: categories, // Use cached future
-        builder: (BuildContext context, AsyncSnapshot snapshot) {
+      body: StreamBuilder<List<CategoryController>>(
+        stream: categoriesStream,
+        builder: (BuildContext context, AsyncSnapshot<List<CategoryController>> snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           } else if (snapshot.hasError) {
             return Center(child: Text('Error: ${snapshot.error}'));
+          } else if (snapshot.hasData) {
+            return _buildCategoryView(context, snapshot.data!);
           } else {
-            final categories = snapshot.data;
-            return _buildCategoryView(context, categories);
+            return Center(child: Text('No categories available.'));
           }
         },
       ),
     );
   }
 
-  Widget _buildCategoryView(
-      BuildContext context, List<CategoryController> categories) {
+  Widget _buildCategoryView(BuildContext context, List<CategoryController> categories) {
     return Center(
       child: Container(
         width: MediaQuery.of(context).size.width * 0.75,
@@ -118,12 +110,11 @@ class _InventoryPageState extends State<InventoryPage>
       height: 50,
       child: Row(
         children: [
-          // "All" Button
           GestureDetector(
             onTap: () {
               setState(() {
                 selectedCategoryIndex = 100;
-                products = _fetchProducts(null);
+                productsStream = AppRequest.getProductsStream(null);
               });
               _controller.reset();
               _controller.forward();
@@ -133,9 +124,7 @@ class _InventoryPageState extends State<InventoryPage>
               margin: const EdgeInsets.symmetric(horizontal: 5),
               alignment: Alignment.center,
               decoration: BoxDecoration(
-                color: selectedCategoryIndex == 100
-                    ? Colors.blueGrey
-                    : Colors.grey,
+                color: selectedCategoryIndex == 100 ? Colors.blueGrey : Colors.grey,
                 borderRadius: BorderRadius.circular(25),
               ),
               child: Text(
@@ -147,7 +136,6 @@ class _InventoryPageState extends State<InventoryPage>
               ),
             ),
           ),
-          // Category Buttons
           Expanded(
             child: ListView.builder(
               scrollDirection: Axis.horizontal,
@@ -158,7 +146,7 @@ class _InventoryPageState extends State<InventoryPage>
                   onTap: () {
                     setState(() {
                       selectedCategoryIndex = index;
-                      products = _fetchProducts(category.id);
+                      productsStream = AppRequest.getProductsStream(category.id);
                     });
                     _controller.reset();
                     _controller.forward();
@@ -168,9 +156,7 @@ class _InventoryPageState extends State<InventoryPage>
                     margin: const EdgeInsets.symmetric(horizontal: 5),
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
-                      color: selectedCategoryIndex == index
-                          ? Colors.blueGrey
-                          : Colors.grey,
+                      color: selectedCategoryIndex == index ? Colors.blueGrey : Colors.grey,
                       borderRadius: BorderRadius.circular(25),
                     ),
                     child: Text(
@@ -193,17 +179,15 @@ class _InventoryPageState extends State<InventoryPage>
   Widget _buildProductList(BuildContext context) {
     return SlideTransition(
       position: _offsetAnimation,
-      child: FutureBuilder<List<ProductController>>(
-        future: products, // Use cached future
-        builder: (BuildContext context,
-            AsyncSnapshot<List<ProductController>> snapshot) {
+      child: StreamBuilder<List<ProductController>>(
+        stream: productsStream,
+        builder: (BuildContext context, AsyncSnapshot<List<ProductController>> snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           } else if (snapshot.hasError) {
             return Center(child: Text('Error: ${snapshot.error}'));
           } else if (snapshot.hasData) {
             if (snapshot.data!.isEmpty) {
-              // Display a message when no products are available
               return _buildNoDataView();
             } else {
               return _buildProductListView(snapshot.data!);
@@ -238,7 +222,6 @@ class _InventoryPageState extends State<InventoryPage>
           SizedBox(height: 10),
           ElevatedButton(
             onPressed: () {
-              // Action to add new products
               Globals.switchScreens(context: context, screen: AddProductForm());
             },
             child: Text('Add Product'),
@@ -296,7 +279,6 @@ class _InventoryPageState extends State<InventoryPage>
   }) {
     return ElevatedButton(
       onPressed: () {
-        // Navigate to EditProductPage with the required parameters
         Globals.switchScreens(
           context: context,
           screen: EditProductPage(

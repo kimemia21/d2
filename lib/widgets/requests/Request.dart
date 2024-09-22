@@ -1,4 +1,6 @@
+import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:application/main.dart';
 import 'package:application/widgets/Globals.dart';
@@ -17,23 +19,27 @@ import 'package:cherry_toast/cherry_toast.dart';
 class AppRequest {
   static String mainUrl = "http://127.0.0.1:8000/api";
 
-  static Future<List<CategoryController>> getCategorites() async {
+  static Stream<List<CategoryController>> getCategoriesStream() async* {
     final url = "$mainUrl/category";
-    try {
-      final response = await http.get(Uri.parse(url));
-      if (response.statusCode == 200) {
-        final body = jsonDecode(response.body);
-        final List<dynamic> categoryList = body["categories"];
-        // CategoryController.fromJsonList(categoryList);
-
-        return CategoryController.fromJsonList(categoryList);
-      } else {
-        print(response.statusCode);
-        return [];
+    
+    while (true) {
+      try {
+        final response = await http.get(Uri.parse(url));
+        if (response.statusCode == 200) {
+          final body = jsonDecode(response.body);
+          final List<dynamic> productList = body["categories"];
+          yield CategoryController.fromJsonList(productList);
+        } else {
+          print("Error: ${response.statusCode}");
+          yield [];
+        }
+      } catch (e) {
+        print("Error on getCategorites function: $e");
+        yield [];
       }
-    } catch (e) {
-      print("error on getcategorie function $e");
-      throw Exception(e);
+
+      // Wait for a certain duration before fetching again
+      await Future.delayed(Duration(seconds: 3));
     }
   }
 
@@ -50,14 +56,14 @@ class AppRequest {
       if (response.statusCode == 201) {
         bloc.changeLoading(false);
         final body = jsonDecode(response.body);
-        final List<dynamic> categoryList = body["categories"];
-        print(categoryList);
+        final List<dynamic> ProductList = body["categories"];
+        print(ProductList);
         bloc.changeLoading(true);
         CherryToast.success(
           title: Text("Success",
               style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
           description:
-              Text("added category successfully", style: GoogleFonts.abel()),
+              Text("added product successfully", style: GoogleFonts.abel()),
           animationDuration: Duration(milliseconds: 200),
           animationCurve: Curves.easeInOut,
         ).show(context);
@@ -79,14 +85,14 @@ class AppRequest {
         );
       }
     } catch (e) {
-      print("error on getcategorie function $e");
+      print("error on product function $e");
       throw Exception(e);
     }
   }
 
-  static Future<List<ProductController>> getProducts(id) async {
+  static Stream<List<ProductController>> getProductsStream(id) async* {
     final url =
-        id == null ? "$mainUrl/products" : "$mainUrl/products/category/$id";
+        id == null ? "$mainUrl/product" : "$mainUrl/product/category/$id";
     final request = await http.get(Uri.parse(url));
 
     if (request.statusCode == 200) {
@@ -102,10 +108,12 @@ class AppRequest {
               (element) => ProductController.fromJson(element))
           .toList();
 
-      return products;
+      yield products;
     } else {
       throw Exception("Response code error ${request.statusCode}");
+
     }
+ await Future.delayed(Duration(seconds: 3));
   }
 
   static Future patchProduct(
@@ -185,7 +193,7 @@ class AppRequest {
     }
   }
 
-static Future CreateBrand(
+  static Future CreateBrand(
       {required Map<String, dynamic> body,
       required BuildContext context}) async {
     final Uri url = Uri.parse("$mainUrl/brand");
@@ -232,6 +240,89 @@ static Future CreateBrand(
     }
   }
 
+   static Future<void> CreateProduct({
+    required Map<String, dynamic> body,
+    required BuildContext context,
+  }) async {
+    final Uri url = Uri.parse("$mainUrl/product");
+    final Map<String, String> headers = {'Content-Type': 'application/json'};
+    final Appbloc bloc = context.read<Appbloc>();
 
+    bloc.changeLoading(true);
 
+    try {
+      final response = await http.post(
+        url,
+        headers: headers,
+        body: jsonEncode(body),
+      ).timeout(Duration(seconds: 10)); // Add a timeout
+
+      if (response.statusCode == 201) {
+        final responseBody = jsonDecode(response.body);
+
+        print("-----------------------$responseBody------------------------");
+        CherryToast.success(
+          title: Text(
+            "Success",
+            style: GoogleFonts.poppins(fontWeight: FontWeight.bold),
+          ),
+          description: Text(
+            "Product added successfully",
+            style: GoogleFonts.abel(),
+          ),
+          animationDuration: Duration(milliseconds: 200),
+          animationCurve: Curves.easeInOut,
+        ).show(context);
+
+        Navigator.of(context).pop();
+      } else {
+        _handleErrorResponse(context, response);
+      }
+    } catch (e) {
+      _handleException(context, e);
+    } finally {
+      bloc.changeLoading(false);
+    }
+  }
+
+  static void _handleErrorResponse(BuildContext context, http.Response response) {
+    String errorMessage;
+    try {
+      final errorBody = jsonDecode(response.body);
+      errorMessage = errorBody['msg'] ?? 'An error occurred';
+    } catch (_) {
+      errorMessage = 'An unexpected error occurred';
+    }
+
+    _showErrorSnackBar(context, errorMessage);
+  }
+
+  static void _handleException(BuildContext context, dynamic exception) {
+    String errorMessage;
+    if (exception is TimeoutException) {
+      errorMessage = 'The request timed out. Please try again.';
+    } else if (exception is SocketException) {
+      errorMessage = 'No internet connection. Please check your network.';
+    } else {
+      errorMessage = 'An unexpected error occurred: ${exception.toString()}';
+    }
+
+    _showErrorSnackBar(context, errorMessage);
+  }
+
+  static void _showErrorSnackBar(BuildContext context, String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          message,
+          style: GoogleFonts.poppins(color: Colors.white),
+        ),
+        backgroundColor: Colors.red,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10),
+        ),
+      ),
+    );
+  }
 }

@@ -28,7 +28,7 @@ class _CategoryDropdownState extends State<CategoryDropdown> {
     while (true) {
       try {
         List<Map<String, dynamic>> fetchedCategories = await CategoryRequest.fetchCategory(context);
-        yield fetchedCategories;
+        yield fetchedCategories.reversed.toList();
       } catch (e) {
         print('Error fetching categories: $e');
         yield [];

@@ -63,6 +63,71 @@ class _AddProductFormState extends State<AddProductForm>
     super.dispose();
   }
 
+  bool validateInputs() {
+    if (selectedCategory == null) {
+      error(title: "Please select a category");
+      return false;
+    }
+    if (selectedBrand == null) {
+      error(title: "Please select a brand");
+      return false;
+    }
+    if (nameController.text.isEmpty) {
+      error(title: "Please enter a product name");
+      return false;
+    }
+    if (buyingPriceController.text.isEmpty) {
+      error(title: "Please enter a buying price");
+      return false;
+    }
+    if (sellingPriceController.text.isEmpty) {
+      error(title: "Please enter a selling price");
+      return false;
+    }
+    if (quantityController.text.isEmpty) {
+      error(title: "Please enter a quantity");
+      return false;
+    }
+
+    // Add additional validation for numeric fields
+    if (double.tryParse(buyingPriceController.text) == null) {
+      error(title: "Invalid buying price");
+      return false;
+    }
+    if (double.tryParse(sellingPriceController.text) == null) {
+      error(title: "Invalid selling price");
+      return false;
+    }
+    if (int.tryParse(quantityController.text) == null) {
+      error(title: "Invalid quantity");
+      return false;
+    }
+
+    return true;
+  }
+
+  void saveProduct() {
+    if (validateInputs()) {
+
+      final Map<String, dynamic> body = {
+        "category": int.parse(selectedCategory!),
+        "brand": int.parse(selectedBrand!),
+        "product_name": nameController.text,
+        "buying_price": buyingPriceController.text,
+        "selling_price": sellingPriceController.text,
+        "quantity": quantityController.text
+      };
+      
+      AppRequest.CreateProduct(body: body, context: context);
+
+      CherryToast.success(
+        title: Text("Product saved successfully"),
+        toastDuration: Duration(seconds: 2),
+        animationDuration: Duration(seconds: 2),
+      ).show(context);
+    }
+  }
+
   void showAddCategoryDialog(
     BuildContext context,
     String title,
@@ -133,44 +198,44 @@ class _AddProductFormState extends State<AddProductForm>
                       ),
                     ),
                     SizedBox(height: 5),
-                    Container(
-                        height: 200, // Reduced height
-                        decoration: BoxDecoration(
-                          border: Border.all(color: Colors.grey.shade300),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: FutureBuilder<List<CategoryController>>(
-                            future: AppRequest.getCategorites(),
-                            builder: (BuildContext context, snapshot) {
-                              if (snapshot.connectionState ==
-                                  ConnectionState.waiting) {
-                                return const Center(
-                                    child: CircularProgressIndicator());
-                              } else if (snapshot.hasError) {
-                                return Center(
-                                    child: Text('Error: ${snapshot.error}'));
-                              } else {
-                                final categories = snapshot.data;
-                                return ListView.builder(
-                                  itemCount: categories!.length,
-                                  itemBuilder: (context, index) {
-                                    final item = categories[index];
-                                    return Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 10,
-                                        vertical: 3,
-                                      ),
-                                      child: Text(
-                                        item.categoryName,
-                                        style: GoogleFonts.poppins(
-                                            color: Colors.black87,
-                                            fontSize: 12),
-                                      ),
-                                    );
-                                  },
-                                );
-                              }
-                            })),
+    Container(
+      width: 600,
+      height: 300,
+      child: StreamBuilder<List<CategoryController>>(
+          stream: AppRequest.getCategoriesStream(),
+          builder: (BuildContext context, AsyncSnapshot<List<CategoryController>> snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            } else if (snapshot.hasError) {
+              return Center(child: Text('Error: ${snapshot.error}'));
+            } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+              return Center(child: Text('No categories available'));
+            } else {
+              final categories = snapshot.data!;
+              return ListView.builder(
+                itemCount: categories.length,
+                itemBuilder: (context, index) {
+                  final item = categories[index];
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 3,
+                    ),
+                    child: Text(
+                      item.categoryName,
+                      style: GoogleFonts.poppins(
+                        color: Colors.black87,
+                        fontSize: 12,
+                      ),
+                    ),
+                  );
+                },
+              );
+            }
+          },
+        ),
+    ),
+    
                   ],
                 ),
               ),
@@ -390,7 +455,6 @@ class _AddProductFormState extends State<AddProductForm>
                       await AppRequest.CreateBrand(
                           body: body, context: context);
 
-                     
                       // Navigator.of(dialogContext).pop();
                     } else {
                       ScaffoldMessenger.of(dialogContext).showSnackBar(
@@ -543,13 +607,14 @@ class _AddProductFormState extends State<AddProductForm>
             buildTextField('Product Name', nameController, Icons.shopping_bag,
                 type: TextInputType.text),
             SizedBox(height: 20),
-            buildTextField(
+            buildNumberTextField(
                 'Buying Price', buyingPriceController, Icons.attach_money),
             SizedBox(height: 20),
-            buildTextField(
+            buildNumberTextField(
                 'Selling Price', sellingPriceController, Icons.attach_money),
             SizedBox(height: 20),
-            buildTextField('Quantity', quantityController, Icons.inventory),
+            buildNumberTextField(
+                'Quantity', quantityController, Icons.inventory)
           ],
         ),
       ),
@@ -571,6 +636,44 @@ class _AddProductFormState extends State<AddProductForm>
             inputFormatters: type == TextInputType.number
                 ? [FilteringTextInputFormatter.digitsOnly]
                 : null,
+            decoration: InputDecoration(
+              labelText: label,
+              hintStyle: GoogleFonts.poppins(color: Colors.grey, fontSize: 14),
+              focusedBorder: OutlineInputBorder(
+                borderSide: BorderSide(
+                    color: Theme.of(context).colorScheme.secondary, width: 2),
+                borderRadius: BorderRadius.circular(15),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderSide: BorderSide(color: Colors.grey.shade300),
+                borderRadius: BorderRadius.circular(15),
+              ),
+              filled: true,
+              fillColor: Colors.grey.shade100,
+              prefixIcon: Icon(icon,
+                  color: Theme.of(context).colorScheme.secondary, size: 20),
+              contentPadding:
+                  EdgeInsets.symmetric(vertical: 10, horizontal: 15),
+            ),
+            style: GoogleFonts.poppins(color: Colors.black87, fontSize: 14),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget buildNumberTextField(
+      String label, TextEditingController controller, IconData icon) {
+    return TweenAnimationBuilder(
+      duration: Duration(milliseconds: 500),
+      tween: Tween<double>(begin: 0, end: 1),
+      builder: (context, double opacity, child) {
+        return Opacity(
+          opacity: opacity,
+          child: TextField(
+            controller: controller,
+            keyboardType: TextInputType.number,
+            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
             decoration: InputDecoration(
               labelText: label,
               hintStyle: GoogleFonts.poppins(color: Colors.grey, fontSize: 14),
@@ -624,7 +727,7 @@ class _AddProductFormState extends State<AddProductForm>
                         width: 200,
                         padding: EdgeInsets.all(10),
                         child: ElevatedButton.icon(
-                          onPressed: () {}, // Add your function here
+                          onPressed: saveProduct, // Add your function here
                           icon: Icon(
                             Icons.save,
                             color: Colors.white,
@@ -648,7 +751,9 @@ class _AddProductFormState extends State<AddProductForm>
                         width: 200,
                         padding: EdgeInsets.all(10),
                         child: ElevatedButton.icon(
-                          onPressed: () {},
+                          onPressed: () {
+                            Navigator.pop(context);
+                          },
                           icon: Icon(
                             Icons.delete,
                             color: Colors.white,

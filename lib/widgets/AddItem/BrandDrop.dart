@@ -26,12 +26,12 @@ class _BrandDropdownState extends State<BrandDropdown> {
     while (true) {
       try {
         List<Map<String, dynamic>> fetchedBrands = await BrandRequest.fetchBrand(context);
-        yield fetchedBrands;
+        yield fetchedBrands.reversed.toList();
       } catch (e) {
         print('Error fetching brands: $e');
         yield [];
       }
-      await Future.delayed(Duration(seconds: 5)); // Poll every 5 seconds
+      await Future.delayed(Duration(seconds: 1)); // Poll every 5 seconds
     }
   }
 

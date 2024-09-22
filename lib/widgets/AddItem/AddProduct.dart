@@ -1,10 +1,11 @@
 import 'package:application/main.dart';
+import 'package:application/widgets/AddItem/BrandDrop.dart';
 import 'package:application/widgets/AddItem/CatDropDown.dart';
-import 'package:application/widgets/AddItem/CatRequest.dart';
 import 'package:application/widgets/controllers/BrandSerializer.dart';
 import 'package:application/widgets/controllers/CategorySerializers.dart';
 import 'package:application/widgets/requests/Request.dart';
 import 'package:application/widgets/state/AppBloc.dart';
+import 'package:cherry_toast/cherry_toast.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -22,9 +23,6 @@ class _AddProductFormState extends State<AddProductForm>
     with SingleTickerProviderStateMixin {
   String? selectedCategory;
   String? selectedBrand;
-
-  List<String> categories = ['Food', 'Beverages', 'Snacks', 'Merchandise'];
-  List<String> brands = ['Food', 'Beverages', 'Snacks', 'Merchandise'];
 
   TextEditingController sellingPriceController = TextEditingController();
   TextEditingController nameController = TextEditingController();
@@ -380,10 +378,19 @@ class _AddProductFormState extends State<AddProductForm>
                   onPressed: () async {
                     if (newItem.isNotEmpty) {
                       // onAdd(newItem);
-                      await AppRequest.CreateCategory(
-                        body: {"category_name": newItem.toUpperCase()},
-                        context: context,
-                      );
+                      //                  {
+                      //     "id": 1,
+                      //     "brand_name": "Vega",
+                      //     "category": 1
+                      // },
+                      final Map<String, dynamic> body = {
+                        "brand_name": newItem.toUpperCase(),
+                        "category": int.parse(selectedCategory!)
+                      };
+                      await AppRequest.CreateBrand(
+                          body: body, context: context);
+
+                     
                       // Navigator.of(dialogContext).pop();
                     } else {
                       ScaffoldMessenger.of(dialogContext).showSnackBar(
@@ -409,6 +416,14 @@ class _AddProductFormState extends State<AddProductForm>
 
   void addNewBrand() async {
     showAddBrandDialog(context, 'Brand');
+  }
+
+  void error({required String title}) {
+    CherryToast.error(
+      title: Text(title),
+      toastDuration: Duration(seconds: 2),
+      animationDuration: Duration(seconds: 2),
+    ).show(context);
   }
 
   void editField(String field) {
@@ -460,13 +475,15 @@ class _AddProductFormState extends State<AddProductForm>
   }
 
   Widget buildDropdownWithButton({
-    required VoidCallback addNewItem,
+    required addNewItem,
+    required Widget dropdown,
   }) {
     return Row(
       children: [
-        Expanded(child: CategoryDropdown()),
+        Expanded(child: dropdown),
         SizedBox(width: 10),
         ElevatedButton.icon(
+          // add an alert if selectedCategory is empty so that we can get the brand id when creating a new Brand
           onPressed: addNewItem,
           icon: Icon(Icons.add),
           label: Text('New', style: GoogleFonts.poppins(color: Colors.white)),
@@ -501,12 +518,27 @@ class _AddProductFormState extends State<AddProductForm>
             ),
             SizedBox(height: 16),
             buildDropdownWithButton(
+              dropdown: CategoryDropdown(onchangeCategory: (value) {
+                setState(() {
+                  selectedCategory = value;
+                });
+              }),
               addNewItem: addNewCategory,
             ),
             SizedBox(height: 20),
-            buildDropdownWithButton(
-              addNewItem: addNewBrand,
-            ),
+            buildDropdownWithButton(dropdown: BrandDropdown(
+              onbrandChange: (value) {
+                setState(() {
+                  selectedBrand = value;
+                  print(value);
+                });
+              },
+            ), addNewItem: () {
+              try {} catch (e) {}
+              selectedCategory != null
+                  ? addNewBrand()
+                  : error(title: "please select category");
+            }),
             SizedBox(height: 20),
             buildTextField('Product Name', nameController, Icons.shopping_bag,
                 type: TextInputType.text),

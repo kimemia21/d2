@@ -1,7 +1,6 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:http/http.dart' as http;
 
 class BrandRequest {
@@ -11,7 +10,7 @@ class BrandRequest {
   static Future<List<Map<String, dynamic>>> fetchBrand(
       BuildContext context) async {
     try {
-      final Uri uri = Uri.parse("$mainUrl/brands");
+      final Uri uri = Uri.parse("$mainUrl/brand");
       final Map<String, String> headers = {
         "Content-Type": "application/json",
         // "x-auth-token": Provider.of<appBloc>(context, listen: false).token,

@@ -3,45 +3,41 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class CategoryDropdown extends StatefulWidget {
+  final Function(String?) onchangeCategory;
+
+  const CategoryDropdown({
+    Key? key,
+    required this.onchangeCategory,
+  }) : super(key: key);
+
   @override
   _CategoryDropdownState createState() => _CategoryDropdownState();
 }
 
 class _CategoryDropdownState extends State<CategoryDropdown> {
   String? _selectedCategory;
-  List<Map<String, dynamic>> _category = [];
-  bool _isLoading = true;
+  late Stream<List<Map<String, dynamic>>> _categoriesStream;
 
   @override
   void initState() {
     super.initState();
-    _fetchCategory();
+    _categoriesStream = _createCategoriesStream();
   }
 
-  Future<void> _fetchCategory() async {
-    try {
-      List<Map<String, dynamic>> fetchedCategory = await CategoryRequest.fetchCategory(context);
-      setState(() {
-        _category = fetchedCategory;
-        _isLoading = false;
-      });
-    } catch (e) {
-      print('Error fetching category: $e');
-      setState(() {
-        _isLoading = false;
-      });
+  Stream<List<Map<String, dynamic>>> _createCategoriesStream() async* {
+    while (true) {
+      try {
+        List<Map<String, dynamic>> fetchedCategories = await CategoryRequest.fetchCategory(context);
+        yield fetchedCategories;
+      } catch (e) {
+        print('Error fetching categories: $e');
+        yield [];
+      }
+      await Future.delayed(Duration(seconds:1)); // Poll every 5 seconds
     }
   }
 
-  Widget _buildCategoryDropdown() {
-    if (_isLoading) {
-      return Center(
-        child: CircularProgressIndicator(
-          valueColor: AlwaysStoppedAnimation<Color>(Colors.green),
-        ),
-      );
-    }
-
+  Widget _buildCategoryDropdown(List<Map<String, dynamic>> categories) {
     return Container(
       margin: EdgeInsets.symmetric(vertical: 10),
       decoration: BoxDecoration(
@@ -73,7 +69,7 @@ class _CategoryDropdownState extends State<CategoryDropdown> {
           contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         ),
         value: _selectedCategory,
-        items: _category
+        items: categories
             .map((category) => DropdownMenuItem<String>(
                   value: category['id'].toString(),
                   child: Text(
@@ -89,6 +85,7 @@ class _CategoryDropdownState extends State<CategoryDropdown> {
           setState(() {
             _selectedCategory = value;
           });
+          widget.onchangeCategory(value);
         },
         icon: Icon(Icons.arrow_drop_down, color: Colors.green.shade600),
         iconSize: 24,
@@ -104,6 +101,23 @@ class _CategoryDropdownState extends State<CategoryDropdown> {
 
   @override
   Widget build(BuildContext context) {
-    return _buildCategoryDropdown();
+    return StreamBuilder<List<Map<String, dynamic>>>(
+      stream: _categoriesStream,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Center(
+            child: CircularProgressIndicator(
+              valueColor: AlwaysStoppedAnimation<Color>(Colors.green),
+            ),
+          );
+        } else if (snapshot.hasError) {
+          return Center(child: Text('Error: ${snapshot.error}'));
+        } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+          return Center(child: Text('No categories available'));
+        } else {
+          return _buildCategoryDropdown(snapshot.data!);
+        }
+      },
+    );
   }
 }

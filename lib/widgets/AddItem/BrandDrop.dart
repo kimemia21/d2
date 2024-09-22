@@ -4,45 +4,38 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class BrandDropdown extends StatefulWidget {
+  final Function(String) onbrandChange;
+
+  const BrandDropdown({Key? key, required this.onbrandChange}) : super(key: key);
+
   @override
   _BrandDropdownState createState() => _BrandDropdownState();
 }
 
 class _BrandDropdownState extends State<BrandDropdown> {
   String? _selectedBrand;
-  List<Map<String, dynamic>> _brands = [];
-  bool _isLoading = true;
+  late Stream<List<Map<String, dynamic>>> _brandsStream;
 
   @override
   void initState() {
     super.initState();
-    _fetchBrands();
+    _brandsStream = _createBrandsStream();
   }
 
-  Future<void> _fetchBrands() async {
-    try {
-      List<Map<String, dynamic>> fetchedbrand = await BrandRequest.fetchBrand(context);
-      setState(() {
-        _brands = fetchedbrand;
-        _isLoading = false;
-      });
-    } catch (e) {
-      print('Error fetching brand: $e');
-      setState(() {
-        _isLoading = false;
-      });
+  Stream<List<Map<String, dynamic>>> _createBrandsStream() async* {
+    while (true) {
+      try {
+        List<Map<String, dynamic>> fetchedBrands = await BrandRequest.fetchBrand(context);
+        yield fetchedBrands;
+      } catch (e) {
+        print('Error fetching brands: $e');
+        yield [];
+      }
+      await Future.delayed(Duration(seconds: 5)); // Poll every 5 seconds
     }
   }
 
-  Widget _buildBrandDropdown() {
-    if (_isLoading) {
-      return Center(
-        child: CircularProgressIndicator(
-          valueColor: AlwaysStoppedAnimation<Color>(Colors.green),
-        ),
-      );
-    }
-
+  Widget _buildBrandDropdown(List<Map<String, dynamic>> brands) {
     return Container(
       margin: EdgeInsets.symmetric(vertical: 10),
       decoration: BoxDecoration(
@@ -59,7 +52,7 @@ class _BrandDropdownState extends State<BrandDropdown> {
       ),
       child: DropdownButtonFormField<String>(
         decoration: InputDecoration(
-          labelText: 'brand',
+          labelText: 'Brand',
           labelStyle: GoogleFonts.poppins(
             color: Colors.green.shade700,
             fontWeight: FontWeight.w500,
@@ -74,7 +67,7 @@ class _BrandDropdownState extends State<BrandDropdown> {
           contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         ),
         value: _selectedBrand,
-        items: _brands
+        items: brands
             .map((brand) => DropdownMenuItem<String>(
                   value: brand['id'].toString(),
                   child: Text(
@@ -90,6 +83,7 @@ class _BrandDropdownState extends State<BrandDropdown> {
           setState(() {
             _selectedBrand = value;
           });
+          widget.onbrandChange(value!);
         },
         icon: Icon(Icons.arrow_drop_down, color: Colors.green.shade600),
         iconSize: 24,
@@ -105,6 +99,23 @@ class _BrandDropdownState extends State<BrandDropdown> {
 
   @override
   Widget build(BuildContext context) {
-    return _buildBrandDropdown();
+    return StreamBuilder<List<Map<String, dynamic>>>(
+      stream: _brandsStream,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Center(
+            child: CircularProgressIndicator(
+              valueColor: AlwaysStoppedAnimation<Color>(Colors.green),
+            ),
+          );
+        } else if (snapshot.hasError) {
+          return Center(child: Text('Error: ${snapshot.error}'));
+        } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+          return Center(child: Text('No brands available'));
+        } else {
+          return _buildBrandDropdown(snapshot.data!);
+        }
+      },
+    );
   }
 }

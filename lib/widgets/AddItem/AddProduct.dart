@@ -1,6 +1,7 @@
 import 'package:application/main.dart';
 import 'package:application/widgets/AddItem/CatDropDown.dart';
 import 'package:application/widgets/AddItem/CatRequest.dart';
+import 'package:application/widgets/controllers/BrandSerializer.dart';
 import 'package:application/widgets/controllers/CategorySerializers.dart';
 import 'package:application/widgets/requests/Request.dart';
 import 'package:application/widgets/state/AppBloc.dart';
@@ -64,8 +65,10 @@ class _AddProductFormState extends State<AddProductForm>
     super.dispose();
   }
 
-  void showAddDialog(BuildContext context, String title, List<String> items,
-      Function(String) onAdd) {
+  void showAddCategoryDialog(
+    BuildContext context,
+    String title,
+  ) {
     String newItem = '';
 
     showDialog(
@@ -87,7 +90,7 @@ class _AddProductFormState extends State<AddProductForm>
                 ),
               ),
               content: SizedBox(
-                width: 600, 
+                width: 600,
                 height: 400,
                 // Set a fixed width for the dialog
                 child: Column(
@@ -207,7 +210,176 @@ class _AddProductFormState extends State<AddProductForm>
                   ),
                   onPressed: () async {
                     if (newItem.isNotEmpty) {
-                      onAdd(newItem);
+                      // onAdd(newItem);
+                      await AppRequest.CreateCategory(
+                        body: {"category_name": newItem.toUpperCase()},
+                        context: context,
+                      );
+                      // Navigator.of(dialogContext).pop();
+                    } else {
+                      ScaffoldMessenger.of(dialogContext).showSnackBar(
+                        SnackBar(
+                          content: Text('Please enter a $title name'),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                    }
+                  },
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void showAddBrandDialog(
+    BuildContext context,
+    String title,
+  ) {
+    String newItem = '';
+
+    showDialog(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return StatefulBuilder(
+          builder: (BuildContext context, StateSetter setState) {
+            final Appbloc bloc = Provider.of<Appbloc>(context, listen: false);
+
+            return AlertDialog(
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20)),
+              title: Text(
+                title,
+                style: GoogleFonts.poppins(
+                  color: Theme.of(context).primaryColor,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 20,
+                ),
+              ),
+              content: SizedBox(
+                width: 600,
+                height: 400,
+                // Set a fixed width for the dialog
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextField(
+                      onChanged: (value) {
+                        newItem = value;
+                      },
+                      decoration: InputDecoration(
+                        hintText: "Enter new $title",
+                        hintStyle: GoogleFonts.poppins(
+                            color: Colors.grey, fontSize: 14),
+                        focusedBorder: OutlineInputBorder(
+                          borderSide: BorderSide(
+                              color: Theme.of(context).colorScheme.secondary,
+                              width: 2),
+                          borderRadius: BorderRadius.circular(15),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderSide: BorderSide(color: Colors.grey.shade300),
+                          borderRadius: BorderRadius.circular(15),
+                        ),
+                        filled: true,
+                        fillColor: Colors.grey.shade100,
+                        prefixIcon: Icon(Icons.add_circle_outline,
+                            color: Theme.of(context).colorScheme.secondary,
+                            size: 20),
+                        contentPadding:
+                            EdgeInsets.symmetric(vertical: 10, horizontal: 15),
+                      ),
+                      style: GoogleFonts.poppins(
+                          color: Colors.black87, fontSize: 14),
+                    ),
+                    SizedBox(height: 15),
+                    Text(
+                      "Existing ${title.toLowerCase()}:",
+                      style: GoogleFonts.poppins(
+                        color: Colors.grey.shade600,
+                        fontWeight: FontWeight.w500,
+                        fontSize: 14,
+                      ),
+                    ),
+                    SizedBox(height: 5),
+                    Container(
+                        height: 200, // Reduced height
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.grey.shade300),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: FutureBuilder<List<BrandController>>(
+                            future: AppRequest.getBrands(null),
+                            builder: (BuildContext context, snapshot) {
+                              if (snapshot.connectionState ==
+                                  ConnectionState.waiting) {
+                                return const Center(
+                                    child: CircularProgressIndicator());
+                              } else if (snapshot.hasError) {
+                                return Center(
+                                    child: Text('Error: ${snapshot.error}'));
+                              } else {
+                                final categories = snapshot.data;
+                                return ListView.builder(
+                                  itemCount: categories!.length,
+                                  itemBuilder: (context, index) {
+                                    final item = categories[index];
+                                    return Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 10,
+                                        vertical: 3,
+                                      ),
+                                      child: Text(
+                                        item.brandName,
+                                        style: GoogleFonts.poppins(
+                                            color: Colors.black87,
+                                            fontSize: 12),
+                                      ),
+                                    );
+                                  },
+                                );
+                              }
+                            })),
+                  ],
+                ),
+              ),
+              actions: <Widget>[
+                TextButton(
+                  child: Text(
+                    'Cancel',
+                    style:
+                        GoogleFonts.poppins(color: Colors.grey, fontSize: 14),
+                  ),
+                  onPressed: () {
+                    Navigator.of(dialogContext).pop();
+                  },
+                ),
+                ElevatedButton(
+                  child: bloc.isloading
+                      ? LoadingAnimationWidget.staggeredDotsWave(
+                          color: Colors.white,
+                          size: 20,
+                        )
+                      : Text(
+                          'Add',
+                          style: GoogleFonts.poppins(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                          ),
+                        ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Theme.of(context).primaryColor,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    padding: EdgeInsets.symmetric(horizontal: 15, vertical: 8),
+                  ),
+                  onPressed: () async {
+                    if (newItem.isNotEmpty) {
+                      // onAdd(newItem);
                       await AppRequest.CreateCategory(
                         body: {"category_name": newItem.toUpperCase()},
                         context: context,
@@ -232,15 +404,11 @@ class _AddProductFormState extends State<AddProductForm>
   }
 
   void addNewCategory() async {
-    showAddDialog(context, 'Category', categories, (newCategory) {
-      categories.add(newCategory);
-    });
+    showAddCategoryDialog(context, "Category");
   }
 
   void addNewBrand() async {
-    showAddDialog(context, 'Brand', brands, (newBrand) {
-      brands.add(newBrand);
-    });
+    showAddBrandDialog(context, 'Brand');
   }
 
   void editField(String field) {
@@ -337,9 +505,6 @@ class _AddProductFormState extends State<AddProductForm>
             ),
             SizedBox(height: 20),
             buildDropdownWithButton(
-              // text: 'Select Brand',
-              // selectedValue: selectedBrand,
-              // items: brands,
               addNewItem: addNewBrand,
             ),
             SizedBox(height: 20),

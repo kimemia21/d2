@@ -184,4 +184,54 @@ class AppRequest {
       throw Exception("Error fetching brands: $e");
     }
   }
+
+static Future CreateBrand(
+      {required Map<String, dynamic> body,
+      required BuildContext context}) async {
+    final Uri url = Uri.parse("$mainUrl/brand");
+    final Map<String, String> headers = {'Content-Type': 'application/json'};
+    final Appbloc bloc = context.read<Appbloc>();
+    try {
+      bloc.changeLoading(true);
+      final response =
+          await http.post(url, headers: headers, body: jsonEncode(body));
+      if (response.statusCode == 201) {
+        bloc.changeLoading(false);
+        final body = jsonDecode(response.body);
+        final List<dynamic> categoryList = body["brands"];
+        print(categoryList);
+        bloc.changeLoading(true);
+        CherryToast.success(
+          title: Text("Success",
+              style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
+          description:
+              Text("added brand successfully", style: GoogleFonts.abel()),
+          animationDuration: Duration(milliseconds: 200),
+          animationCurve: Curves.easeInOut,
+        ).show(context);
+        Navigator.of(context).pop();
+      } else {
+        bloc.changeLoading(false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              response.body,
+              style: GoogleFonts.poppins(color: Colors.white),
+            ),
+            backgroundColor: Colors.green,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      print("error on getbrand function $e");
+      throw Exception(e);
+    }
+  }
+
+
+
 }

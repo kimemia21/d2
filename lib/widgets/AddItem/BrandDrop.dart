@@ -1,39 +1,40 @@
+import 'package:application/widgets/AddItem/BrandReq.dart';
 import 'package:application/widgets/AddItem/CatRequest.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-class CategoryDropdown extends StatefulWidget {
+class BrandDropdown extends StatefulWidget {
   @override
-  _CategoryDropdownState createState() => _CategoryDropdownState();
+  _BrandDropdownState createState() => _BrandDropdownState();
 }
 
-class _CategoryDropdownState extends State<CategoryDropdown> {
-  String? _selectedCategory;
-  List<Map<String, dynamic>> _category = [];
+class _BrandDropdownState extends State<BrandDropdown> {
+  String? _selectedBrand;
+  List<Map<String, dynamic>> _brands = [];
   bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    _fetchCategory();
+    _fetchBrands();
   }
 
-  Future<void> _fetchCategory() async {
+  Future<void> _fetchBrands() async {
     try {
-      List<Map<String, dynamic>> fetchedCategory = await CategoryRequest.fetchCategory(context);
+      List<Map<String, dynamic>> fetchedbrand = await BrandRequest.fetchBrand(context);
       setState(() {
-        _category = fetchedCategory;
+        _brands = fetchedbrand;
         _isLoading = false;
       });
     } catch (e) {
-      print('Error fetching category: $e');
+      print('Error fetching brand: $e');
       setState(() {
         _isLoading = false;
       });
     }
   }
 
-  Widget _buildCategoryDropdown() {
+  Widget _buildBrandDropdown() {
     if (_isLoading) {
       return Center(
         child: CircularProgressIndicator(
@@ -58,7 +59,7 @@ class _CategoryDropdownState extends State<CategoryDropdown> {
       ),
       child: DropdownButtonFormField<String>(
         decoration: InputDecoration(
-          labelText: 'Category',
+          labelText: 'brand',
           labelStyle: GoogleFonts.poppins(
             color: Colors.green.shade700,
             fontWeight: FontWeight.w500,
@@ -69,15 +70,15 @@ class _CategoryDropdownState extends State<CategoryDropdown> {
           ),
           filled: true,
           fillColor: Colors.white,
-          prefixIcon: Icon(Icons.category, color: Colors.green.shade600),
+          prefixIcon: Icon(Icons.branding_watermark, color: Colors.green.shade600),
           contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         ),
-        value: _selectedCategory,
-        items: _category
-            .map((category) => DropdownMenuItem<String>(
-                  value: category['id'].toString(),
+        value: _selectedBrand,
+        items: _brands
+            .map((brand) => DropdownMenuItem<String>(
+                  value: brand['id'].toString(),
                   child: Text(
-                    category['category_name'],
+                    brand['brand_name'],
                     style: GoogleFonts.poppins(
                       color: Colors.black87,
                       fontWeight: FontWeight.w400,
@@ -87,7 +88,7 @@ class _CategoryDropdownState extends State<CategoryDropdown> {
             .toList(),
         onChanged: (value) {
           setState(() {
-            _selectedCategory = value;
+            _selectedBrand = value;
           });
         },
         icon: Icon(Icons.arrow_drop_down, color: Colors.green.shade600),
@@ -104,6 +105,6 @@ class _CategoryDropdownState extends State<CategoryDropdown> {
 
   @override
   Widget build(BuildContext context) {
-    return _buildCategoryDropdown();
+    return _buildBrandDropdown();
   }
 }

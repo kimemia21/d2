@@ -21,26 +21,49 @@ class AppRequest {
 
   static Stream<List<CategoryController>> getCategoriesStream() async* {
     final url = "$mainUrl/category";
-    
+    List<CategoryController> previousCategories = [];
+
     while (true) {
       try {
         final response = await http.get(Uri.parse(url));
+
         if (response.statusCode == 200) {
           final body = jsonDecode(response.body);
-          final List<dynamic> productList = body["categories"];
-          yield CategoryController.fromJsonList(productList);
+          final List<dynamic> categoriesList = body["categories"];
+
+          // Map the 'categories' list to a list of CategoryController objects
+          final List<CategoryController> currentCategories =
+              CategoryController.fromJsonList(categoriesList);
+
+          // Only yield new data if it has changed
+          if (!_areCategoriesEqual(previousCategories, currentCategories)) {
+            previousCategories = currentCategories; // Update the cache
+            yield currentCategories;
+          }
         } else {
           print("Error: ${response.statusCode}");
           yield [];
         }
       } catch (e) {
-        print("Error on getCategorites function: $e");
+        print("Error on getCategories function: $e");
         yield [];
       }
 
       // Wait for a certain duration before fetching again
-      await Future.delayed(Duration(seconds: 3));
+      await Future.delayed(Duration(seconds: 10));
     }
+  }
+
+// Helper method to compare two lists of CategoryController
+  static bool _areCategoriesEqual(
+      List<CategoryController> oldList, List<CategoryController> newList) {
+    if (oldList.length != newList.length) return false;
+
+    for (int i = 0; i < oldList.length; i++) {
+      if (oldList[i] != newList[i]) return false;
+    }
+
+    return true;
   }
 
   static Future CreateCategory(
@@ -90,34 +113,57 @@ class AppRequest {
     }
   }
 
-  static Stream<List<ProductController>> getProductsStream(id) async* {
+  static Stream<List<ProductController>> getProductsStream(int? id) async* {
     final url =
         id == null ? "$mainUrl/product" : "$mainUrl/product/category/$id";
-    final request = await http.get(Uri.parse(url));
+    List<ProductController> previousProducts = [];
 
-    if (request.statusCode == 200) {
-      final body = jsonDecode(request.body); // Decode the response body
-      // Access the 'products' key in the response
-      final List productsList = body["products"];
+    while (true) {
+      try {
+        final request = await http.get(Uri.parse(url));
 
-      print(productsList);
+        if (request.statusCode == 200) {
+          final body = jsonDecode(request.body);
+          final List productsList = body["products"];
 
-      // Map the 'products' list to a list of ProductController objects
-      final products = productsList
-          .map<ProductController>(
-              (element) => ProductController.fromJson(element))
-          .toList();
+          // Map the 'products' list to a list of ProductController objects
+          final List<ProductController> currentProducts = productsList
+              .map((element) => ProductController.fromJson(element))
+              .toList();
 
-      yield products;
-    } else {
-      throw Exception("Response code error ${request.statusCode}");
+          // Only yield new data if it has changed
+          if (!_areListsEqual(previousProducts, currentProducts)) {
+            previousProducts = currentProducts; // Update the cache
+            yield currentProducts;
+          }
+        } else {
+          throw Exception("Response code error ${request.statusCode}");
+        }
+      } catch (e) {
+        throw Exception("Error fetching products: $e");
+      }
 
+      // Poll every 3 seconds
+      await Future.delayed(Duration(seconds: 3));
     }
- await Future.delayed(Duration(seconds: 3));
+  }
+
+// Helper method to compare two lists of ProductController
+  static bool _areListsEqual(
+      List<ProductController> oldList, List<ProductController> newList) {
+    if (oldList.length != newList.length) return false;
+
+    for (int i = 0; i < oldList.length; i++) {
+      if (oldList[i] != newList[i]) return false;
+    }
+
+    return true;
   }
 
   static Future patchProduct(
-      {required BuildContext context,
+      {
+        required bool isRestock,
+        required BuildContext context,
       required int id,
       required Map<String, dynamic> data}) async {
     try {
@@ -143,6 +189,7 @@ class AppRequest {
             ),
           ),
         );
+        isRestock?Navigator.pop(context):
         Globals.switchScreens(context: context, screen: InventoryPage());
       } else {
         bloc.changeLoading(false);
@@ -166,7 +213,7 @@ class AppRequest {
     }
   }
 
-  static Future<List<BrandController>> getBrands(int? id) async {
+  static Future<List<BrandController>> FutureGetBrands(int? id) async {
     final url = id != null ? "$mainUrl/brand/$id" : "$mainUrl/brand";
 
     try {
@@ -190,6 +237,33 @@ class AppRequest {
     } catch (e) {
       print("Error fetching brands: $e");
       throw Exception("Error fetching brands: $e");
+    }
+  }
+
+    static Future<List<CategoryController>> FutureGetCategories() async {
+    final url ="$mainUrl/category";
+
+    try {
+      final request = await http.get(Uri.parse(url));
+
+      if (request.statusCode == 200) {
+        final body = jsonDecode(request.body);
+        final List categoryList = body["categories"];
+
+        if (categoryList.isEmpty) {
+          return [];
+        }
+
+        final List<CategoryController> category = categoryList
+            .map((element) => CategoryController.fromJson(element))
+            .toList();
+        return category;
+      } else {
+        throw Exception("Response code error ${request.statusCode}");
+      }
+    } catch (e) {
+      print("Error fetching category: $e");
+      throw Exception("Error fetching category: $e");
     }
   }
 
@@ -240,7 +314,7 @@ class AppRequest {
     }
   }
 
-   static Future<void> CreateProduct({
+  static Future<void> CreateProduct({
     required Map<String, dynamic> body,
     required BuildContext context,
   }) async {
@@ -251,11 +325,13 @@ class AppRequest {
     bloc.changeLoading(true);
 
     try {
-      final response = await http.post(
-        url,
-        headers: headers,
-        body: jsonEncode(body),
-      ).timeout(Duration(seconds: 10)); // Add a timeout
+      final response = await http
+          .post(
+            url,
+            headers: headers,
+            body: jsonEncode(body),
+          )
+          .timeout(Duration(seconds: 3)); // Add a timeout
 
       if (response.statusCode == 201) {
         final responseBody = jsonDecode(response.body);
@@ -285,7 +361,8 @@ class AppRequest {
     }
   }
 
-  static void _handleErrorResponse(BuildContext context, http.Response response) {
+  static void _handleErrorResponse(
+      BuildContext context, http.Response response) {
     String errorMessage;
     try {
       final errorBody = jsonDecode(response.body);

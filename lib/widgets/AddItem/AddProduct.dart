@@ -374,7 +374,7 @@ class _AddProductFormState extends State<AddProductForm>
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: FutureBuilder<List<BrandController>>(
-                            future: AppRequest.getBrands(null),
+                            future: AppRequest.FutureGetBrands(null),
                             builder: (BuildContext context, snapshot) {
                               if (snapshot.connectionState ==
                                   ConnectionState.waiting) {

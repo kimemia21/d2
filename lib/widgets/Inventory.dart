@@ -1,12 +1,17 @@
-import 'package:application/widgets/EditProduct.dart';
+import 'package:application/main.dart';
+import 'package:application/widgets/EditProduct/EditProduct.dart';
 import 'package:application/widgets/controllers/ProductSerializer.dart';
 import 'package:application/widgets/homepage.dart';
+import 'package:application/widgets/state/AppBloc.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:application/widgets/AddItem/AddProduct.dart';
 import 'package:application/widgets/Globals.dart';
 import 'package:application/widgets/controllers/CategorySerializers.dart';
 import 'package:application/widgets/requests/Request.dart';
+import 'package:loading_animation_widget/loading_animation_widget.dart';
+import 'package:provider/provider.dart';
 
 class InventoryPage extends StatefulWidget {
   @override
@@ -18,7 +23,7 @@ class _InventoryPageState extends State<InventoryPage>
   int selectedCategoryIndex = 100;
   late AnimationController _controller;
   late Animation<Offset> _offsetAnimation;
-  
+
   late Stream<List<CategoryController>> categoriesStream;
   late Stream<List<ProductController>> productsStream;
 
@@ -74,7 +79,8 @@ class _InventoryPageState extends State<InventoryPage>
       ),
       body: StreamBuilder<List<CategoryController>>(
         stream: categoriesStream,
-        builder: (BuildContext context, AsyncSnapshot<List<CategoryController>> snapshot) {
+        builder: (BuildContext context,
+            AsyncSnapshot<List<CategoryController>> snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           } else if (snapshot.hasError) {
@@ -89,7 +95,8 @@ class _InventoryPageState extends State<InventoryPage>
     );
   }
 
-  Widget _buildCategoryView(BuildContext context, List<CategoryController> categories) {
+  Widget _buildCategoryView(
+      BuildContext context, List<CategoryController> categories) {
     return Center(
       child: Container(
         width: MediaQuery.of(context).size.width * 0.75,
@@ -124,7 +131,9 @@ class _InventoryPageState extends State<InventoryPage>
               margin: const EdgeInsets.symmetric(horizontal: 5),
               alignment: Alignment.center,
               decoration: BoxDecoration(
-                color: selectedCategoryIndex == 100 ? Colors.blueGrey : Colors.grey,
+                color: selectedCategoryIndex == 100
+                    ? Colors.blueGrey
+                    : Colors.grey,
                 borderRadius: BorderRadius.circular(25),
               ),
               child: Text(
@@ -146,7 +155,8 @@ class _InventoryPageState extends State<InventoryPage>
                   onTap: () {
                     setState(() {
                       selectedCategoryIndex = index;
-                      productsStream = AppRequest.getProductsStream(category.id);
+                      productsStream =
+                          AppRequest.getProductsStream(category.id);
                     });
                     _controller.reset();
                     _controller.forward();
@@ -156,7 +166,9 @@ class _InventoryPageState extends State<InventoryPage>
                     margin: const EdgeInsets.symmetric(horizontal: 5),
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
-                      color: selectedCategoryIndex == index ? Colors.blueGrey : Colors.grey,
+                      color: selectedCategoryIndex == index
+                          ? Colors.blueGrey
+                          : Colors.grey,
                       borderRadius: BorderRadius.circular(25),
                     ),
                     child: Text(
@@ -181,7 +193,8 @@ class _InventoryPageState extends State<InventoryPage>
       position: _offsetAnimation,
       child: StreamBuilder<List<ProductController>>(
         stream: productsStream,
-        builder: (BuildContext context, AsyncSnapshot<List<ProductController>> snapshot) {
+        builder: (BuildContext context,
+            AsyncSnapshot<List<ProductController>> snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           } else if (snapshot.hasError) {
@@ -255,6 +268,7 @@ class _InventoryPageState extends State<InventoryPage>
           mainAxisSize: MainAxisSize.min,
           children: [
             _buildEditButton(
+                category: product.category,
                 productName: product.product_name,
                 productId: product.product_id,
                 brand: product.brand,
@@ -262,10 +276,169 @@ class _InventoryPageState extends State<InventoryPage>
                 sellingPrice: product.selling_price,
                 quantity: product.quantity),
             const SizedBox(width: 8),
-            _buildRestockButton(),
+            _buildRestockButton(
+                name: product.product_name,
+                quantity: product.quantity,
+                id: product.product_id),
           ],
         ),
       ),
+    );
+  }
+
+  // RESTOCK
+  void _showRestockAlert(
+      {required String name, required int quantity, required int id}) {
+    TextEditingController restockController = TextEditingController();
+   final Appbloc bloc = Provider.of<Appbloc>(context, listen: false);
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          contentPadding: EdgeInsets.all(20),
+          title: Text(
+            'Restock $name',
+            style: GoogleFonts.poppins(
+              color: Colors.black,
+              fontWeight: FontWeight.bold,
+              fontSize: 28, // Adjusted font size
+            ),
+          ),
+          content: Container(
+            width: MediaQuery.of(context).size.width *
+                0.35, // Custom width (80% of the screen width)
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Item ID: XXXXX', // Placeholder for item number
+                  style: GoogleFonts.poppins(
+                    color: Colors.grey[600],
+                    fontSize: 18,
+                  ),
+                ),
+                SizedBox(height: 10),
+                Text(
+                  'Current quantity: $quantity',
+                  style: GoogleFonts.poppins(
+                    color: Colors.grey[600],
+                    fontSize: 18, // Increased font size
+                  ),
+                ),
+                SizedBox(height: 20),
+                SizedBox(
+                  width: MediaQuery.of(context).size.width * .1,
+                  child: TextField(
+                    controller: restockController,
+                    keyboardType: TextInputType.number,
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                    decoration: InputDecoration(
+                      labelText: 'Restock Quantity',
+                      hintText: 'Enter new quantity',
+                      hintStyle:
+                          GoogleFonts.poppins(color: Colors.grey, fontSize: 10),
+                      focusedBorder: OutlineInputBorder(
+                        borderSide: BorderSide(color: Colors.black, width: 2),
+                        borderRadius: BorderRadius.circular(15),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderSide: BorderSide(color: Colors.grey.shade300),
+                        borderRadius: BorderRadius.circular(15),
+                      ),
+                      filled: true,
+                      fillColor: Colors.grey.shade100,
+                      prefixIcon: Icon(Icons.add_shopping_cart,
+                          color: Colors.black, size: 20),
+                      contentPadding:
+                          EdgeInsets.symmetric(vertical: 10, horizontal: 15),
+                    ),
+                    style: GoogleFonts.poppins(
+                        color: Colors.black87,
+                        fontSize: 18), // Increased font size
+                  ),
+                ),
+                SizedBox(height: 10),
+                Text(
+                  'Last Restocked: DD/MM/YYYY', // Placeholder for last restock date
+                  style: GoogleFonts.poppins(
+                    color: Colors.grey[600],
+                    fontSize: 16,
+                  ),
+                ),
+                SizedBox(height: 10),
+                Text(
+                  'Restocked By: John Doe', // Placeholder for restocked by
+                  style: GoogleFonts.poppins(
+                    color: Colors.grey[600],
+                    fontSize: 16,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              child: Text(
+                'Cancel',
+                style: GoogleFonts.poppins(color: Colors.grey, fontSize: 16),
+              ),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+            ElevatedButton(
+              child: bloc.isloading
+                  ? LoadingAnimationWidget.staggeredDotsWave(
+                      color: Colors.white,
+                      size: 20,
+                    )
+                  : Text(
+                      'Restock',
+                      style: GoogleFonts.poppins(
+                          color: Colors.white,
+                          fontSize: 18), // Increased font size
+                    ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.black,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(15),
+                ),
+                padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+              ),
+              onPressed: () async {
+                int currentQuantity = quantity;
+                int newQuantity = int.parse(restockController.text);
+                final _quantity = quantity + newQuantity;
+
+                final body = {"quantity": _quantity};
+                AppRequest.patchProduct(
+                    isRestock: true, context: context, id: id, data: body);
+
+                // Future.delayed(Duration(seconds: 4))
+                //     .then((_) => Navigator.pop(context));
+
+                // if (newQuantity > currentQuantity) {
+                //   setState(() {
+                //     // quantity = newQuantity.toString();
+                //   });
+                //   Navigator.of(context).pop();
+                // } else {
+                //   ScaffoldMessenger.of(context).showSnackBar(
+                //     SnackBar(
+                //       content: Text(
+                //           'New quantity must be greater than current quantity'),
+                //       backgroundColor: Colors.red,
+                //     ),
+                //   );
+                // }
+              },
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -276,12 +449,14 @@ class _InventoryPageState extends State<InventoryPage>
     required int buyingPrice,
     required int sellingPrice,
     required int quantity,
+    required int category,
   }) {
     return ElevatedButton(
       onPressed: () {
         Globals.switchScreens(
           context: context,
           screen: EditProductPage(
+            categoryId: category,
             productName: productName,
             productId: productId,
             brand: brand,
@@ -301,10 +476,12 @@ class _InventoryPageState extends State<InventoryPage>
     );
   }
 
-  Widget _buildRestockButton() {
+  Widget _buildRestockButton(
+      {required String name, required int quantity, required int id}) {
     return ElevatedButton(
       onPressed: () {
         // Restock functionality here
+        _showRestockAlert(name: name, quantity: quantity, id: id);
       },
       style: ElevatedButton.styleFrom(
         backgroundColor: Colors.green,

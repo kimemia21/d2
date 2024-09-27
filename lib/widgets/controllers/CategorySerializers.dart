@@ -1,16 +1,16 @@
 class CategoryController {
-  final String categoryName;
+  final String name;
   final int id;
 
-  CategoryController({required this.categoryName, required this.id});
+  CategoryController({required this.name, required this.id});
 
   // Factory method to handle a single JSON object
   factory CategoryController.fromJson(Map<String, dynamic> json) {
     print(json);
-    final requiredKeys = ["category_name", "id"];
+    final requiredKeys = ["name", "id"];
     if (requiredKeys.every(json.containsKey)) {
       return CategoryController(
-        categoryName: json["category_name"],
+        name: json["name"],
         id: json["id"],
       );
     } else {

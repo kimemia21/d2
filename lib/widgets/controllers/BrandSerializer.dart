@@ -1,10 +1,10 @@
 class BrandController {
-  final String brandName;
+  final String name;
   final int id;
   final int category;
 
   const BrandController({
-    required this.brandName,
+    required this.name,
     required this.id,
     required this.category,
   });
@@ -23,7 +23,7 @@ class BrandController {
       }
 
       return BrandController(
-        brandName: json["brand_name"] as String,
+        name: json["brand_name"] as String,
         id: json["id"] as int,
         category: json["category"] as int,
       );

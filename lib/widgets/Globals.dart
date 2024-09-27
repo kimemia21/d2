@@ -3,18 +3,28 @@ import 'package:flutter/material.dart';
 
 class Globals {
 
-static final helmetData = <Map<String,dynamic>>{
-  {"name":"Full Face Helmet", "totalStock": 50, "sold": 20},
- {"name": "Modular Helmet", "totalStock": 40, "sold": 15},
- {"name": "Open Face Helmet", "totalStock": 60, "sold": 25},
-  {"name":"Half Helmet", "totalStock": 30, "sold": 10},
- {"name": "Off-Road Helmet", "totalStock": 25, "sold": 5},
- {"name": "Dual-Sport Helmet", "totalStock": 35, "sold": 18},
-  {"name":"Adventure Helmet", "totalStock": 20, "sold": 8},
- {"name": "Racing Helmet", "totalStock": 15, "sold": 7},
-  {"name":"Snowmobile Helmet", "totalStock": 10, "sold": 3},
-  {"name":"Retro Helmet", "totalStock": 45, "sold": 22},
-};
+// Widget to show when data is being loaded
+static Widget buildLoadingCard() {
+  return Center(
+    child: CircularProgressIndicator(),
+  );
+}
+
+// Widget to show when an error occurs
+static Widget buildErrorCard(String errorMessage) {
+  return Center(
+    child: Text(
+      "Error: $errorMessage",
+      style: TextStyle(color: Colors.red),
+    ),
+  );
+}
+
+static Widget buildEmptyCard() {
+  return Center(
+    child: Text("No stock data available."),
+  );
+}
 
 
   static Future<void> switchScreens(

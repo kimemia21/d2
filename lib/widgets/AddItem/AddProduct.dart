@@ -222,7 +222,7 @@ class _AddProductFormState extends State<AddProductForm>
                       vertical: 3,
                     ),
                     child: Text(
-                      item.categoryName,
+                      item.name,
                       style: GoogleFonts.poppins(
                         color: Colors.black87,
                         fontSize: 12,
@@ -395,7 +395,7 @@ class _AddProductFormState extends State<AddProductForm>
                                         vertical: 3,
                                       ),
                                       child: Text(
-                                        item.brandName,
+                                        item.name,
                                         style: GoogleFonts.poppins(
                                             color: Colors.black87,
                                             fontSize: 12),

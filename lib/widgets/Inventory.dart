@@ -1,7 +1,8 @@
-import 'package:application/main.dart';
 import 'package:application/widgets/EditProduct/EditProduct.dart';
+import 'package:application/widgets/controllers/ProductQuantity.dart';
 import 'package:application/widgets/controllers/ProductSerializer.dart';
 import 'package:application/widgets/homepage.dart';
+import 'package:application/widgets/nodata/nodata.dart';
 import 'package:application/widgets/state/AppBloc.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -56,6 +57,17 @@ class _InventoryPageState extends State<InventoryPage>
     super.dispose();
   }
 
+Map<int, Stream<List<ProductStockController>>> _streamCache = {};
+
+Stream<List<ProductStockController>> _getProductStockStream(int? productId) {
+  if (!_streamCache.containsKey(productId)) {
+    _streamCache[productId!] = AppRequest.StreamGetProductStock(productId);
+  }
+  return _streamCache[productId]!;
+}
+
+
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -85,10 +97,10 @@ class _InventoryPageState extends State<InventoryPage>
             return const Center(child: CircularProgressIndicator());
           } else if (snapshot.hasError) {
             return Center(child: Text('Error: ${snapshot.error}'));
-          } else if (snapshot.hasData) {
+          } else if (snapshot.hasData && snapshot.data!.isNotEmpty) {
             return _buildCategoryView(context, snapshot.data!);
           } else {
-            return Center(child: Text('No categories available.'));
+            return NoDataScreen();
           }
         },
       ),
@@ -172,7 +184,7 @@ class _InventoryPageState extends State<InventoryPage>
                       borderRadius: BorderRadius.circular(25),
                     ),
                     child: Text(
-                      category.categoryName,
+                      category.name,
                       style: const TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
@@ -249,36 +261,56 @@ class _InventoryPageState extends State<InventoryPage>
       itemCount: products.length,
       itemBuilder: (context, index) {
         final product = products[index];
-        return _buildProductCard(product);
+
+        // Use StreamBuilder instead of FutureBuilder
+        return StreamBuilder<List<ProductStockController>>(
+          stream:_getProductStockStream(product.product_id),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return Globals.buildLoadingCard();
+            } else if (snapshot.hasError) {
+              return Globals.buildErrorCard(snapshot.error.toString());
+            } else if (snapshot.hasData && snapshot.data != null) {
+              final stockData = snapshot.data!;
+              return _buildProductCard(
+                  context, product, stockData.first.quantity);
+            } else {
+              return Globals.buildEmptyCard();
+            }
+          },
+        );
       },
     );
   }
 
-  Widget _buildProductCard(ProductController product) {
+  Widget _buildProductCard(
+      BuildContext context, ProductController product, qunatity) {
     return Card(
       elevation: 4,
       margin: const EdgeInsets.symmetric(vertical: 8),
       child: ListTile(
         title: Text(
-          product.product_name,
+          product.name,
           style: const TextStyle(fontWeight: FontWeight.bold),
         ),
-        subtitle: Text('Quantity: ${product.quantity}'),
+        subtitle: Text('Quantity: ${qunatity}'),
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             _buildEditButton(
+                context: context,
                 category: product.category,
-                productName: product.product_name,
+                productName: product.name,
                 productId: product.product_id,
                 brand: product.brand,
                 buyingPrice: product.buying_price,
                 sellingPrice: product.selling_price,
-                quantity: product.quantity),
+                quantity: qunatity),
             const SizedBox(width: 8),
             _buildRestockButton(
-                name: product.product_name,
-                quantity: product.quantity,
+                context: context,
+                name: product.name,
+                quantity: qunatity,
                 id: product.product_id),
           ],
         ),
@@ -288,9 +320,12 @@ class _InventoryPageState extends State<InventoryPage>
 
   // RESTOCK
   void _showRestockAlert(
-      {required String name, required int quantity, required int id}) {
+      {required BuildContext context,
+      required String name,
+      required int quantity,
+      required int id}) {
     TextEditingController restockController = TextEditingController();
-   final Appbloc bloc = Provider.of<Appbloc>(context, listen: false);
+    final Appbloc bloc = Provider.of<Appbloc>(context, listen: false);
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -443,11 +478,12 @@ class _InventoryPageState extends State<InventoryPage>
   }
 
   Widget _buildEditButton({
+    required BuildContext context,
     required String productName,
     required int productId,
     required int brand,
-    required int buyingPrice,
-    required int sellingPrice,
+    required double buyingPrice,
+    required double sellingPrice,
     required int quantity,
     required int category,
   }) {
@@ -477,11 +513,15 @@ class _InventoryPageState extends State<InventoryPage>
   }
 
   Widget _buildRestockButton(
-      {required String name, required int quantity, required int id}) {
+      {required BuildContext context,
+      required String name,
+      required int quantity,
+      required int id}) {
     return ElevatedButton(
       onPressed: () {
         // Restock functionality here
-        _showRestockAlert(name: name, quantity: quantity, id: id);
+        _showRestockAlert(
+            context: context, name: name, quantity: quantity, id: id);
       },
       style: ElevatedButton.styleFrom(
         backgroundColor: Colors.green,

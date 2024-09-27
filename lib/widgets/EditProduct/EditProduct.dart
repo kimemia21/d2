@@ -13,8 +13,8 @@ class EditProductPage extends StatefulWidget {
   final String productName;
   final int productId;
   final int brand;
-  final int buyingPrice;
-  final int sellingPrice;
+  final double  buyingPrice;
+  final double  sellingPrice;
   final int quantity;
   final int categoryId;
 
@@ -273,7 +273,7 @@ class _EditProductPageState extends State<EditProductPage>
       items: _brands.map<DropdownMenuItem<int>>((BrandController brand) {
         return DropdownMenuItem<int>(
           value: brand.id,
-          child: Text(brand.brandName),
+          child: Text(brand.name),
         );
       }).toList(),
       decoration: InputDecoration(
@@ -309,7 +309,7 @@ class _EditProductPageState extends State<EditProductPage>
           _category.map<DropdownMenuItem<int>>((CategoryController category) {
         return DropdownMenuItem<int>(
           value: category.id,
-          child: Text(category.categoryName),
+          child: Text(category.name),
         );
       }).toList(),
       decoration: InputDecoration(

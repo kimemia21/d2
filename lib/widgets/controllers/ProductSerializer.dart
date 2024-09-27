@@ -1,22 +1,21 @@
 class ProductController {
-  final String product_name;
+  final String name;
   final int product_id;
   final int brand;
   final int category;
-  final int buying_price;
-  final int selling_price;
-  final int quantity;
+  final double buying_price;
+  final double selling_price;
 
-  ProductController(
-   
-      {
-         required  this.category, 
-        required this.product_name,
-      required this.product_id,
-      required this.brand,
-      required this.buying_price,
-      required this.selling_price,
-      required this.quantity});
+
+  ProductController({
+    required this.category,
+    required this.  name,
+    required this.product_id,
+    required this.brand,
+    required this.buying_price,
+    required this.selling_price,
+
+  });
 
   factory ProductController.fromJson(Map<String, dynamic> json) {
     try {
@@ -25,10 +24,10 @@ class ProductController {
       final keys = [
         "category",
         "brand",
-        "product_name",
+        "name",
         "buying_price",
         "selling_price",
-        "quantity",
+
         "id"
       ];
 
@@ -39,26 +38,20 @@ class ProductController {
         }
       }
 
-      // final brandValue = json["brand"];
-      // final brandId = brandValue is Map ? brandValue["id"] : brandValue;
-
-      // if (brandId is! int) {
-      //   print("Invalid brand ID type: ${brandId.runtimeType}");
-      //   throw Exception("Brand ID must be an integer");
-      // }
-
       return ProductController(
-          category: json["category"],
-          product_name: json["product_name"] as String,
-          product_id: json["id"] as int,
-          brand: json["brand"] as int,
-          buying_price: json["buying_price"] as int,
-          selling_price: json["selling_price"] as int,
-          quantity: json["quantity"] as int);
-          
+        category: json["category"] as int,
+        name: json["name"] as String,
+        product_id: json["id"] as int,
+        brand: json["brand"] as int,
+        buying_price: double.parse(json["buying_price"] as String), // Parse from string to double
+        selling_price: double.parse(json["selling_price"] as String), // Parse from string to double
+      
+      );
     } catch (e) {
       print("Error in ProductController.fromJson: $e");
       rethrow;
     }
   }
+
+ 
 }

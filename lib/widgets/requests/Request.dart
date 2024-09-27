@@ -7,6 +7,7 @@ import 'package:application/widgets/Globals.dart';
 import 'package:application/widgets/Inventory.dart';
 import 'package:application/widgets/controllers/BrandSerializer.dart';
 import 'package:application/widgets/controllers/CategorySerializers.dart';
+import 'package:application/widgets/controllers/ProductQuantity.dart';
 import 'package:application/widgets/controllers/ProductSerializer.dart';
 import 'package:application/widgets/state/AppBloc.dart';
 import 'package:flutter/material.dart';
@@ -148,6 +149,12 @@ class AppRequest {
     }
   }
 
+
+
+
+
+
+
 // Helper method to compare two lists of ProductController
   static bool _areListsEqual(
       List<ProductController> oldList, List<ProductController> newList) {
@@ -221,13 +228,13 @@ class AppRequest {
 
       if (request.statusCode == 200) {
         final body = jsonDecode(request.body);
-        final List brandList = body["brands"];
+        final List ProductStock = body["brands"];
 
-        if (brandList.isEmpty) {
+        if (ProductStock.isEmpty) {
           return [];
         }
 
-        final List<BrandController> brands = brandList
+        final List<BrandController> brands = ProductStock
             .map((element) => BrandController.fromJson(element))
             .toList();
         return brands;
@@ -402,4 +409,35 @@ class AppRequest {
       ),
     );
   }
+
+ static Stream<List<ProductStockController>> StreamGetProductStock(int? id) async* {
+  final url = id != null ? "$mainUrl/stock/$id" : "$mainUrl/stock";
+
+  try {
+    final request = await http.get(Uri.parse(url));
+
+    if (request.statusCode == 200) {
+      final body = jsonDecode(request.body);
+      final List ProductStock = body["stock"];
+
+      if (ProductStock.isEmpty) {
+        yield [];
+      } else {
+        final List<ProductStockController> productstock = ProductStock
+            .map((element) => ProductStockController.fromJson(element))
+            .toList();
+        yield productstock;
+      }
+    } else {
+      throw Exception("Response code error ${request.statusCode}");
+    }
+  } catch (e) {
+    print("Error fetching productstock: $e");
+    throw Exception("Error fetching productstock: $e");
+  }
+}
+
+
+
+
 }

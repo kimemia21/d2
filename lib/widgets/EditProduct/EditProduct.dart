@@ -1,257 +1,93 @@
-import 'package:application/main.dart';
-import 'package:application/widgets/controllers/BrandSerializer.dart';
-import 'package:application/widgets/controllers/CategorySerializers.dart';
-import 'package:application/widgets/requests/Request.dart';
-import 'package:application/widgets/state/AppBloc.dart';
+import 'package:application/widgets/controllers/ProductWithStock.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
+import 'package:intl/intl.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:loading_animation_widget/loading_animation_widget.dart';
-import 'package:provider/provider.dart';
 
 class EditProductPage extends StatefulWidget {
-  final String productName;
-  final int productId;
-  final int brand;
-  final double  buyingPrice;
-  final double  sellingPrice;
-  final int quantity;
-  final int categoryId;
+  final ProductData product;
+  // final Function(BuildContext, ProductData) onRestock;
+  // final Function(BuildContext, ProductData) onEdit;
 
   const EditProductPage({
     Key? key,
-    required this.productName,
-    required this.productId,
-    required this.brand,
-    required this.buyingPrice,
-    required this.sellingPrice,
-    required this.quantity,
-    required this.categoryId,
+    required this.product,
+  //  required this.onRestock,
+  //   required this.onE dit,
   }) : super(key: key);
 
   @override
-  _EditProductPageState createState() => _EditProductPageState();
+  State<EditProductPage> createState() => _EditProductPageState();
 }
 
-class _EditProductPageState extends State<EditProductPage>
-    with SingleTickerProviderStateMixin {
-  final _formKey = GlobalKey<FormState>();
-
-  late TextEditingController _productNameController;
-  late TextEditingController _buyingPriceController;
-  late TextEditingController _sellingPriceController;
-  late TextEditingController _quantityController;
-  late AnimationController _animationController;
-  late Animation<double> _animation;
-
-  List<BrandController> _brands = [];
-  List<CategoryController> _category = [];
-  String? _selectedBrand;
-  int? _selectedBrandId;
-
-  String? _selectedCategory;
-  int? _selectedCategoryId;
-
-  // POS-friendly color scheme from AddProductForm
-  final Color primaryColor = Color(0xFF2C3E50);
-  final Color accentColor = Color(0xFF3498DB);
-  final Color backgroundColor = Color(0xFFF5F5F5);
-  final Color cardColor = Colors.white;
+class _EditProductPageState extends State<EditProductPage> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _scaleAnimation;
+  final formatter = NumberFormat("#,##0.00", "en_US");
 
   @override
   void initState() {
     super.initState();
-
-    _productNameController = TextEditingController(text: widget.productName);
-    _buyingPriceController =
-        TextEditingController(text: widget.buyingPrice.toString());
-    _sellingPriceController =
-        TextEditingController(text: widget.sellingPrice.toString());
-    _quantityController =
-        TextEditingController(text: widget.quantity.toString());
-
-    _fetchBrands();
-    _fetchCategory();
-    _animationController = AnimationController(
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 200),
       vsync: this,
-      duration: const Duration(milliseconds: 300),
     );
-    _animation = CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.easeInOut,
+    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.95).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
     );
-    _animationController.forward();
-  }
-
-  Future<void> _fetchBrands() async {
-    try {
-      List<BrandController> brands = await AppRequest.FutureGetBrands(null);
-
-      setState(() {
-        _brands = brands;
-        _selectedBrandId = brands
-            .firstWhere((brand) => brand.id == widget.brand,
-                orElse: () => brands.first)
-            .id;
-      });
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error fetching brands: $e')),
-      );
-    }
-  }
-
-  Future<void> _fetchCategory() async {
-    try {
-      List<CategoryController> category =
-          await AppRequest.FutureGetCategories();
-
-      setState(() {
-        _category = category;
-        _selectedCategoryId = category
-            .firstWhere((element) => element.id == widget.categoryId,
-                orElse: () => category.first)
-            .id;
-      });
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error fetching category: $e')),
-      );
-    }
   }
 
   @override
   void dispose() {
-    _productNameController.dispose();
-    _buyingPriceController.dispose();
-    _sellingPriceController.dispose();
-    _quantityController.dispose();
-    _animationController.dispose();
+    _controller.dispose();
     super.dispose();
-  }
-
-  Future<void> _saveProductDetails() async {
-    if (_formKey.currentState!.validate()) {
-      final Map<String, dynamic> data = {
-        "brand": _selectedBrandId,
-        "id": widget.productId,
-        "category": _selectedCategoryId,
-        "product_name": _productNameController.text,
-        "buying_price": _buyingPriceController.text,
-        "selling_price": _sellingPriceController.text,
-        "quantity": _quantityController.text
-      };
-      AppRequest.patchProduct(
-        isRestock: false,
-          context: context, id: widget.productId, data: data);
-    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final bloc = context.watch<Appbloc>();
+    final bool isLowStock = widget.product.quantity <= widget.product.reorderLevel;
+    final theme = Theme.of(context);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Edit Product', style: TextStyle(color: Colors.white)),
-        backgroundColor: primaryColor,
-      ),
-      body: Center(
-        child: Container(
-          width: MediaQuery.of(context).size.width * 0.5,
-          child: SingleChildScrollView(
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: ScaleTransition(
-                scale: _animation,
-                child: Card(
-                  elevation: 4,
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12)),
-                  color: cardColor,
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Form(
-                      key: _formKey,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Edit Product',
-                            style: TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                                color: primaryColor),
-                          ),
-                          SizedBox(height: 16),
-                          _buildTextField(_productNameController,
-                              'Product Name', Icons.shopping_bag),
-                          SizedBox(height: 20),
-                          _buildBrandDropdown(),
-                          SizedBox(height: 20),
-                          _buildCategoryDropdown(),
-                          SizedBox(height: 20),
-                          _buildTextField(_buyingPriceController,
-                              'Buying Price', Icons.attach_money,
-                              isPrice: true),
-                          SizedBox(height: 20),
-                          _buildTextField(_sellingPriceController,
-                              'Selling Price', Icons.attach_money,
-                              isPrice: true),
-                          SizedBox(height: 20),
-                          _buildTextField(
-                              _quantityController, 'Quantity', Icons.inventory,
-                              isPrice: true),
-                          SizedBox(height: 32),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: ElevatedButton.icon(
-                                  onPressed: _saveProductDetails,
-                                  icon: Icon(Icons.save, color: Colors.white),
-                                  label: bloc.isloading
-                                      ? LoadingAnimationWidget
-                                          .staggeredDotsWave(
-                                          color: Colors.white,
-                                          size: 20,
-                                        )
-                                      : Text('Save Changes',
-                                          style: GoogleFonts.poppins(
-                                              color: Colors.white)),
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.green,
-                                    padding: EdgeInsets.symmetric(
-                                        vertical: 14, horizontal: 15),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(15),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              SizedBox(width: 10),
-                              Expanded(
-                                child: ElevatedButton.icon(
-                                  onPressed: () {
-                                    Navigator.pop(context);
-                                  },
-                                  icon: Icon(Icons.cancel, color: Colors.white),
-                                  label: Text('Cancel',
-                                      style: GoogleFonts.poppins(
-                                          color: Colors.white)),
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.redAccent,
-                                    padding: EdgeInsets.symmetric(vertical: 14),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(15),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
+    return MouseRegion(
+      onEnter: (_) => _controller.forward(),
+      onExit: (_) => _controller.reverse(),
+      child: AnimatedBuilder(
+        animation: _scaleAnimation,
+        builder: (context, child) => Transform.scale(
+          scale: _scaleAnimation.value,
+          child: Container(
+            margin: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 10,
+                  spreadRadius: 0,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                borderRadius: BorderRadius.circular(16),
+                onTap: () {},
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildHeader(theme),
+                      const SizedBox(height: 16),
+                      _buildCategories(theme),
+                      const SizedBox(height: 16),
+                      _buildStockInfo(isLowStock, theme),
+                      const SizedBox(height: 16),
+                      _buildPricingInfo(theme),
+                      const SizedBox(height: 16),
+                      _buildActions(context, theme),
+                    ],
                   ),
                 ),
               ),
@@ -262,112 +98,287 @@ class _EditProductPageState extends State<EditProductPage>
     );
   }
 
-  Widget _buildBrandDropdown() {
-    return DropdownButtonFormField<int>(
-      value: _selectedBrandId,
-      onChanged: (newValue) {
-        setState(() {
-          _selectedBrandId = newValue;
-        });
-      },
-      items: _brands.map<DropdownMenuItem<int>>((BrandController brand) {
-        return DropdownMenuItem<int>(
-          value: brand.id,
-          child: Text(brand.name),
-        );
-      }).toList(),
-      decoration: InputDecoration(
-        labelText: 'Brand',
-        hintStyle: GoogleFonts.poppins(color: Colors.grey, fontSize: 14),
-        focusedBorder: OutlineInputBorder(
-          borderSide: BorderSide(
-              color: Theme.of(context).colorScheme.secondary, width: 2),
-          borderRadius: BorderRadius.circular(15),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderSide: BorderSide(color: Colors.grey.shade300),
-          borderRadius: BorderRadius.circular(15),
-        ),
-        filled: true,
-        fillColor: Colors.grey.shade100,
-        prefixIcon: Icon(Icons.branding_watermark,
-            color: Theme.of(context).colorScheme.secondary, size: 20),
-        contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 15),
-      ),
-    );
-  }
-
-  Widget _buildCategoryDropdown() {
-    return DropdownButtonFormField<int>(
-      value: _selectedCategoryId,
-      onChanged: (newValue) {
-        setState(() {
-          _selectedCategoryId = newValue;
-        });
-      },
-      items:
-          _category.map<DropdownMenuItem<int>>((CategoryController category) {
-        return DropdownMenuItem<int>(
-          value: category.id,
-          child: Text(category.name),
-        );
-      }).toList(),
-      decoration: InputDecoration(
-        labelText: 'Category',
-        hintStyle: GoogleFonts.poppins(color: Colors.grey, fontSize: 14),
-        focusedBorder: OutlineInputBorder(
-          borderSide: BorderSide(
-              color: Theme.of(context).colorScheme.secondary, width: 2),
-          borderRadius: BorderRadius.circular(15),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderSide: BorderSide(color: Colors.grey.shade300),
-          borderRadius: BorderRadius.circular(15),
-        ),
-        filled: true,
-        fillColor: Colors.grey.shade100,
-        prefixIcon: Icon(Icons.branding_watermark,
-            color: Theme.of(context).colorScheme.secondary, size: 20),
-        contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 15),
-      ),
-    );
-  }
-
-  Widget _buildTextField(
-      TextEditingController controller, String label, IconData icon,
-      {bool isPrice = false}) {
-    return TweenAnimationBuilder(
-      duration: Duration(milliseconds: 500),
-      tween: Tween<double>(begin: 0, end: 1),
-      builder: (context, double opacity, child) {
-        return Opacity(
-          opacity: opacity,
-          child: TextField(
-            controller: controller,
-            keyboardType: isPrice ? TextInputType.number : TextInputType.text,
-            decoration: InputDecoration(
-              labelText: label,
-              hintStyle: GoogleFonts.poppins(color: Colors.grey, fontSize: 14),
-              focusedBorder: OutlineInputBorder(
-                borderSide: BorderSide(
-                    color: Theme.of(context).colorScheme.secondary, width: 2),
-                borderRadius: BorderRadius.circular(15),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderSide: BorderSide(color: Colors.grey.shade300),
-                borderRadius: BorderRadius.circular(15),
-              ),
-              filled: true,
-              fillColor: Colors.grey.shade100,
-              prefixIcon: Icon(icon,
-                  color: Theme.of(context).colorScheme.secondary, size: 20),
-              contentPadding:
-                  EdgeInsets.symmetric(vertical: 10, horizontal: 15),
-            ),
-            style: GoogleFonts.poppins(color: Colors.black87, fontSize: 14),
+  Widget _buildHeader(ThemeData theme) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Product Image Container
+        Container(
+          width: 90,
+          height: 90,
+          decoration: BoxDecoration(
+            color: theme.colorScheme.surface,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.grey.withOpacity(0.1)),
           ),
-        );
-      },
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.inventory_2_outlined,
+                size: 36,
+                color: theme.colorScheme.secondary,
+              ),
+              const SizedBox(height: 4),
+              Text(
+                '#${widget.product.id}',
+                style: GoogleFonts.inter(
+                  fontSize: 12,
+                  color: theme.colorScheme.secondary,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(width: 16),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Text(
+                      widget.product.name,
+                      style: GoogleFonts.inter(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: theme.colorScheme.onSurface,
+                      ),
+                    ),
+                  ),
+                  Switch.adaptive(
+                    value: widget.product.isActive,
+                    onChanged: (value) {
+                      // Handle status change
+                    },
+                    activeColor: theme.colorScheme.primary,
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCategories(ThemeData theme) {
+    return Row(
+      children: [
+        _buildCategoryChip(
+          icon: Icons.category_outlined,
+          label: 'Category ${widget.product.category}',
+          backgroundColor: theme.colorScheme.primary.withOpacity(0.1),
+          textColor: theme.colorScheme.primary,
+        ),
+        const SizedBox(width: 8),
+        _buildCategoryChip(
+          icon: Icons.business_outlined,
+          label: 'Brand ${widget.product.brand}',
+          backgroundColor: theme.colorScheme.secondary.withOpacity(0.1),
+          textColor: theme.colorScheme.secondary,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCategoryChip({
+    required IconData icon,
+    required String label,
+    required Color backgroundColor,
+    required Color textColor,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: backgroundColor,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 16, color: textColor),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: GoogleFonts.inter(
+              fontSize: 12,
+              color: textColor,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStockInfo(bool isLowStock, ThemeData theme) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey.withOpacity(0.1)),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: [
+          _buildStockInfoItem(
+            icon: Icons.inventory,
+            label: 'Current Stock',
+            value: '${widget.product.quantity}',
+            valueColor: isLowStock ? Colors.red : Colors.green,
+            theme: theme,
+          ),
+          _buildStockInfoItem(
+            icon: Icons.warning_amber_outlined,
+            label: 'Reorder Level',
+            value: '${widget.product.reorderLevel}',
+            valueColor: theme.colorScheme.onSurface,
+            theme: theme,
+          ),
+          _buildStockInfoItem(
+            icon: Icons.update,
+            label: 'Last Restocked',
+            value: DateFormat('MM/dd/yy').format(widget.product.lastRestocked),
+            valueColor: theme.colorScheme.onSurface,
+            theme: theme,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStockInfoItem({
+    required IconData icon,
+    required String label,
+    required String value,
+    required Color valueColor,
+    required ThemeData theme,
+  }) {
+    return Column(
+      children: [
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 16, color: theme.colorScheme.secondary),
+            const SizedBox(width: 4),
+            Text(
+              label,
+              style: GoogleFonts.inter(
+                fontSize: 12,
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 4),
+        Text(
+          value,
+          style: GoogleFonts.inter(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: valueColor,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPricingInfo(ThemeData theme) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        _buildPriceItem(
+          icon: Icons.shopping_bag_outlined,
+          label: 'Buying Price',
+          value: '\$${formatter.format(widget.product.buyingPrice)}',
+          theme: theme,
+        ),
+        _buildPriceItem(
+          icon: Icons.sell_outlined,
+          label: 'Selling Price',
+          value: '\$${formatter.format(widget.product.sellingPrice)}',
+          valueColor: Colors.green,
+          theme: theme,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPriceItem({
+    required IconData icon,
+    required String label,
+    required String value,
+    Color? valueColor,
+    required ThemeData theme,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(icon, size: 16, color: theme.colorScheme.onSurfaceVariant),
+            const SizedBox(width: 4),
+            Text(
+              label,
+              style: GoogleFonts.inter(
+                fontSize: 12,
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 4),
+        Text(
+          value,
+          style: GoogleFonts.inter(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: valueColor ?? theme.colorScheme.onSurface,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildActions(BuildContext context, ThemeData theme) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.end,
+      children: [
+        OutlinedButton.icon(
+          onPressed: () {},
+          //  widget.onEdit(context, widget.product),
+          icon: const Icon(Icons.edit_outlined, size: 18),
+          label: Text('Edit', style: GoogleFonts.inter(fontSize: 14)),
+          style: OutlinedButton.styleFrom(
+            foregroundColor: theme.colorScheme.primary,
+            side: BorderSide(color: theme.colorScheme.primary),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+        ),
+        const SizedBox(width: 8),
+        ElevatedButton.icon(
+          onPressed: (){},
+          //  => widget.onRestock(context, widget.product),
+          icon: const Icon(Icons.add, size: 18),
+          label: Text('Restock', style: GoogleFonts.inter(fontSize: 14)),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: theme.colorScheme.primary,
+            foregroundColor: Colors.white,
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

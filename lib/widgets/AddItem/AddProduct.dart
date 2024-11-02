@@ -34,9 +34,12 @@ class _AddProductFormState extends State<AddProductForm>
   late Animation<double> _animation;
 
   // POS-friendly color scheme
-  final Color primaryColor = Color(0xFF2C3E50);
-  final Color accentColor = Color(0xFF3498DB);
-  final Color backgroundColor = Color(0xFFF5F5F5);
+  final Color primaryColor = const Color(0xFF1A237E); // Deep indigo
+  final Color secondaryColor = const Color(0xFF4CAF50); // Green
+  final Color backgroundColor = const Color(0xFFF8F9FA); // Light gray
+  final Color surfaceColor = Colors.white;
+  final Color errorColor = const Color(0xFFEF5350); // Red
+  final Color textColor = const Color(0xFF2C3E50); 
   final Color cardColor = Colors.white;
 
   @override
@@ -108,23 +111,27 @@ class _AddProductFormState extends State<AddProductForm>
 
   void saveProduct() {
     if (validateInputs()) {
+      try {
+        final Map<String, dynamic> body = {
+          "category": int.parse(selectedCategory!),
+          "brand": int.parse(selectedBrand!),
+          "product_name": nameController.text,
+          "buying_price": buyingPriceController.text,
+          "selling_price": sellingPriceController.text,
+          "quantity": quantityController.text
+        };
 
-      final Map<String, dynamic> body = {
-        "category": int.parse(selectedCategory!),
-        "brand": int.parse(selectedBrand!),
-        "product_name": nameController.text,
-        "buying_price": buyingPriceController.text,
-        "selling_price": sellingPriceController.text,
-        "quantity": quantityController.text
-      };
-      
-      AppRequest.CreateProduct(body: body, context: context);
+        AppRequest.CreateProduct(body: body, context: context);
 
-      CherryToast.success(
-        title: Text("Product saved successfully"),
-        toastDuration: Duration(seconds: 2),
-        animationDuration: Duration(seconds: 2),
-      ).show(context);
+        CherryToast.success(
+          title: Text("Product saved successfully"),
+          toastDuration: Duration(seconds: 2),
+          animationDuration: Duration(seconds: 2),
+        ).show(context);
+      } catch (e) {
+        print("Create Product error $e");
+        throw Exception("Create Product error $e");
+      }
     }
   }
 
@@ -198,44 +205,49 @@ class _AddProductFormState extends State<AddProductForm>
                       ),
                     ),
                     SizedBox(height: 5),
-    Container(
-      width: 600,
-      height: 300,
-      child: StreamBuilder<List<CategoryController>>(
-          stream: AppRequest.getCategoriesStream(),
-          builder: (BuildContext context, AsyncSnapshot<List<CategoryController>> snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(child: CircularProgressIndicator());
-            } else if (snapshot.hasError) {
-              return Center(child: Text('Error: ${snapshot.error}'));
-            } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-              return Center(child: Text('No categories available'));
-            } else {
-              final categories = snapshot.data!;
-              return ListView.builder(
-                itemCount: categories.length,
-                itemBuilder: (context, index) {
-                  final item = categories[index];
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 3,
-                    ),
-                    child: Text(
-                      item.name,
-                      style: GoogleFonts.poppins(
-                        color: Colors.black87,
-                        fontSize: 12,
+                    Container(
+                      width: 600,
+                      height: 300,
+                      child: StreamBuilder<List<CategoryController>>(
+                        stream: AppRequest.getCategoriesStream(),
+                        builder: (BuildContext context,
+                            AsyncSnapshot<List<CategoryController>> snapshot) {
+                          if (snapshot.connectionState ==
+                              ConnectionState.waiting) {
+                            return const Center(
+                                child: CircularProgressIndicator());
+                          } else if (snapshot.hasError) {
+                            return Center(
+                                child: Text('Error: ${snapshot.error}'));
+                          } else if (!snapshot.hasData ||
+                              snapshot.data!.isEmpty) {
+                            return Center(
+                                child: Text('No categories available'));
+                          } else {
+                            final categories = snapshot.data!;
+                            return ListView.builder(
+                              itemCount: categories.length,
+                              itemBuilder: (context, index) {
+                                final item = categories[index];
+                                return Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                    vertical: 3,
+                                  ),
+                                  child: Text(
+                                    item.name,
+                                    style: GoogleFonts.poppins(
+                                      color: Colors.black87,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                );
+                              },
+                            );
+                          }
+                        },
                       ),
                     ),
-                  );
-                },
-              );
-            }
-          },
-        ),
-    ),
-    
                   ],
                 ),
               ),
@@ -251,7 +263,7 @@ class _AddProductFormState extends State<AddProductForm>
                   },
                 ),
                 ElevatedButton(
-                  child: bloc.isloading
+                  child:context.watch<Appbloc>().isloading
                       ? LoadingAnimationWidget.staggeredDotsWave(
                           color: Colors.white,
                           size: 20,
@@ -265,7 +277,7 @@ class _AddProductFormState extends State<AddProductForm>
                           ),
                         ),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Theme.of(context).primaryColor,
+                    backgroundColor: Colors.green,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(20),
                     ),
@@ -273,12 +285,12 @@ class _AddProductFormState extends State<AddProductForm>
                   ),
                   onPressed: () async {
                     if (newItem.isNotEmpty) {
-                      // onAdd(newItem);
+                   
                       await AppRequest.CreateCategory(
-                        body: {"category_name": newItem.toUpperCase()},
+                        body: {"name": newItem.toUpperCase()},
                         context: context,
                       );
-                      // Navigator.of(dialogContext).pop();
+                    
                     } else {
                       ScaffoldMessenger.of(dialogContext).showSnackBar(
                         SnackBar(
@@ -442,14 +454,9 @@ class _AddProductFormState extends State<AddProductForm>
                   ),
                   onPressed: () async {
                     if (newItem.isNotEmpty) {
-                      // onAdd(newItem);
-                      //                  {
-                      //     "id": 1,
-                      //     "brand_name": "Vega",
-                      //     "category": 1
-                      // },
+             
                       final Map<String, dynamic> body = {
-                        "brand_name": newItem.toUpperCase(),
+                        "name": newItem.toUpperCase(),
                         "category": int.parse(selectedCategory!)
                       };
                       await AppRequest.CreateBrand(
@@ -506,7 +513,7 @@ class _AddProductFormState extends State<AddProductForm>
             decoration: InputDecoration(
               hintText: "Enter new $field",
               focusedBorder: UnderlineInputBorder(
-                borderSide: BorderSide(color: accentColor),
+                borderSide: BorderSide(color: primaryColor),
               ),
             ),
             keyboardType: TextInputType.number,
@@ -700,82 +707,340 @@ class _AddProductFormState extends State<AddProductForm>
     );
   }
 
+
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isSmallScreen = screenWidth < 600;
+    final formWidth = isSmallScreen ? screenWidth * 0.95 : screenWidth * 0.6;
+
     return Scaffold(
+      backgroundColor: backgroundColor,
       appBar: AppBar(
-        title:
-            Text('Product Management', style: TextStyle(color: Colors.white)),
+        elevation: 0,
         backgroundColor: primaryColor,
+        title: Text(
+          'Add New Product',
+          style: GoogleFonts.poppins(
+            color: Colors.white,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back_ios, color: Colors.white),
+          onPressed: () => Navigator.pop(context),
+        ),
       ),
       body: Center(
         child: Container(
-          width: MediaQuery.of(context).size.width * 0.5,
-          child: SingleChildScrollView(
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
+          width: formWidth,
+          margin: EdgeInsets.symmetric(vertical: 20),
+          child: Card(
+            elevation: 4,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            child: SingleChildScrollView(
+              padding: EdgeInsets.all(24),
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  ScaleTransition(
-                    scale: _animation,
-                    child: buildProductCard(),
-                  ),
-                  SizedBox(height: 20),
-                  Row(
-                    children: [
-                      Container(
-                        width: 200,
-                        padding: EdgeInsets.all(10),
-                        child: ElevatedButton.icon(
-                          onPressed: saveProduct, // Add your function here
-                          icon: Icon(
-                            Icons.save,
-                            color: Colors.white,
-                          ),
-                          label: Text(
-                            'Save Product',
-                            style: GoogleFonts.poppins(color: Colors.white),
-                          ),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.green,
-                            padding: EdgeInsets.symmetric(
-                                vertical: 14, horizontal: 15),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(15),
-                            ),
-                          ),
-                        ),
-                      ),
-                      SizedBox(width: 10),
-                      Container(
-                        width: 200,
-                        padding: EdgeInsets.all(10),
-                        child: ElevatedButton.icon(
-                          onPressed: () {
-                            Navigator.pop(context);
-                          },
-                          icon: Icon(
-                            Icons.delete,
-                            color: Colors.white,
-                          ),
-                          label: Text('Cancel',
-                              style: GoogleFonts.poppins(color: Colors.white)),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.redAccent,
-                            padding: EdgeInsets.symmetric(vertical: 14),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
+                  _buildHeader(),
+                  SizedBox(height: 32),
+                  _buildCategorySection(),
+                  _buildProductDetailsSection(),
+                  _buildPricingSection(),
+                  _buildActionButtons(context),
                 ],
               ),
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildHeader() {
+    return Container(
+      padding: EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: primaryColor.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(15),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.inventory_2, color: primaryColor, size: 32),
+          SizedBox(width: 16),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Product Information',
+                style: GoogleFonts.poppins(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w600,
+                  color: primaryColor,
+                ),
+              ),
+              Text(
+                'Fill in the details below',
+                style: GoogleFonts.poppins(
+                  fontSize: 14,
+                  color: Colors.grey[600],
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCategorySection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildSectionTitle('Category & Brand'),
+        SizedBox(height: 16),
+        Row(
+          children: [
+            Expanded(
+              child: _buildDropdownWithButton(
+                dropdown: CategoryDropdown(
+                  onchangeCategory: (value) {
+                    setState(() => selectedCategory = value);
+                  },
+                ),
+                addNewItem: addNewCategory,
+                label: 'Category',
+              ),
+            ),
+          ],
+        ),
+        SizedBox(height: 16),
+        Row(
+          children: [
+            Expanded(
+              child: _buildDropdownWithButton(
+                dropdown: BrandDropdown(
+                  onbrandChange: (value) {
+                    setState(() => selectedBrand = value);
+                  },
+                ),
+                addNewItem: () {
+                  selectedCategory != null
+                      ? addNewBrand()
+                      : error(title: "Please select category first");
+                },
+                label: 'Brand',
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildProductDetailsSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(height: 24),
+        _buildSectionTitle('Product Details'),
+        SizedBox(height: 16),
+        _buildAnimatedTextField(
+          'Product Name',
+          nameController,
+          Icons.shopping_bag_outlined,
+          TextInputType.text,
+        ),
+        SizedBox(height: 16),
+        _buildAnimatedTextField(
+          'Quantity',
+          quantityController,
+          Icons.inventory_2_outlined,
+          TextInputType.number,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPricingSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(height: 24),
+        _buildSectionTitle('Pricing Information'),
+        SizedBox(height: 16),
+        Row(
+          children: [
+            Expanded(
+              child: _buildAnimatedTextField(
+                'Buying Price',
+                buyingPriceController,
+                Icons.payments_outlined,
+                TextInputType.number,
+              ),
+            ),
+            SizedBox(width: 16),
+            Expanded(
+              child: _buildAnimatedTextField(
+                'Selling Price',
+                sellingPriceController,
+                Icons.point_of_sale,
+                TextInputType.number,
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSectionTitle(String title) {
+    return Text(
+      title,
+      style: GoogleFonts.poppins(
+        fontSize: 16,
+        fontWeight: FontWeight.w600,
+        color: textColor,
+      ),
+    );
+  }
+
+  Widget _buildDropdownWithButton({
+    required Widget dropdown,
+    required VoidCallback addNewItem,
+    required String label,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey.shade300),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  label,
+                  style: GoogleFonts.poppins(
+                    fontSize: 14,
+                    color: Colors.grey[600],
+                  ),
+                ),
+                TextButton.icon(
+                  onPressed: addNewItem,
+                  icon: Icon(Icons.add, size: 18),
+                  label: Text('Add New'),
+                  style: TextButton.styleFrom(
+                    foregroundColor: secondaryColor,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          dropdown,
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAnimatedTextField(
+    String label,
+    TextEditingController controller,
+    IconData icon,
+    TextInputType keyboardType,
+  ) {
+    return TweenAnimationBuilder(
+      duration: Duration(milliseconds: 500),
+      tween: Tween<double>(begin: 0, end: 1),
+      builder: (context, double opacity, child) {
+        return Opacity(
+          opacity: opacity,
+          child: Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.grey.shade300),
+              color: surfaceColor,
+            ),
+            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            child: TextField(
+              controller: controller,
+              keyboardType: keyboardType,
+              inputFormatters: keyboardType == TextInputType.number
+                  ? [FilteringTextInputFormatter.digitsOnly]
+                  : null,
+              decoration: InputDecoration(
+                labelText: label,
+                labelStyle: GoogleFonts.poppins(color: Colors.grey[600]),
+                prefixIcon: Icon(icon, color: primaryColor, size: 20),
+                border: InputBorder.none,
+              ),
+              style: GoogleFonts.poppins(
+                color: textColor,
+                fontSize: 14,
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildActionButtons(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.only(top: 32),
+      child: Row(
+        children: [
+          Expanded(
+            child: ElevatedButton.icon(
+              onPressed: saveProduct,
+              icon: context.watch<Appbloc>().isloading
+                  ? LoadingAnimationWidget.staggeredDotsWave(
+                      color: Colors.white,
+                      size: 20,
+                    )
+                  : Icon(Icons.save_outlined),
+              label: Text(
+                'Save Product',
+                style: GoogleFonts.poppins(
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: secondaryColor,
+                padding: EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+          ),
+          SizedBox(width: 16),
+          Expanded(
+            child: OutlinedButton.icon(
+              onPressed: () => Navigator.pop(context),
+              icon: Icon(Icons.close),
+              label: Text(
+                'Cancel',
+                style: GoogleFonts.poppins(
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: errorColor,
+                side: BorderSide(color: errorColor),
+                padding: EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

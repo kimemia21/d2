@@ -1,5 +1,6 @@
 import 'package:application/widgets/AddItem/BrandReq.dart';
 import 'package:application/widgets/AddItem/CatRequest.dart';
+import 'package:application/widgets/controllers/BrandSerializer.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -14,7 +15,7 @@ class BrandDropdown extends StatefulWidget {
 
 class _BrandDropdownState extends State<BrandDropdown> {
   String? _selectedBrand;
-  late Stream<List<Map<String, dynamic>>> _brandsStream;
+  late Stream<List<BrandController>>_brandsStream;
 
   @override
   void initState() {
@@ -22,20 +23,20 @@ class _BrandDropdownState extends State<BrandDropdown> {
     _brandsStream = _createBrandsStream();
   }
 
-  Stream<List<Map<String, dynamic>>> _createBrandsStream() async* {
+  Stream<List<BrandController>> _createBrandsStream() async* {
     while (true) {
       try {
-        List<Map<String, dynamic>> fetchedBrands = await BrandRequest.fetchBrand(context);
+        List<BrandController> fetchedBrands = await BrandRequest.fetchBrand(context);
         yield fetchedBrands.reversed.toList();
       } catch (e) {
         print('Error fetching brands: $e');
         yield [];
       }
-      await Future.delayed(Duration(seconds: 1)); // Poll every 5 seconds
+      await Future.delayed(Duration(seconds: 5)); // Poll every 5 seconds
     }
   }
 
-  Widget _buildBrandDropdown(List<Map<String, dynamic>> brands) {
+  Widget _buildBrandDropdown(List<BrandController> brands) {
     return Container(
       margin: EdgeInsets.symmetric(vertical: 10),
       decoration: BoxDecoration(
@@ -69,9 +70,9 @@ class _BrandDropdownState extends State<BrandDropdown> {
         value: _selectedBrand,
         items: brands
             .map((brand) => DropdownMenuItem<String>(
-                  value: brand['id'].toString(),
+                  value: brand.id.toString(),
                   child: Text(
-                    brand['brand_name'],
+                    brand.name,
                     style: GoogleFonts.poppins(
                       color: Colors.black87,
                       fontWeight: FontWeight.w400,
@@ -99,7 +100,7 @@ class _BrandDropdownState extends State<BrandDropdown> {
 
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder<List<Map<String, dynamic>>>(
+    return StreamBuilder<List<BrandController>>(
       stream: _brandsStream,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {

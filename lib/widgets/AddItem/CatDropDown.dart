@@ -1,4 +1,5 @@
 import 'package:application/widgets/AddItem/CatRequest.dart';
+import 'package:application/widgets/controllers/CategorySerializers.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -16,7 +17,7 @@ class CategoryDropdown extends StatefulWidget {
 
 class _CategoryDropdownState extends State<CategoryDropdown> {
   String? _selectedCategory;
-  late Stream<List<Map<String, dynamic>>> _categoriesStream;
+  late Stream< List<CategoryController>> _categoriesStream;
 
   @override
   void initState() {
@@ -24,20 +25,21 @@ class _CategoryDropdownState extends State<CategoryDropdown> {
     _categoriesStream = _createCategoriesStream();
   }
 
-  Stream<List<Map<String, dynamic>>> _createCategoriesStream() async* {
+  Stream< List<CategoryController>> _createCategoriesStream() async* {
     while (true) {
       try {
-        List<Map<String, dynamic>> fetchedCategories = await CategoryRequest.fetchCategory(context);
+        
+      List<CategoryController> fetchedCategories = await CategoryRequest.fetchCategory(context);
         yield fetchedCategories.reversed.toList();
       } catch (e) {
         print('Error fetching categories: $e');
         yield [];
       }
-      await Future.delayed(Duration(seconds:1)); // Poll every 5 seconds
+      await Future.delayed(Duration(seconds:5)); // Poll every 5 seconds
     }
   }
 
-  Widget _buildCategoryDropdown(List<Map<String, dynamic>> categories) {
+  Widget _buildCategoryDropdown( List<CategoryController> categories) {
     return Container(
       margin: EdgeInsets.symmetric(vertical: 10),
       decoration: BoxDecoration(
@@ -71,9 +73,9 @@ class _CategoryDropdownState extends State<CategoryDropdown> {
         value: _selectedCategory,
         items: categories
             .map((category) => DropdownMenuItem<String>(
-                  value: category['id'].toString(),
+                  value: category.id.toString(),
                   child: Text(
-                    category['category_name'],
+                    category.name,
                     style: GoogleFonts.poppins(
                       color: Colors.black87,
                       fontWeight: FontWeight.w400,
@@ -101,7 +103,7 @@ class _CategoryDropdownState extends State<CategoryDropdown> {
 
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder<List<Map<String, dynamic>>>(
+    return StreamBuilder< List<CategoryController>>(
       stream: _categoriesStream,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {

@@ -9,6 +9,7 @@ import 'package:application/widgets/controllers/BrandSerializer.dart';
 import 'package:application/widgets/controllers/CategorySerializers.dart';
 import 'package:application/widgets/controllers/ProductQuantity.dart';
 import 'package:application/widgets/controllers/ProductSerializer.dart';
+import 'package:application/widgets/controllers/ProductWithStock.dart';
 import 'package:application/widgets/state/AppBloc.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -16,6 +17,7 @@ import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 
 import 'package:cherry_toast/cherry_toast.dart';
+import 'package:rxdart/rxdart.dart';
 
 class AppRequest {
   static String mainUrl = "http://127.0.0.1:8000/api";
@@ -27,6 +29,7 @@ class AppRequest {
     while (true) {
       try {
         final response = await http.get(Uri.parse(url));
+        print("b14");
 
         if (response.statusCode == 200) {
           final body = jsonDecode(response.body);
@@ -149,12 +152,6 @@ class AppRequest {
     }
   }
 
-
-
-
-
-
-
 // Helper method to compare two lists of ProductController
   static bool _areListsEqual(
       List<ProductController> oldList, List<ProductController> newList) {
@@ -168,9 +165,8 @@ class AppRequest {
   }
 
   static Future patchProduct(
-      {
-        required bool isRestock,
-        required BuildContext context,
+      {required bool isRestock,
+      required BuildContext context,
       required int id,
       required Map<String, dynamic> data}) async {
     try {
@@ -196,8 +192,9 @@ class AppRequest {
             ),
           ),
         );
-        isRestock?Navigator.pop(context):
-        Globals.switchScreens(context: context, screen: InventoryPage());
+        isRestock
+            ? Navigator.pop(context)
+            : Globals.switchScreens(context: context, screen: InventoryPage());
       } else {
         bloc.changeLoading(false);
         ScaffoldMessenger.of(context).showSnackBar(
@@ -234,9 +231,9 @@ class AppRequest {
           return [];
         }
 
-        final List<BrandController> brands = ProductStock
-            .map((element) => BrandController.fromJson(element))
-            .toList();
+        final List<BrandController> brands =
+            ProductStock.map((element) => BrandController.fromJson(element))
+                .toList();
         return brands;
       } else {
         throw Exception("Response code error ${request.statusCode}");
@@ -247,8 +244,8 @@ class AppRequest {
     }
   }
 
-    static Future<List<CategoryController>> FutureGetCategories() async {
-    final url ="$mainUrl/category";
+  static Future<List<CategoryController>> FutureGetCategories() async {
+    final url = "$mainUrl/category";
 
     try {
       final request = await http.get(Uri.parse(url));
@@ -410,34 +407,92 @@ class AppRequest {
     );
   }
 
- static Stream<List<ProductStockController>> StreamGetProductStock(int? id) async* {
-  final url = id != null ? "$mainUrl/stock/$id" : "$mainUrl/stock";
+  static Stream<List<ProductStockController>> StreamGetProductStock(
+      int? id) async* {
+    final url = id != null ? "$mainUrl/stock/$id" : "$mainUrl/stock";
 
-  try {
-    final request = await http.get(Uri.parse(url));
+    try {
+      final request = await http.get(Uri.parse(url));
 
-    if (request.statusCode == 200) {
-      final body = jsonDecode(request.body);
-      final List ProductStock = body["stock"];
+      if (request.statusCode == 200) {
+        final body = jsonDecode(request.body);
+        final List ProductStock = body["stock"];
 
-      if (ProductStock.isEmpty) {
-        yield [];
+        if (ProductStock.isEmpty) {
+          yield [];
+        } else {
+          final List<ProductStockController> productstock = ProductStock.map(
+              (element) => ProductStockController.fromJson(element)).toList();
+          yield productstock;
+        }
       } else {
-        final List<ProductStockController> productstock = ProductStock
-            .map((element) => ProductStockController.fromJson(element))
-            .toList();
-        yield productstock;
+        throw Exception("Response code error ${request.statusCode}");
       }
-    } else {
-      throw Exception("Response code error ${request.statusCode}");
+    } catch (e) {
+      print("Error fetching productstock: $e");
+      throw Exception("Error fetching productstock: $e");
     }
-  } catch (e) {
-    print("Error fetching productstock: $e");
-    throw Exception("Error fetching productstock: $e");
   }
-}
 
+  static Stream<List<ProductData>> getProductDataStream(
+    int? categoryId,
+  ) async* {
+    final productUrl = categoryId == null
+        ? "$mainUrl/product"
+        : "$mainUrl/product/category/$categoryId";
 
+    final stockUrl = "$mainUrl/stock";
 
+    List<ProductData> _previousData = [];
 
+    while (true) {
+      try {
+        // Fetch products and stock data concurrently
+        final productsFuture = http.get(Uri.parse(productUrl));
+
+        final results = await productsFuture;
+
+        if (results.statusCode == 200) {
+          final productsBody = jsonDecode(results.body);
+
+          final List productsList = productsBody["products"];
+
+          // Combine product and stock data
+          final List<ProductData> _currentData = productsList.map((product) {
+            return ProductData.fromJson(product);
+          }).toList();
+
+          // Only yield new data if it has changed
+          if (!_ProductDataListsEqual(_previousData, _currentData)) {
+            _previousData = _currentData;
+
+            yield _currentData;
+          }
+        } else {
+          throw Exception(
+              "Response code error - Products: ${results.statusCode},");
+        }
+      } catch (e) {
+        print("Error fetching product data: $e");
+        yield []; // Yield an empty list in case of error
+      }
+
+      // Poll every 3 seconds
+      await Future.delayed(Duration(seconds: 10));
+    }
+  }
+
+  // Helper method to compare lists
+  static bool _ProductDataListsEqual(
+      List<ProductData> list1, List<ProductData> list2) {
+    if (list1.length != list2.length) return false;
+    for (int i = 0; i < list1.length; i++) {
+      if (list1[i].id != list2[i].id ||
+          list1[i].quantity != list2[i].quantity ||
+          list1[i].sellingPrice != list2[i].sellingPrice) {
+        return false;
+      }
+    }
+    return true;
+  }
 }

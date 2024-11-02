@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:application/widgets/controllers/BrandSerializer.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
@@ -7,7 +8,7 @@ class BrandRequest {
   static String mainUrl = "http://127.0.0.1:8000/api";
 
   // Fetch only the 'id' and 'name' fields from the Brand
-  static Future<List<Map<String, dynamic>>> fetchBrand(
+  static Future<List<BrandController>> fetchBrand(
       BuildContext context) async {
     try {
       final Uri uri = Uri.parse("$mainUrl/brand");
@@ -25,11 +26,9 @@ class BrandRequest {
         print(BrandJson);
 
         // Return only a list of maps with id and name
-        List<Map<String, dynamic>> Brand = BrandJson
-            .map((Brand) => {
-                  "id": Brand["id"],
-                  "brand_name": Brand["brand_name"],
-                })
+
+      final  List<BrandController> Brand = BrandJson
+            .map((Brand) =>BrandController.fromJson(Brand))
             .toList();
 
         return Brand;

@@ -13,7 +13,7 @@ class BrandController {
     try {
       print("Parsing BrandController from JSON: $json");
 
-      const requiredKeys = ["brand_name", "id", "category"];
+      const requiredKeys = ["name", "id", "category"];
 
       for (var key in requiredKeys) {
         if (!json.containsKey(key)) {
@@ -23,7 +23,7 @@ class BrandController {
       }
 
       return BrandController(
-        name: json["brand_name"] as String,
+        name: json["name"] as String,
         id: json["id"] as int,
         category: json["category"] as int,
       );

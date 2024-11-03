@@ -1,384 +1,591 @@
+import 'package:application/widgets/controllers/BrandSerializer.dart';
+import 'package:application/widgets/controllers/CategorySerializers.dart';
 import 'package:application/widgets/controllers/ProductWithStock.dart';
+import 'package:application/widgets/requests/Request.dart';
+import 'package:application/widgets/state/AppBloc.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:loading_animation_widget/loading_animation_widget.dart';
+import 'package:provider/provider.dart';
+import 'package:intl/intl.dart';
 
 class EditProductPage extends StatefulWidget {
   final ProductData product;
-  // final Function(BuildContext, ProductData) onRestock;
-  // final Function(BuildContext, ProductData) onEdit;
+  final bool isCreate;
 
-  const EditProductPage({
-    Key? key,
-    required this.product,
-  //  required this.onRestock,
-  //   required this.onE dit,
-  }) : super(key: key);
+  const EditProductPage(
+      {Key? key, required this.product, required this.isCreate})
+      : super(key: key);
 
   @override
-  State<EditProductPage> createState() => _EditProductPageState();
+  _EditProductPageState createState() => _EditProductPageState();
 }
 
-class _EditProductPageState extends State<EditProductPage> with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<double> _scaleAnimation;
+class _EditProductPageState extends State<EditProductPage>
+    with SingleTickerProviderStateMixin {
+  final _formKey = GlobalKey<FormState>();
   final formatter = NumberFormat("#,##0.00", "en_US");
+
+  TextEditingController _productNameController = TextEditingController();
+  TextEditingController _buyingPriceController = TextEditingController();
+  TextEditingController _sellingPriceController = TextEditingController();
+  TextEditingController _quantityController = TextEditingController();
+
+  TextEditingController _restockController = TextEditingController();
+
+  late AnimationController _animationController;
+  late Animation<double> _animation;
+
+  List<BrandController> _brands = [];
+  List<CategoryController> _category = [];
+  String? _selectedBrand;
+  int? _selectedBrandId;
+
+  String? _selectedCategory;
+  int? _selectedCategoryId;
 
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(
-      duration: const Duration(milliseconds: 200),
+    if (!widget.isCreate) {
+      _productNameController = TextEditingController(text: widget.product.name);
+      _buyingPriceController =
+          TextEditingController(text: widget.product.buyingPrice.toString());
+      _sellingPriceController =
+          TextEditingController(text: widget.product.sellingPrice.toString());
+      _quantityController =
+          TextEditingController(text: widget.product.quantity.toString());
+      _restockController =
+          TextEditingController(text: widget.product.reorderLevel.toString());
+    }
+
+    _fetchBrands();
+    _fetchCategory();
+    _animationController = AnimationController(
       vsync: this,
+      duration: const Duration(milliseconds: 300),
     );
-    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.95).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    _animation = CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeInOut,
+    );
+    _animationController.forward();
+  }
+
+  // Existing fetch methods remain the same
+  Future<void> _fetchBrands() async {
+    try {
+      List<BrandController> brands = await AppRequest.FutureGetBrands(null);
+      setState(() {
+        _brands = brands;
+        _selectedBrandId = brands
+            .firstWhere((brand) => brand.id == widget.product.brand_id,
+                orElse: () => brands.first)
+            .id;
+      });
+    } catch (e) {
+      _showError('Error fetching brands: $e');
+    }
+  }
+
+  Future<void> _fetchCategory() async {
+    try {
+      List<CategoryController> category =
+          await AppRequest.FutureGetCategories();
+      setState(() {
+        _category = category;
+        _selectedCategoryId = category
+            .firstWhere((element) => element.id == widget.product.category_id,
+                orElse: () => category.first)
+            .id;
+      });
+    } catch (e) {
+      _showError('Error fetching categories: $e');
+    }
+  }
+
+  void _showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            Icon(Icons.error_outline, color: Colors.white),
+            SizedBox(width: 8),
+            Expanded(child: Text(message)),
+          ],
+        ),
+        backgroundColor: Colors.red,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final bloc = context.watch<Appbloc>();
+
+    return Scaffold(
+      backgroundColor: Colors.grey[100],
+      appBar: AppBar(
+        elevation: 0,
+        backgroundColor: widget.isCreate ? Colors.green : Colors.blue,
+        title: Text(
+          widget.isCreate
+              ? 'Add Product'
+              : 'Edit Product #${widget.product.id}',
+          style: TextStyle(
+            color: Colors.grey[800],
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back, color: Colors.grey[800]),
+          onPressed: () => Navigator.pop(context),
+        ),
+      ),
+      body: Center(
+        child: Container(
+          constraints: BoxConstraints(maxWidth: 800),
+          child: SingleChildScrollView(
+            padding: EdgeInsets.all(16),
+            child: ScaleTransition(
+              scale: _animation,
+              child: Column(
+                children: [
+                  _buildProductInfoCard(),
+                  SizedBox(height: 16),
+                  _buildPricingCard(),
+                  SizedBox(height: 16),
+                  _buildStockCard(),
+                  SizedBox(height: 16),
+                  _buildActionCard(bloc),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildProductInfoCard() {
+    return _buildCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 60,
+                height: 60,
+                decoration: BoxDecoration(
+                  color: Colors.grey[100],
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(
+                  Icons.inventory_2_outlined,
+                  color: Colors.grey,
+                  size: 30,
+                ),
+              ),
+              SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Product Information',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.grey[800],
+                      ),
+                    ),
+                    SizedBox(height: 4),
+                    Text(
+                      'Basic details about the product',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey[600],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 24),
+          _buildTextField(
+            _productNameController,
+            'Product Name',
+            Icons.shopping_bag_outlined,
+          ),
+          SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(child: _buildBrandDropdown()),
+              SizedBox(width: 16),
+              Expanded(child: _buildCategoryDropdown()),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPricingCard() {
+    return _buildCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                Icons.payments_outlined,
+                size: 24,
+                color: Colors.blue,
+              ),
+              SizedBox(width: 12),
+              Text(
+                'Pricing Information',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.grey[800],
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 24),
+          Row(
+            children: [
+              Expanded(
+                child: _buildTextField(
+                  _buyingPriceController,
+                  'Buying Price',
+                  Icons.shopping_bag_outlined,
+                  prefix: '\$',
+                  isNumber: true,
+                ),
+              ),
+              SizedBox(width: 16),
+              Expanded(
+                child: _buildTextField(
+                  _sellingPriceController,
+                  'Selling Price',
+                  Icons.sell_outlined,
+                  prefix: '\$',
+                  isNumber: true,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStockCard() {
+    return _buildCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                Icons.inventory,
+                size: 24,
+                color: Colors.green,
+              ),
+              SizedBox(width: 12),
+              Text(
+                'Stock Information',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.grey[800],
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 24),
+          _buildTextField(
+            _quantityController,
+            'Quantity in Stock',
+            Icons.inventory_2_outlined,
+            isNumber: true,
+          ),
+          SizedBox(height: 24),
+          _buildTextField(
+            _restockController,
+            'Restock Level',
+            Icons.warning_amber_outlined,
+            isNumber: true,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildActionCard(Appbloc bloc) {
+    return _buildCard(
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          OutlinedButton.icon(
+            onPressed: () => Navigator.pop(context),
+            icon: Icon(Icons.close, size: 16),
+            label: Text('Cancel', style: TextStyle(fontSize: 12)),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: Colors.grey[700],
+              side: BorderSide(color: Colors.grey[400]!),
+              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+          ),
+          SizedBox(width: 12),
+          ElevatedButton.icon(
+            onPressed: () {
+              if (_formKey.currentState!.validate()) {
+                final Map<String, dynamic> data = {
+                  "brand": _selectedBrandId,
+                  "id": widget.product.id,
+                  "category": _selectedCategoryId,
+                  "product_name": _productNameController.text,
+                  "buying_price": _buyingPriceController.text,
+                  "selling_price": _sellingPriceController.text,
+                  "quantity": _quantityController.text
+                };
+                AppRequest.patchProduct(
+                  isRestock: false,
+                  context: context,
+                  id: widget.product.id,
+                  data: data,
+                );
+              }
+            },
+            icon: bloc.isloading
+                ? LoadingAnimationWidget.staggeredDotsWave(
+                    color: Colors.white,
+                    size: 16,
+                  )
+                : Icon(Icons.save, size: 16),
+
+            label: Text(  widget.isCreate?"Create":
+              
+              'Save Changes', style: TextStyle(fontSize: 12)),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.green,
+              foregroundColor: Colors.white,
+              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCard({required Widget child}) {
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.1),
+            spreadRadius: 1,
+            blurRadius: 6,
+            offset: Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: EdgeInsets.all(24),
+        child: child,
+      ),
+    );
+  }
+
+  Widget _buildTextField(
+    TextEditingController controller,
+    String label,
+    IconData icon, {
+    bool isNumber = false,
+    String? prefix,
+  }) {
+    return TextField(
+      controller: controller,
+      keyboardType: isNumber ? TextInputType.number : TextInputType.text,
+      decoration: InputDecoration(
+        labelText: label,
+        labelStyle: TextStyle(
+          color: Colors.grey[600],
+          fontSize: 12,
+        ),
+        prefixIcon: Icon(icon, size: 18, color: Colors.grey[600]),
+        prefixText: prefix,
+        prefixStyle: TextStyle(
+          color: Colors.grey[800],
+          fontSize: 14,
+        ),
+        filled: true,
+        fillColor: Colors.grey[50],
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: BorderSide(color: Colors.grey[300]!),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: BorderSide(color: Colors.blue, width: 1),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: BorderSide(color: Colors.grey[300]!),
+        ),
+        contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      ),
+      style: TextStyle(
+        fontSize: 14,
+        color: Colors.grey[800],
+      ),
+    );
+  }
+
+  Widget _buildBrandDropdown() {
+    return _buildDropdown(
+      value: _selectedBrandId,
+      items: _brands.map((brand) {
+        return DropdownMenuItem(
+          value: brand.id,
+          child: Text(brand.name),
+        );
+      }).toList(),
+      onChanged: (value) {
+        setState(() {
+          _selectedBrandId = value as int?;
+        });
+      },
+      label: 'Brand',
+      icon: Icons.business_outlined,
+    );
+  }
+
+  Widget _buildCategoryDropdown() {
+    return _buildDropdown(
+      value: _selectedCategoryId,
+      items: _category.map((category) {
+        return DropdownMenuItem(
+          value: category.id,
+          child: Text(category.name),
+        );
+      }).toList(),
+      onChanged: (value) {
+        setState(() {
+          _selectedCategoryId = value as int?;
+        });
+      },
+      label: 'Category',
+      icon: Icons.category_outlined,
+    );
+  }
+
+
+    Widget buildDropdownWithButton({
+   required addNewItem,
+    required Widget dropdown,
+     }) {
+    return Row(
+      children: [
+        Expanded(child: dropdown),
+        SizedBox(width: 10),
+        ElevatedButton.icon(
+       
+          onPressed: addNewItem,
+          icon: Icon(Icons.add),
+          label: Text('New', style: GoogleFonts.poppins(color: Colors.white)),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Theme.of(context).colorScheme.secondary,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(15),
+            ),
+            padding: EdgeInsets.symmetric(horizontal: 15, vertical: 8),
+          ),
+        ),
+      ],
+    );
+  }
+
+
+
+
+
+
+  Widget _buildDropdown({
+    required String label,
+    required IconData icon,
+    required List<DropdownMenuItem<int>> items,
+    required void Function(Object?) onChanged,
+    required int? value,
+  }) {
+    return DropdownButtonFormField<int>(
+      value: value,
+      items: items,
+      onChanged: onChanged,
+      decoration: InputDecoration(
+        labelText: label,
+        labelStyle: TextStyle(
+          color: Colors.grey[600],
+          fontSize: 12,
+        ),
+        prefixIcon: Icon(icon, size: 18, color: Colors.grey[600]),
+        filled: true,
+        fillColor: Colors.grey[50],
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: BorderSide(color: Colors.grey[300]!),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: BorderSide(color: Colors.blue, width: 1),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: BorderSide(color: Colors.grey[300]!),
+        ),
+        contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      ),
+      style: TextStyle(
+        fontSize: 14,
+        color: Colors.grey[800],
+      ),
+      dropdownColor: Colors.white,
+      icon: Icon(Icons.arrow_drop_down, color: Colors.grey[600]),
+      isExpanded: true,
+      hint: Text(
+        'Select $label',
+        style: TextStyle(
+          fontSize: 14,
+          color: Colors.grey[600],
+        ),
+      ),
     );
   }
 
   @override
   void dispose() {
-    _controller.dispose();
+    _productNameController.dispose();
+    _buyingPriceController.dispose();
+    _sellingPriceController.dispose();
+    _quantityController.dispose();
+    _animationController.dispose();
     super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final bool isLowStock = widget.product.quantity <= widget.product.reorderLevel;
-    final theme = Theme.of(context);
-
-    return MouseRegion(
-      onEnter: (_) => _controller.forward(),
-      onExit: (_) => _controller.reverse(),
-      child: AnimatedBuilder(
-        animation: _scaleAnimation,
-        builder: (context, child) => Transform.scale(
-          scale: _scaleAnimation.value,
-          child: Container(
-            margin: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
-                  blurRadius: 10,
-                  spreadRadius: 0,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: Material(
-              color: Colors.transparent,
-              child: InkWell(
-                borderRadius: BorderRadius.circular(16),
-                onTap: () {},
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildHeader(theme),
-                      const SizedBox(height: 16),
-                      _buildCategories(theme),
-                      const SizedBox(height: 16),
-                      _buildStockInfo(isLowStock, theme),
-                      const SizedBox(height: 16),
-                      _buildPricingInfo(theme),
-                      const SizedBox(height: 16),
-                      _buildActions(context, theme),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildHeader(ThemeData theme) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Product Image Container
-        Container(
-          width: 90,
-          height: 90,
-          decoration: BoxDecoration(
-            color: theme.colorScheme.surface,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.grey.withOpacity(0.1)),
-          ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                Icons.inventory_2_outlined,
-                size: 36,
-                color: theme.colorScheme.secondary,
-              ),
-              const SizedBox(height: 4),
-              Text(
-                '#${widget.product.id}',
-                style: GoogleFonts.inter(
-                  fontSize: 12,
-                  color: theme.colorScheme.secondary,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(width: 16),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Expanded(
-                    child: Text(
-                      widget.product.name,
-                      style: GoogleFonts.inter(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: theme.colorScheme.onSurface,
-                      ),
-                    ),
-                  ),
-                  Switch.adaptive(
-                    value: widget.product.isActive,
-                    onChanged: (value) {
-                      // Handle status change
-                    },
-                    activeColor: theme.colorScheme.primary,
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildCategories(ThemeData theme) {
-    return Row(
-      children: [
-        _buildCategoryChip(
-          icon: Icons.category_outlined,
-          label: 'Category ${widget.product.category}',
-          backgroundColor: theme.colorScheme.primary.withOpacity(0.1),
-          textColor: theme.colorScheme.primary,
-        ),
-        const SizedBox(width: 8),
-        _buildCategoryChip(
-          icon: Icons.business_outlined,
-          label: 'Brand ${widget.product.brand}',
-          backgroundColor: theme.colorScheme.secondary.withOpacity(0.1),
-          textColor: theme.colorScheme.secondary,
-        ),
-      ],
-    );
-  }
-
-  Widget _buildCategoryChip({
-    required IconData icon,
-    required String label,
-    required Color backgroundColor,
-    required Color textColor,
-  }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-        color: backgroundColor,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 16, color: textColor),
-          const SizedBox(width: 4),
-          Text(
-            label,
-            style: GoogleFonts.inter(
-              fontSize: 12,
-              color: textColor,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildStockInfo(bool isLowStock, ThemeData theme) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.withOpacity(0.1)),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          _buildStockInfoItem(
-            icon: Icons.inventory,
-            label: 'Current Stock',
-            value: '${widget.product.quantity}',
-            valueColor: isLowStock ? Colors.red : Colors.green,
-            theme: theme,
-          ),
-          _buildStockInfoItem(
-            icon: Icons.warning_amber_outlined,
-            label: 'Reorder Level',
-            value: '${widget.product.reorderLevel}',
-            valueColor: theme.colorScheme.onSurface,
-            theme: theme,
-          ),
-          _buildStockInfoItem(
-            icon: Icons.update,
-            label: 'Last Restocked',
-            value: DateFormat('MM/dd/yy').format(widget.product.lastRestocked),
-            valueColor: theme.colorScheme.onSurface,
-            theme: theme,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildStockInfoItem({
-    required IconData icon,
-    required String label,
-    required String value,
-    required Color valueColor,
-    required ThemeData theme,
-  }) {
-    return Column(
-      children: [
-        Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 16, color: theme.colorScheme.secondary),
-            const SizedBox(width: 4),
-            Text(
-              label,
-              style: GoogleFonts.inter(
-                fontSize: 12,
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 4),
-        Text(
-          value,
-          style: GoogleFonts.inter(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-            color: valueColor,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildPricingInfo(ThemeData theme) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        _buildPriceItem(
-          icon: Icons.shopping_bag_outlined,
-          label: 'Buying Price',
-          value: '\$${formatter.format(widget.product.buyingPrice)}',
-          theme: theme,
-        ),
-        _buildPriceItem(
-          icon: Icons.sell_outlined,
-          label: 'Selling Price',
-          value: '\$${formatter.format(widget.product.sellingPrice)}',
-          valueColor: Colors.green,
-          theme: theme,
-        ),
-      ],
-    );
-  }
-
-  Widget _buildPriceItem({
-    required IconData icon,
-    required String label,
-    required String value,
-    Color? valueColor,
-    required ThemeData theme,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Icon(icon, size: 16, color: theme.colorScheme.onSurfaceVariant),
-            const SizedBox(width: 4),
-            Text(
-              label,
-              style: GoogleFonts.inter(
-                fontSize: 12,
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 4),
-        Text(
-          value,
-          style: GoogleFonts.inter(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-            color: valueColor ?? theme.colorScheme.onSurface,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildActions(BuildContext context, ThemeData theme) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.end,
-      children: [
-        OutlinedButton.icon(
-          onPressed: () {},
-          //  widget.onEdit(context, widget.product),
-          icon: const Icon(Icons.edit_outlined, size: 18),
-          label: Text('Edit', style: GoogleFonts.inter(fontSize: 14)),
-          style: OutlinedButton.styleFrom(
-            foregroundColor: theme.colorScheme.primary,
-            side: BorderSide(color: theme.colorScheme.primary),
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-          ),
-        ),
-        const SizedBox(width: 8),
-        ElevatedButton.icon(
-          onPressed: (){},
-          //  => widget.onRestock(context, widget.product),
-          icon: const Icon(Icons.add, size: 18),
-          label: Text('Restock', style: GoogleFonts.inter(fontSize: 14)),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: theme.colorScheme.primary,
-            foregroundColor: Colors.white,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-          ),
-        ),
-      ],
-    );
   }
 }

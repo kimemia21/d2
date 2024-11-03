@@ -29,6 +29,7 @@ class _AddProductFormState extends State<AddProductForm>
   TextEditingController brandController = TextEditingController();
   TextEditingController buyingPriceController = TextEditingController();
   TextEditingController quantityController = TextEditingController();
+  TextEditingController restockLevel = TextEditingController();
 
   late AnimationController _animationController;
   late Animation<double> _animation;
@@ -39,7 +40,7 @@ class _AddProductFormState extends State<AddProductForm>
   final Color backgroundColor = const Color(0xFFF8F9FA); // Light gray
   final Color surfaceColor = Colors.white;
   final Color errorColor = const Color(0xFFEF5350); // Red
-  final Color textColor = const Color(0xFF2C3E50); 
+  final Color textColor = const Color(0xFF2C3E50);
   final Color cardColor = Colors.white;
 
   @override
@@ -135,10 +136,11 @@ class _AddProductFormState extends State<AddProductForm>
     }
   }
 
-  void showAddCategoryDialog(
-    BuildContext context,
-    String title,
-  ) {
+  void showAddBrandOrCategoryDialog(
+      {required BuildContext context,
+      required String title,
+      required Future future,
+      required bool isBrand}) {
     String newItem = '';
 
     showDialog(
@@ -169,180 +171,7 @@ class _AddProductFormState extends State<AddProductForm>
                     TextField(
                       onChanged: (value) {
                         newItem = value;
-                      },
-                      decoration: InputDecoration(
-                        hintText: "Enter new $title",
-                        hintStyle: GoogleFonts.poppins(
-                            color: Colors.grey, fontSize: 14),
-                        focusedBorder: OutlineInputBorder(
-                          borderSide: BorderSide(
-                              color: Theme.of(context).colorScheme.secondary,
-                              width: 2),
-                          borderRadius: BorderRadius.circular(15),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderSide: BorderSide(color: Colors.grey.shade300),
-                          borderRadius: BorderRadius.circular(15),
-                        ),
-                        filled: true,
-                        fillColor: Colors.grey.shade100,
-                        prefixIcon: Icon(Icons.add_circle_outline,
-                            color: Theme.of(context).colorScheme.secondary,
-                            size: 20),
-                        contentPadding:
-                            EdgeInsets.symmetric(vertical: 10, horizontal: 15),
-                      ),
-                      style: GoogleFonts.poppins(
-                          color: Colors.black87, fontSize: 14),
-                    ),
-                    SizedBox(height: 15),
-                    Text(
-                      "Existing ${title.toLowerCase()}:",
-                      style: GoogleFonts.poppins(
-                        color: Colors.grey.shade600,
-                        fontWeight: FontWeight.w500,
-                        fontSize: 14,
-                      ),
-                    ),
-                    SizedBox(height: 5),
-                    Container(
-                      width: 600,
-                      height: 300,
-                      child: StreamBuilder<List<CategoryController>>(
-                        stream: AppRequest.getCategoriesStream(),
-                        builder: (BuildContext context,
-                            AsyncSnapshot<List<CategoryController>> snapshot) {
-                          if (snapshot.connectionState ==
-                              ConnectionState.waiting) {
-                            return const Center(
-                                child: CircularProgressIndicator());
-                          } else if (snapshot.hasError) {
-                            return Center(
-                                child: Text('Error: ${snapshot.error}'));
-                          } else if (!snapshot.hasData ||
-                              snapshot.data!.isEmpty) {
-                            return Center(
-                                child: Text('No categories available'));
-                          } else {
-                            final categories = snapshot.data!;
-                            return ListView.builder(
-                              itemCount: categories.length,
-                              itemBuilder: (context, index) {
-                                final item = categories[index];
-                                return Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 10,
-                                    vertical: 3,
-                                  ),
-                                  child: Text(
-                                    item.name,
-                                    style: GoogleFonts.poppins(
-                                      color: Colors.black87,
-                                      fontSize: 12,
-                                    ),
-                                  ),
-                                );
-                              },
-                            );
-                          }
-                        },
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              actions: <Widget>[
-                TextButton(
-                  child: Text(
-                    'Cancel',
-                    style:
-                        GoogleFonts.poppins(color: Colors.grey, fontSize: 14),
-                  ),
-                  onPressed: () {
-                    Navigator.of(dialogContext).pop();
-                  },
-                ),
-                ElevatedButton(
-                  child:context.watch<Appbloc>().isloading
-                      ? LoadingAnimationWidget.staggeredDotsWave(
-                          color: Colors.white,
-                          size: 20,
-                        )
-                      : Text(
-                          'Add',
-                          style: GoogleFonts.poppins(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 14,
-                          ),
-                        ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.green,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    padding: EdgeInsets.symmetric(horizontal: 15, vertical: 8),
-                  ),
-                  onPressed: () async {
-                    if (newItem.isNotEmpty) {
-                   
-                      await AppRequest.CreateCategory(
-                        body: {"name": newItem.toUpperCase()},
-                        context: context,
-                      );
-                    
-                    } else {
-                      ScaffoldMessenger.of(dialogContext).showSnackBar(
-                        SnackBar(
-                          content: Text('Please enter a $title name'),
-                          backgroundColor: Colors.red,
-                        ),
-                      );
-                    }
-                  },
-                ),
-              ],
-            );
-          },
-        );
-      },
-    );
-  }
-
-  void showAddBrandDialog(
-    BuildContext context,
-    String title,
-  ) {
-    String newItem = '';
-
-    showDialog(
-      context: context,
-      builder: (BuildContext dialogContext) {
-        return StatefulBuilder(
-          builder: (BuildContext context, StateSetter setState) {
-            final Appbloc bloc = Provider.of<Appbloc>(context, listen: false);
-
-            return AlertDialog(
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20)),
-              title: Text(
-                title,
-                style: GoogleFonts.poppins(
-                  color: Theme.of(context).primaryColor,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 20,
-                ),
-              ),
-              content: SizedBox(
-                width: 600,
-                height: 400,
-                // Set a fixed width for the dialog
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    TextField(
-                      onChanged: (value) {
-                        newItem = value;
+                        print(newItem);
                       },
                       decoration: InputDecoration(
                         hintText: "Enter new $title",
@@ -385,8 +214,8 @@ class _AddProductFormState extends State<AddProductForm>
                           border: Border.all(color: Colors.grey.shade300),
                           borderRadius: BorderRadius.circular(10),
                         ),
-                        child: FutureBuilder<List<BrandController>>(
-                            future: AppRequest.FutureGetBrands(null),
+                        child: FutureBuilder(
+                            future: future,
                             builder: (BuildContext context, snapshot) {
                               if (snapshot.connectionState ==
                                   ConnectionState.waiting) {
@@ -396,11 +225,11 @@ class _AddProductFormState extends State<AddProductForm>
                                 return Center(
                                     child: Text('Error: ${snapshot.error}'));
                               } else {
-                                final categories = snapshot.data;
+                                final data = snapshot.data;
                                 return ListView.builder(
-                                  itemCount: categories!.length,
+                                  itemCount: data!.length,
                                   itemBuilder: (context, index) {
-                                    final item = categories[index];
+                                    final item = data[index];
                                     return Padding(
                                       padding: const EdgeInsets.symmetric(
                                         horizontal: 10,
@@ -432,7 +261,7 @@ class _AddProductFormState extends State<AddProductForm>
                   },
                 ),
                 ElevatedButton(
-                  child: bloc.isloading
+                  child: context.watch<Appbloc>().isloading
                       ? LoadingAnimationWidget.staggeredDotsWave(
                           color: Colors.white,
                           size: 20,
@@ -452,26 +281,42 @@ class _AddProductFormState extends State<AddProductForm>
                     ),
                     padding: EdgeInsets.symmetric(horizontal: 15, vertical: 8),
                   ),
-                  onPressed: () async {
-                    if (newItem.isNotEmpty) {
-             
-                      final Map<String, dynamic> body = {
-                        "name": newItem.toUpperCase(),
-                        "category": int.parse(selectedCategory!)
-                      };
-                      await AppRequest.CreateBrand(
-                          body: body, context: context);
+                 // Function to handle button press
+onPressed: () async {
+  try {
+    // Check if the new item name is not empty
+    if (newItem.isNotEmpty) {
+      // Create a request body based on whether it's a brand or category
+      final Map<String, dynamic> body = isBrand ? {
+        "name": newItem.toUpperCase(), // Convert name to uppercase
+        "category": int.parse(selectedCategory!), // Parse the selected category
+      } : {
+        "name": newItem.toUpperCase(), // Only name for non-brand items
+      };
 
-                      // Navigator.of(dialogContext).pop();
-                    } else {
-                      ScaffoldMessenger.of(dialogContext).showSnackBar(
-                        SnackBar(
-                          content: Text('Please enter a $title name'),
-                          backgroundColor: Colors.red,
-                        ),
-                      );
-                    }
-                  },
+      // Make the API request to create the brand or category
+      await AppRequest.CreateBrandOrCategory(
+        isBrand: isBrand,
+        body: body,
+        context: context,
+      );
+
+      
+    } else {
+      // Show a Snackbar if the item name is empty
+      ScaffoldMessenger.of(dialogContext).showSnackBar(
+        SnackBar(
+          content: Text('Please enter a $title name'), // Message to user
+          backgroundColor: Colors.red, // Red background for error
+        ),
+      );
+    }
+  } catch (e) {
+    // Handle any exceptions that occur during the process
+    throw Exception("Error: $e");
+  }
+},
+
                 ),
               ],
             );
@@ -482,11 +327,20 @@ class _AddProductFormState extends State<AddProductForm>
   }
 
   void addNewCategory() async {
-    showAddCategoryDialog(context, "Category");
+    // showAddCategoryOrDialog(context, "Category");
+    showAddBrandOrCategoryDialog(
+        context: context,
+        title: "Category",
+        future: AppRequest.FutureGetCategories(),
+        isBrand: false);
   }
 
   void addNewBrand() async {
-    showAddBrandDialog(context, 'Brand');
+    showAddBrandOrCategoryDialog(
+        context: context,
+        title: "Brand",
+        future: AppRequest.FutureGetBrands(null),
+        isBrand: true);
   }
 
   void error({required String title}) {
@@ -554,7 +408,6 @@ class _AddProductFormState extends State<AddProductForm>
         Expanded(child: dropdown),
         SizedBox(width: 10),
         ElevatedButton.icon(
-          // add an alert if selectedCategory is empty so that we can get the brand id when creating a new Brand
           onPressed: addNewItem,
           icon: Icon(Icons.add),
           label: Text('New', style: GoogleFonts.poppins(color: Colors.white)),
@@ -621,7 +474,9 @@ class _AddProductFormState extends State<AddProductForm>
                 'Selling Price', sellingPriceController, Icons.attach_money),
             SizedBox(height: 20),
             buildNumberTextField(
-                'Quantity', quantityController, Icons.inventory)
+                'Quantity', quantityController, Icons.inventory),
+            buildNumberTextField(
+                'Restock Level', quantityController, Icons.dangerous_sharp)
           ],
         ),
       ),
@@ -707,7 +562,6 @@ class _AddProductFormState extends State<AddProductForm>
     );
   }
 
-
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
@@ -737,7 +591,8 @@ class _AddProductFormState extends State<AddProductForm>
           margin: EdgeInsets.symmetric(vertical: 20),
           child: Card(
             elevation: 4,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
             child: SingleChildScrollView(
               padding: EdgeInsets.all(24),
               child: Column(
@@ -859,6 +714,8 @@ class _AddProductFormState extends State<AddProductForm>
           Icons.inventory_2_outlined,
           TextInputType.number,
         ),
+        buildNumberTextField(
+            'Restock Level', quantityController, Icons.dangerous_sharp)
       ],
     );
   }

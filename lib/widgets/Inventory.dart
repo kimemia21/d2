@@ -919,7 +919,7 @@ class _InventoryPageState extends State<InventoryPage>
                     OutlinedButton.icon(
                       onPressed: () => Globals.switchScreens(
                         context: context,
-                        screen: EditProductPage(product: product),
+                        screen: EditProductPage(product: product,isCreate: false,),
                       ),
                       icon: const Icon(Icons.edit_outlined, size: 16),
                       label: const Text('Edit', style: TextStyle(fontSize: 12)),
@@ -1114,7 +1114,7 @@ class _InventoryPageState extends State<InventoryPage>
         try {
           Globals.switchScreens(
             context: context,
-            screen: EditProductPage(product: product),
+            screen: EditProductPage(product: product, isCreate: false,),
           );
         } catch (e) {
           print("Got this error when switching screens $e");

@@ -330,42 +330,69 @@ class AppRequest {
   }
 
   static Future<void> CreateProduct({
-    required Map<String, dynamic> body,
+    required Map<String, dynamic> stockBody,
+    required Map<String, dynamic> Productbody,
     required BuildContext context,
   }) async {
     final Uri url = Uri.parse("$mainUrl/product");
+    final Uri stockurl = Uri.parse("$mainUrl/stock");
+
     final Map<String, String> headers = {'Content-Type': 'application/json'};
     final Appbloc bloc = context.read<Appbloc>();
 
     bloc.changeLoading(true);
 
     try {
+      // Send product creation request
       final response = await http
           .post(
             url,
             headers: headers,
-            body: jsonEncode(body),
+            body: jsonEncode(Productbody),
           )
           .timeout(Duration(seconds: 3)); // Add a timeout
 
       if (response.statusCode == 201) {
-        final responseBody = jsonDecode(response.body);
+        final PB = jsonDecode(response.body);
+        if (PB["rsp"]) {
+           var productId = PB["product"]["id"];
+          stockBody.addAll({"product": productId});
+          print("---------------------$stockBody");
 
-        print("-----------------------$responseBody------------------------");
-        CherryToast.success(
-          title: Text(
-            "Success",
-            style: GoogleFonts.poppins(fontWeight: FontWeight.bold),
-          ),
-          description: Text(
-            "Product added successfully",
-            style: GoogleFonts.abel(),
-          ),
-          animationDuration: Duration(milliseconds: 200),
-          animationCurve: Curves.easeInOut,
-        ).show(context);
+          // Send stock creation request
+          final stockResponse = await http
+              .post(
+                stockurl,
+                headers: headers,
+                body: jsonEncode(stockBody),
+              )
+              .timeout(Duration(seconds: 3));
 
-        Navigator.of(context).pop();
+          if (stockResponse.statusCode == 201) {
+            final SB = jsonDecode(stockResponse.body);
+            if (SB["rsp"] == true) {
+              CherryToast.success(
+                title: Text(
+                  "Success",
+                  style: GoogleFonts.poppins(fontWeight: FontWeight.bold),
+                ),
+                description: Text(
+                  "Product added successfully",
+                  style: GoogleFonts.abel(),
+                ),
+                animationDuration: Duration(milliseconds: 200),
+                animationCurve: Curves.easeInOut,
+              ).show(context);
+              Navigator.of(context).pop();
+            } else {
+              _handleErrorResponse(context, stockResponse);
+            }
+          } else {
+            _handleErrorResponse(context, stockResponse);
+          }
+        } else {
+          _handleErrorResponse(context, response);
+        }
       } else {
         _handleErrorResponse(context, response);
       }

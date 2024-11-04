@@ -7,17 +7,17 @@ import 'package:application/widgets/controllers/ProductWithStock.dart';
 import 'package:application/widgets/requests/Request.dart';
 import 'package:application/widgets/state/AppBloc.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 
 class EditProductPage extends StatefulWidget {
-  final ProductData product;
+  final ProductData? product;
   final bool isCreate;
 
-  const EditProductPage(
-      {Key? key, required this.product, required this.isCreate})
+  const EditProductPage({Key? key, this.product, required this.isCreate})
       : super(key: key);
 
   @override
@@ -26,7 +26,7 @@ class EditProductPage extends StatefulWidget {
 
 class _EditProductPageState extends State<EditProductPage>
     with SingleTickerProviderStateMixin {
-  final _formKey = GlobalKey<FormState>();
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   final formatter = NumberFormat("#,##0.00", "en_US");
 
   TextEditingController _productNameController = TextEditingController();
@@ -51,15 +51,16 @@ class _EditProductPageState extends State<EditProductPage>
   void initState() {
     super.initState();
     if (!widget.isCreate) {
-      _productNameController = TextEditingController(text: widget.product.name);
+      _productNameController =
+          TextEditingController(text: widget.product!.name);
       _buyingPriceController =
-          TextEditingController(text: widget.product.buyingPrice.toString());
+          TextEditingController(text: widget.product!.buyingPrice.toString());
       _sellingPriceController =
-          TextEditingController(text: widget.product.sellingPrice.toString());
+          TextEditingController(text: widget.product!.sellingPrice.toString());
       _quantityController =
-          TextEditingController(text: widget.product.quantity.toString());
+          TextEditingController(text: widget.product!.quantity.toString());
       _restockController =
-          TextEditingController(text: widget.product.reorderLevel.toString());
+          TextEditingController(text: widget.product!.reorderLevel.toString());
     }
 
     _fetchBrands();
@@ -82,10 +83,12 @@ class _EditProductPageState extends State<EditProductPage>
       List<BrandController> brands = await AppRequest.FutureGetBrands(null);
       setState(() {
         _brands = brands;
-        _selectedBrandId = brands
-            .firstWhere((brand) => brand.id == widget.product.brand_id,
-                orElse: () => brands.first)
-            .id;
+        _selectedBrandId = widget.isCreate
+            ? null
+            : brands
+                .firstWhere((brand) => brand.id == widget.product!.brand_id,
+                    orElse: () => brands.first)
+                .id;
       });
     } catch (e) {
       _showError('Error fetching brands: $e');
@@ -99,10 +102,13 @@ class _EditProductPageState extends State<EditProductPage>
           await AppRequest.FutureGetCategories();
       setState(() {
         _category = category;
-        _selectedCategoryId = category
-            .firstWhere((element) => element.id == widget.product.category_id,
-                orElse: () => category.first)
-            .id;
+        _selectedCategoryId = widget.isCreate
+            ? null
+            : category
+                .firstWhere(
+                    (element) => element.id == widget.product!.category_id,
+                    orElse: () => category.first)
+                .id;
       });
     } catch (e) {
       _showError('Error fetching categories: $e');
@@ -153,7 +159,11 @@ class _EditProductPageState extends State<EditProductPage>
   @override
   Widget build(BuildContext context) {
     final bloc = context.watch<Appbloc>();
-
+    _quantityController.text = "45";
+    _productNameController.text = "mems";
+    _restockController.text = "30";
+    _buyingPriceController.text = "100";
+    _sellingPriceController.text = "140";
     return Scaffold(
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
@@ -162,7 +172,7 @@ class _EditProductPageState extends State<EditProductPage>
         title: Text(
           widget.isCreate
               ? 'Add Product'
-              : 'Edit Product #${widget.product.id}',
+              : 'Edit Product #${widget.product!.id}',
           style: TextStyle(
             color: Colors.grey[800],
             fontSize: 18,
@@ -174,23 +184,26 @@ class _EditProductPageState extends State<EditProductPage>
           onPressed: () => Navigator.pop(context),
         ),
       ),
-      body: Center(
-        child: Container(
-          constraints: BoxConstraints(maxWidth: 800),
-          child: SingleChildScrollView(
-            padding: EdgeInsets.all(16),
-            child: ScaleTransition(
-              scale: _animation,
-              child: Column(
-                children: [
-                  _buildProductInfoCard(),
-                  SizedBox(height: 16),
-                  _buildPricingCard(),
-                  SizedBox(height: 16),
-                  _buildStockCard(),
-                  SizedBox(height: 16),
-                  _buildActionCard(bloc),
-                ],
+      body: Form(
+        key: _formKey,
+        child: Center(
+          child: Container(
+            constraints: BoxConstraints(maxWidth: 800),
+            child: SingleChildScrollView(
+              padding: EdgeInsets.all(16),
+              child: ScaleTransition(
+                scale: _animation,
+                child: Column(
+                  children: [
+                    _buildProductInfoCard(),
+                    SizedBox(height: 16),
+                    _buildPricingCard(),
+                    SizedBox(height: 16),
+                    _buildStockCard(),
+                    SizedBox(height: 16),
+                    _buildActionCard(bloc),
+                  ],
+                ),
               ),
             ),
           ),
@@ -339,12 +352,19 @@ class _EditProductPageState extends State<EditProductPage>
               ),
             ],
           ),
-          SizedBox(height: 24),
-          _buildTextField(
-            _quantityController,
-            'Quantity in Stock',
-            Icons.inventory_2_outlined,
-            isNumber: true,
+          Visibility(
+            visible: widget.isCreate,
+            child: Column(
+              children: [
+                SizedBox(height: 24),
+                _buildTextField(
+                  _quantityController,
+                  'Quantity in Stock',
+                  Icons.inventory_2_outlined,
+                  isNumber: true,
+                ),
+              ],
+            ),
           ),
           SizedBox(height: 24),
           _buildTextField(
@@ -352,6 +372,7 @@ class _EditProductPageState extends State<EditProductPage>
             'Restock Level',
             Icons.warning_amber_outlined,
             isNumber: true,
+            isRestock: true,
           ),
         ],
       ),
@@ -379,22 +400,43 @@ class _EditProductPageState extends State<EditProductPage>
           SizedBox(width: 12),
           ElevatedButton.icon(
             onPressed: () {
-              print(
-                  "--------------------$_selectedBrandId ----------$_selectedCategoryId");
+              if (widget.isCreate && _formKey.currentState!.validate()) {
+                final Map<String, dynamic> productbody = {
+                  "brand_id": _selectedBrandId,
+                  "category_id": _selectedCategoryId,
+                  "name": _productNameController.text,
+                  "buying_price": _buyingPriceController.text,
+                  "selling_price": _sellingPriceController.text,
+                  "barcode": "",
+                  "is_active": true,
+                };
 
-              final Map<String, dynamic> Productdata = {
-                "brand": _selectedBrandId,
-                "id": widget.product.id,
-                "category": _selectedCategoryId,
-                "product_name": _productNameController.text,
+                final Map<String, dynamic> stockBody = {
+                  "quantity": _quantityController.text,
+                  "reorder_level": _restockController.text,
+                };
+
+                AppRequest.CreateProduct(
+                    stockBody: stockBody,
+                    Productbody: productbody,
+                    context: context);
+              }
+
+              final Map<String, dynamic> PatchProductdata = {
+                "brand_id": _selectedBrandId,
+                "id": widget.product!.id,
+                "category_id": _selectedCategoryId,
+                "name": _productNameController.text,
                 "buying_price": _buyingPriceController.text,
                 "selling_price": _sellingPriceController.text,
-                "quantity": _quantityController.text
+                // "quantity": _quantityController.text
+              };
+              final Map<String, dynamic> Patchstockdata = {
+                "id": widget.product!.stockId,
+                "reorder_level": _restockController.text,
               };
 
-              print(jsonEncode(Productdata));
-
-              for (var entry in Productdata.entries) {
+              for (var entry in PatchProductdata.entries) {
                 if (entry.value == null ||
                     entry.value == '' ||
                     entry.value == 0) {
@@ -403,12 +445,7 @@ class _EditProductPageState extends State<EditProductPage>
                 }
               }
 
-              final Map<String, dynamic> stockdata = {
-                "id": widget.product.stockId,
-                "reorder_level": _restockController.text,
-              };
-
-              for (var entry in stockdata.entries) {
+              for (var entry in Patchstockdata.entries) {
                 if (entry.value == null ||
                     entry.value == '' ||
                     entry.value == 0) {
@@ -418,11 +455,11 @@ class _EditProductPageState extends State<EditProductPage>
               }
 
               AppRequest.patchProduct(
-                productData: Productdata,
-                stockData: stockdata,
+                productData: PatchProductdata,
+                stockData: Patchstockdata,
                 isRestock: false,
                 context: context,
-                id: widget.product.id,
+                id: widget.product!.id,
               );
             },
             icon: bloc.isloading
@@ -475,10 +512,34 @@ class _EditProductPageState extends State<EditProductPage>
     IconData icon, {
     bool isNumber = false,
     String? prefix,
+    bool isRestock = false, // Default to false to avoid null issues
   }) {
-    return TextField(
+    return TextFormField(
+      validator: (value) {
+        if (value == null || value.isEmpty) {
+          return "$label can't be empty";
+        }
+
+        if (isRestock) {
+          // Ensure quantityController is not null and parse it safely
+          int? stockQuantity = int.tryParse(_quantityController.text);
+          int? inputQuantity = int.tryParse(value);
+
+          if (stockQuantity != null && inputQuantity != null) {
+            if (inputQuantity > stockQuantity) {
+              return "$label can't be greater than stock quantity";
+            }
+          }
+        }
+        return null;
+      },
       controller: controller,
       keyboardType: isNumber ? TextInputType.number : TextInputType.text,
+      inputFormatters: [
+        isNumber
+            ? FilteringTextInputFormatter.digitsOnly
+            : FilteringTextInputFormatter.singleLineFormatter
+      ],
       decoration: InputDecoration(
         labelText: label,
         labelStyle: TextStyle(
@@ -613,7 +674,7 @@ class _EditProductPageState extends State<EditProductPage>
     required int? value,
   }) {
     return DropdownButtonFormField<int>(
-      value: value,
+      value: widget.isCreate ? null : value,
       items: items,
       onChanged: onChanged,
       decoration: InputDecoration(

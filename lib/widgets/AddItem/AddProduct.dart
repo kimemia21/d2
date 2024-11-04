@@ -123,7 +123,7 @@ class _AddProductFormState extends State<AddProductForm>
           "quantity": quantityController.text
         };
 
-        AppRequest.CreateProduct(body: body, context: context);
+    
 
         CherryToast.success(
           title: Text("Product saved successfully"),

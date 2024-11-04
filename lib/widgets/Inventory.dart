@@ -64,7 +64,7 @@ class _InventoryPageState extends State<InventoryPage>
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => Globals.switchScreens(
           context: context,
-          screen: AddProductForm(),
+          screen: EditProductPage(isCreate:true),
         ),
         backgroundColor: Colors.blue[600],
         label: const Text(

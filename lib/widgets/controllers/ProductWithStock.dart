@@ -1,23 +1,3 @@
-// {
-//     "products": [
-//         {
-//             "id": 1,
-//             "product": {
-//                 "id": 1,
-//                 "name": "TVS Star LX",
-//                 "category": 1,
-//                 "brand": 1,
-//                 "barcode": "",
-//                 "buying_price": "120.00",
-//                 "selling_price": "150.00",
-//                 "is_active": true
-//             },
-//             "quantity": 10,
-//             "reorder_level": 5,
-//             "last_restocked": "2024-11-02T05:49:35.160816Z"
-//         }
-//     ]
-// }
 
 class ProductData {
   final int id;

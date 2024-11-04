@@ -1,3 +1,6 @@
+import 'dart:convert';
+
+import 'package:application/widgets/Globals.dart';
 import 'package:application/widgets/controllers/BrandSerializer.dart';
 import 'package:application/widgets/controllers/CategorySerializers.dart';
 import 'package:application/widgets/controllers/ProductWithStock.dart';
@@ -74,6 +77,7 @@ class _EditProductPageState extends State<EditProductPage>
 
   // Existing fetch methods remain the same
   Future<void> _fetchBrands() async {
+    print("invoked brands");
     try {
       List<BrandController> brands = await AppRequest.FutureGetBrands(null);
       setState(() {
@@ -89,6 +93,7 @@ class _EditProductPageState extends State<EditProductPage>
   }
 
   Future<void> _fetchCategory() async {
+    print("invoked fetch category");
     try {
       List<CategoryController> category =
           await AppRequest.FutureGetCategories();
@@ -119,6 +124,30 @@ class _EditProductPageState extends State<EditProductPage>
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       ),
     );
+  }
+
+  void addNewCategory({required VoidCallback onInvoked}) async {
+    Globals.showAddBrandOrCategoryDialog(
+      context: context,
+      title: "Category",
+      future: AppRequest.FutureGetCategories(),
+      isBrand: false,
+      selectedCategory: _selectedCategoryId,
+    );
+  }
+
+  Future<void> addNewBrand({required VoidCallback onInvoked}) async {
+    Globals.showAddBrandOrCategoryDialog(
+      context: context,
+      title: "Brand",
+      future: AppRequest.FutureGetBrands(null),
+      isBrand: true,
+      selectedCategory: _selectedCategoryId,
+    );
+    if (onInvoked != null) {
+      print("Calling onInvoked callback");
+      await onInvoked;
+    }
   }
 
   @override
@@ -350,23 +379,51 @@ class _EditProductPageState extends State<EditProductPage>
           SizedBox(width: 12),
           ElevatedButton.icon(
             onPressed: () {
-              if (_formKey.currentState!.validate()) {
-                final Map<String, dynamic> data = {
-                  "brand": _selectedBrandId,
-                  "id": widget.product.id,
-                  "category": _selectedCategoryId,
-                  "product_name": _productNameController.text,
-                  "buying_price": _buyingPriceController.text,
-                  "selling_price": _sellingPriceController.text,
-                  "quantity": _quantityController.text
-                };
-                AppRequest.patchProduct(
-                  isRestock: false,
-                  context: context,
-                  id: widget.product.id,
-                  data: data,
-                );
+              print(
+                  "--------------------$_selectedBrandId ----------$_selectedCategoryId");
+
+              final Map<String, dynamic> Productdata = {
+                "brand": _selectedBrandId,
+                "id": widget.product.id,
+                "category": _selectedCategoryId,
+                "product_name": _productNameController.text,
+                "buying_price": _buyingPriceController.text,
+                "selling_price": _sellingPriceController.text,
+                "quantity": _quantityController.text
+              };
+
+              print(jsonEncode(Productdata));
+
+              for (var entry in Productdata.entries) {
+                if (entry.value == null ||
+                    entry.value == '' ||
+                    entry.value == 0) {
+                  print(
+                      'Field ${entry.key} contains a null/empty value: ${entry.value}');
+                }
               }
+
+              final Map<String, dynamic> stockdata = {
+                "id": widget.product.stockId,
+                "reorder_level": _restockController.text,
+              };
+
+              for (var entry in stockdata.entries) {
+                if (entry.value == null ||
+                    entry.value == '' ||
+                    entry.value == 0) {
+                  print(
+                      'Field ${entry.key} contains a null/empty value: ${entry.value}');
+                }
+              }
+
+              AppRequest.patchProduct(
+                productData: Productdata,
+                stockData: stockdata,
+                isRestock: false,
+                context: context,
+                id: widget.product.id,
+              );
             },
             icon: bloc.isloading
                 ? LoadingAnimationWidget.staggeredDotsWave(
@@ -374,10 +431,8 @@ class _EditProductPageState extends State<EditProductPage>
                     size: 16,
                   )
                 : Icon(Icons.save, size: 16),
-
-            label: Text(  widget.isCreate?"Create":
-              
-              'Save Changes', style: TextStyle(fontSize: 12)),
+            label: Text(widget.isCreate ? "Create" : 'Save Changes',
+                style: TextStyle(fontSize: 12)),
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.green,
               foregroundColor: Colors.white,
@@ -460,73 +515,95 @@ class _EditProductPageState extends State<EditProductPage>
   }
 
   Widget _buildBrandDropdown() {
-    return _buildDropdown(
-      value: _selectedBrandId,
-      items: _brands.map((brand) {
-        return DropdownMenuItem(
-          value: brand.id,
-          child: Text(brand.name),
-        );
-      }).toList(),
-      onChanged: (value) {
-        setState(() {
-          _selectedBrandId = value as int?;
-        });
-      },
-      label: 'Brand',
-      icon: Icons.business_outlined,
+    return Container(
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          IconButton(
+            onPressed: () {
+              // Remove the async from here since we're not awaiting anything directly
+              addNewBrand(
+                onInvoked: () async {
+                  try {
+                    // Await the _fetchBrands call
+                    await _fetchBrands();
+                  } catch (e) {
+                    print("Error fetching brands: $e");
+                    // Handle the error appropriately, maybe show a snackbar
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Failed to fetch brands: $e')),
+                    );
+                  }
+                },
+              );
+            },
+            icon: Icon(
+              Icons.add_outlined,
+              color: Colors.green,
+            ),
+          ),
+          Expanded(
+            child: _buildDropdown(
+              value: _selectedBrandId,
+              items: _brands.map((brand) {
+                return DropdownMenuItem(
+                  value: brand.id,
+                  child: Text(brand.name),
+                );
+              }).toList(),
+              onChanged: (value) {
+                setState(() {
+                  _selectedBrandId = value as int?;
+                });
+              },
+              label: 'Brand',
+              icon: Icons.business_outlined,
+            ),
+          ),
+        ],
+      ),
     );
   }
 
   Widget _buildCategoryDropdown() {
-    return _buildDropdown(
-      value: _selectedCategoryId,
-      items: _category.map((category) {
-        return DropdownMenuItem(
-          value: category.id,
-          child: Text(category.name),
-        );
-      }).toList(),
-      onChanged: (value) {
-        setState(() {
-          _selectedCategoryId = value as int?;
-        });
-      },
-      label: 'Category',
-      icon: Icons.category_outlined,
-    );
-  }
-
-
-    Widget buildDropdownWithButton({
-   required addNewItem,
-    required Widget dropdown,
-     }) {
     return Row(
       children: [
-        Expanded(child: dropdown),
-        SizedBox(width: 10),
-        ElevatedButton.icon(
-       
-          onPressed: addNewItem,
-          icon: Icon(Icons.add),
-          label: Text('New', style: GoogleFonts.poppins(color: Colors.white)),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Theme.of(context).colorScheme.secondary,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(15),
-            ),
-            padding: EdgeInsets.symmetric(horizontal: 15, vertical: 8),
+        Expanded(
+          child: _buildDropdown(
+            value: _selectedCategoryId,
+            items: _category.map((category) {
+              return DropdownMenuItem(
+                value: category.id,
+                child: Text(category.name),
+              );
+            }).toList(),
+            onChanged: (value) {
+              setState(() {
+                _selectedCategoryId = value as int?;
+              });
+            },
+            label: 'Category',
+            icon: Icons.category_outlined,
           ),
         ),
+        IconButton(
+            onPressed: () {
+              addNewCategory(onInvoked: () async {
+                try {
+                  print("invoked by mems");
+                  await _fetchCategory();
+                } catch (e) {
+                  throw Exception("invoked by mems $e");
+                }
+              });
+            },
+            icon: Icon(
+              Icons.add_outlined,
+              color: Colors.green,
+            )),
       ],
     );
   }
-
-
-
-
-
 
   Widget _buildDropdown({
     required String label,

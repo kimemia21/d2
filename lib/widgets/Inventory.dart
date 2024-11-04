@@ -1095,7 +1095,7 @@ class _InventoryPageState extends State<InventoryPage>
                     isRestock: true,
                     context: context,
                     id: product.id,
-                    data: body);
+                    stockData: body);
               },
             ),
           ],

@@ -29,9 +29,10 @@ class ProductData {
   final double buyingPrice;
   final double sellingPrice;
   final bool isActive;
-  int quantity;
+  final  int quantity;
   final int reorderLevel;
   final DateTime lastRestocked;
+  final int stockId;
 
   ProductData({
     required this.id,
@@ -46,16 +47,17 @@ class ProductData {
     required this.isActive,
     required this.reorderLevel,
     required this.lastRestocked,
+    required this.stockId
   });
 
   factory ProductData.fromJson(Map<String, dynamic> product) {
     final data = ProductData(
+
       id: product["product"]['id'],
       name: product["product"]['name'],
       brand: product["product"]['brand'],
-      brand_id:int.parse(  product["product"]['brand_id']) ,
-      category_id:int.parse(  product["product"]['category_id']),
-
+      brand_id: product["product"]['brand_id'],
+      category_id: product["product"]['category_id'],
       category: product["product"]['category'],
       isActive: product["product"]["is_active"],
       buyingPrice: double.parse(product["product"]['buying_price']),
@@ -65,6 +67,7 @@ class ProductData {
       lastRestocked: product['last_restocked'] != null
           ? DateTime.parse(product['last_restocked'])
           : DateTime.now(),
+      stockId: product["id"]    
     );
 
     // Check if any fields are null and print the values
@@ -80,6 +83,7 @@ class ProductData {
       'lastRestocked': data.lastRestocked,
     };
 
+   
     for (var entry in values.entries) {
       if (entry.value == null || entry.value == '' || entry.value == 0) {
         print('Field ${entry.key} contains a null/empty value: ${entry.value}');

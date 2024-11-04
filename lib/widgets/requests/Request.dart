@@ -168,16 +168,26 @@ class AppRequest {
       {required bool isRestock,
       required BuildContext context,
       required int id,
-      required Map<String, dynamic> data}) async {
+      Map<String, dynamic>? productData,
+      required Map<String, dynamic> stockData}) async {
     try {
       final Appbloc bloc = context.read<Appbloc>();
       bloc.changeLoading(true);
-      final Uri uri = Uri.parse("$mainUrl/product/$id");
-      final http.Response response = await http.patch(uri,
-          headers: {"Content-Type": "application/json"},
-          body: jsonEncode(data));
+      final Uri product_uri = Uri.parse("$mainUrl/product/$id");
+      final Uri stock_uri = Uri.parse("$mainUrl/stock/${stockData["id"]}");
 
-      if (response.statusCode == 200) {
+      final http.Response product_Response = await http.patch(product_uri,
+          headers: {"Content-Type": "application/json"},
+          body: jsonEncode(productData));
+
+      final http.Response stock_Response = await http.patch(stock_uri,
+          headers: {"Content-Type": "application/json"},
+          body: jsonEncode(stockData));
+
+      final product_body = jsonDecode(product_Response.body);
+      final stock_body = jsonDecode(stock_Response.body);
+
+      if (product_body["rsp"] == true && stock_body["rsp"] == true) {
         bloc.changeLoading(false);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -200,7 +210,7 @@ class AppRequest {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              response.body,
+              "product error $product_body and stock error $stock_body",
               style: GoogleFonts.poppins(color: Colors.white),
             ),
             backgroundColor: Colors.red,
@@ -210,7 +220,7 @@ class AppRequest {
             ),
           ),
         );
-        print(response.body);
+        print("product error $product_body and stock error $stock_body");
       }
     } catch (e) {
       print("err in patchProduct $e");
@@ -285,9 +295,9 @@ class AppRequest {
           await http.post(url, headers: headers, body: jsonEncode(body));
       final resBody = jsonDecode(response.body);
       if (resBody["rsp"] == true) {
-         bloc.changeLoading(false);
-     
-            Navigator.of(context).pop();
+        bloc.changeLoading(false);
+
+        Navigator.of(context).pop();
         CherryToast.success(
           title: Text("Success",
               style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
@@ -297,7 +307,6 @@ class AppRequest {
           animationDuration: Duration(milliseconds: 200),
           animationCurve: Curves.easeInOut,
         ).show(context);
-     
       } else {
         bloc.changeLoading(false);
         ScaffoldMessenger.of(context).showSnackBar(

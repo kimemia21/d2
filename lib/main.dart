@@ -1,5 +1,4 @@
-import 'package:application/widgets/AddItem/AddProduct.dart';
-import 'package:application/widgets/Inventory.dart';
+
 import 'package:application/widgets/homepage.dart';
 import 'package:application/widgets/state/AppBloc.dart';
 import 'package:flutter/material.dart';

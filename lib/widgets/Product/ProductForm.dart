@@ -13,18 +13,18 @@ import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 
-class EditProductPage extends StatefulWidget {
+class ProductPage extends StatefulWidget {
   final ProductData? product;
   final bool isCreate;
 
-  const EditProductPage({Key? key, this.product, required this.isCreate})
+  const ProductPage({Key? key, this.product, required this.isCreate})
       : super(key: key);
 
   @override
-  _EditProductPageState createState() => _EditProductPageState();
+  _ProductPageState createState() => _ProductPageState();
 }
 
-class _EditProductPageState extends State<EditProductPage>
+class _ProductPageState extends State<ProductPage>
     with SingleTickerProviderStateMixin {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   final formatter = NumberFormat("#,##0.00", "en_US");
@@ -459,7 +459,9 @@ class _EditProductPageState extends State<EditProductPage>
                 stockData: Patchstockdata,
                 isRestock: false,
                 context: context,
-                id: widget.product!.id,
+                Productid: widget.product!.id,
+                stockId: widget.product!.stockId,
+                isOnSwitch: false
               );
             },
             icon: bloc.isloading

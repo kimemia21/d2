@@ -70,87 +70,44 @@ class AppRequest {
     return true;
   }
 
-  // static Future CreateCategory(
-  //     {required Map<String, dynamic> body,
-  //     required BuildContext context}) async {
-  //   final Uri url = Uri.parse("$mainUrl/category");
-  //   final Map<String, String> headers = {'Content-Type': 'application/json'};
-  //   final Appbloc bloc = context.read<Appbloc>();
-  //   try {
-  //     bloc.changeLoading(true);
-  //     final response =
-  //         await http.post(url, headers: headers, body: jsonEncode(body));
-  //     if (response.statusCode == 201) {
-  //       bloc.changeLoading(false);
-  //       final body = jsonDecode(response.body);
-  //       final List<dynamic> ProductList = body["categories"];
-  //       print(ProductList);
-  //       bloc.changeLoading(true);
-  //       CherryToast.success(
-  //         title: Text("Success",
-  //             style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
-  //         description:
-  //             Text("added product successfully", style: GoogleFonts.abel()),
-  //         animationDuration: Duration(milliseconds: 200),
-  //         animationCurve: Curves.easeInOut,
-  //       ).show(context);
-  //       Navigator.of(context).pop();
-  //     } else {
-  //       bloc.changeLoading(false);
-  //       ScaffoldMessenger.of(context).showSnackBar(
-  //         SnackBar(
-  //           content: Text(
-  //             response.body,
-  //             style: GoogleFonts.poppins(color: Colors.white),
-  //           ),
-  //           backgroundColor: Colors.green,
-  //           behavior: SnackBarBehavior.floating,
-  //           shape: RoundedRectangleBorder(
-  //             borderRadius: BorderRadius.circular(10),
-  //           ),
-  //         ),
-  //       );
-  //     }
-  //   } catch (e) {
-  //     print("error on product function $e");
-  //     throw Exception(e);
-  //   }
-  // }
 
-  static Stream<List<ProductController>> getProductsStream(int? id) async* {
-    final url =
-        id == null ? "$mainUrl/product" : "$mainUrl/product/category/$id";
-    List<ProductController> previousProducts = [];
+static Stream<List<ProductController>> getProductsStream(int? id) async* {
+  final url = id == null ? "$mainUrl/product" : "$mainUrl/product/category/$id";
+  List<ProductController> previousProducts = [];
 
-    while (true) {
-      try {
-        final request = await http.get(Uri.parse(url));
+  while (true) {
+    try {
+      final request = await http.get(Uri.parse(url));
 
-        if (request.statusCode == 200) {
-          final body = jsonDecode(request.body);
-          final List productsList = body["products"];
+      if (request.statusCode == 200) {
+        final body = jsonDecode(request.body);
+        final List productsList = body["products"];
 
-          // Map the 'products' list to a list of ProductController objects
-          final List<ProductController> currentProducts = productsList
-              .map((element) => ProductController.fromJson(element))
-              .toList();
+    
+        final List<ProductController> currentProducts = productsList
+            .map((element) => ProductController.fromJson(element))
+            .toList();
 
-          // Only yield new data if it has changed
-          if (!_areListsEqual(previousProducts, currentProducts)) {
-            previousProducts = currentProducts; // Update the cache
-            yield currentProducts;
-          }
-        } else {
-          throw Exception("Response code error ${request.statusCode}");
+        // Only yield new data if it has changed
+        if (!_areListsEqual(previousProducts, currentProducts)) {
+          previousProducts = currentProducts; // Update the cache
+          yield currentProducts;
         }
-      } catch (e) {
-        throw Exception("Error fetching products: $e");
+      } else {
+        // Log error and yield an empty list
+        print("Response code error ${request.statusCode}");
+        yield [];
       }
-
-      // Poll every 3 seconds
-      await Future.delayed(Duration(seconds: 3));
+    } catch (e) {
+      // Log exception and yield an empty list
+      print("Error fetching products: $e");
+      yield [];
     }
+
+    // Poll every 3 seconds
+    await Future.delayed(Duration(seconds: 10));
   }
+}
 
 // Helper method to compare two lists of ProductController
   static bool _areListsEqual(
@@ -167,14 +124,103 @@ class AppRequest {
   static Future patchProduct(
       {required bool isRestock,
       required BuildContext context,
-      required int id,
+      // this is for handle the activate and deactive  status of a product
+      required bool isOnSwitch,
+      int? Productid,
+     int? stockId,
       Map<String, dynamic>? productData,
-      required Map<String, dynamic> stockData}) async {
+     Map<String, dynamic> ?stockData,
+     VoidCallback? callback
+     }) async {
     try {
       final Appbloc bloc = context.read<Appbloc>();
       bloc.changeLoading(true);
-      final Uri product_uri = Uri.parse("$mainUrl/product/$id");
-      final Uri stock_uri = Uri.parse("$mainUrl/stock/${stockData["id"]}");
+
+      if (isRestock) {
+        final Uri stock_uri = Uri.parse("$mainUrl/stock/$stockId");
+        final http.Response stock_Response = await http.patch(stock_uri,
+            headers: {"Content-Type": "application/json"},
+            body: jsonEncode(stockData));
+        final stock_body = jsonDecode(stock_Response.body);
+        if (stock_body["rsp"] == true) {
+          bloc.changeLoading(false);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'Stock updated successfully!',
+                style: GoogleFonts.poppins(color: Colors.white),
+              ),
+              backgroundColor: Colors.green,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+          );
+          Navigator.pop(context);
+        } else {
+          bloc.changeLoading(false);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                "stock error $stock_body",
+                style: GoogleFonts.poppins(color: Colors.white),
+              ),
+              backgroundColor: Colors.red,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+          );
+          print("stock error $stock_body");
+        }
+      }
+        if (isOnSwitch) {
+        final Uri productSwitchUri = Uri.parse("$mainUrl/product/$Productid");
+        final http.Response switch_Response = await http.patch(productSwitchUri,
+            headers: {"Content-Type": "application/json"},
+            body: jsonEncode(productData));
+        final switch_body = jsonDecode(switch_Response.body);
+        if (switch_body["rsp"] == true) {
+          bloc.changeLoading(false);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'Success !',
+                style: GoogleFonts.poppins(color: Colors.white),
+              ),
+              backgroundColor: Colors.green,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+          );
+
+        } else {
+          bloc.changeLoading(false);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                "stock error $switch_body",
+                style: GoogleFonts.poppins(color: Colors.white),
+              ),
+              backgroundColor: Colors.red,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+          );
+          print("stock error $switch_body");
+        }
+      }
+      
+      
+
+      final Uri product_uri = Uri.parse("$mainUrl/product/$Productid");
+      final Uri stock_uri = Uri.parse("$mainUrl/stock/$stockId");
 
       final http.Response product_Response = await http.patch(product_uri,
           headers: {"Content-Type": "application/json"},
@@ -355,7 +401,7 @@ class AppRequest {
       if (response.statusCode == 201) {
         final PB = jsonDecode(response.body);
         if (PB["rsp"]) {
-           var productId = PB["product"]["id"];
+          var productId = PB["product"]["id"];
           stockBody.addAll({"product": productId});
           print("---------------------$stockBody");
 

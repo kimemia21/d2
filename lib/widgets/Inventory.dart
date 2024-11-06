@@ -483,33 +483,23 @@ class _InventoryPageState extends State<InventoryPage>
         builder:
             (BuildContext context, AsyncSnapshot<List<ProductData>> snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            print("Connnection State ${snapshot.connectionState} ${snapshot.data!.isEmpty}");
+            print(
+                "Connnection State ${snapshot.connectionState} ${snapshot.data!.isEmpty}");
 
             return const Center(child: CircularProgressIndicator());
-          } 
-          
-          else if (snapshot.data!.isEmpty) {
-
-              return NoDataScreen();
-            } 
-
-          else if (snapshot.hasError) {
-
+          } else if (snapshot.data!.isEmpty) {
+            return NoDataScreen();
+          } else if (snapshot.hasError) {
             return Center(child: Text('Error: ${snapshot.error}'));
           } else if (snapshot.hasData) {
-            
-   
-              return _buildProductListView(snapshot.data!);
-          
-          }
-           else {
-            return Center(child:NoDataScreen());
+            return _buildProductListView(snapshot.data!);
+          } else {
+            return Center(child: NoDataScreen());
           }
         },
       ),
     );
   }
-
 
   Widget _buildProductListView(List<ProductData> products) {
     return ListView.builder(
@@ -529,7 +519,7 @@ class _InventoryPageState extends State<InventoryPage>
     return Container(
       margin: const EdgeInsets.all(6),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isLowStock? Colors.red.shade100: Colors.white,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
@@ -1147,12 +1137,27 @@ class _InventoryPageState extends State<InventoryPage>
                   int newQuantity = int.parse(restockController.text);
                   final _quantity = product.quantity + newQuantity;
                   final body = {"quantity": _quantity};
-                  AppRequest.patchProduct(
-                      isRestock: true,
-                      context: context,
-                      stockId: product.stockId,
-                      stockData: body,
-                      isOnSwitch: false);
+
+// this is for the stockmovement table
+                  final Map<String, dynamic> restockBody = {
+                    "movement_type": "Restock",
+                    "product": product.id,
+                    "quantity_change": "${_quantity - product.quantity}"
+                  };
+                 
+
+                  Future.wait([
+                    AppRequest.patchProduct(
+                        isRestock: true,
+                        context: context,
+                        stockId: product.stockId,
+                        stockData: body,
+                        isOnSwitch: false),
+                    AppRequest.StockMovement(
+                        context: context, body: restockBody)
+                  ]).catchError((error) {
+    print("Error occurred: $error");
+});
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.blue[600],

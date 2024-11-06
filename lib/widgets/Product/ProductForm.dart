@@ -159,8 +159,8 @@ class _ProductPageState extends State<ProductPage>
   @override
   Widget build(BuildContext context) {
     final bloc = context.watch<Appbloc>();
-    _quantityController.text = "45";
-    _productNameController.text = "mems";
+    _quantityController.text = "15";
+    _productNameController.text = "restock color";
     _restockController.text = "30";
     _buyingPriceController.text = "100";
     _sellingPriceController.text = "140";

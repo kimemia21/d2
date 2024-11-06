@@ -21,6 +21,7 @@ import 'package:rxdart/rxdart.dart';
 
 class AppRequest {
   static String mainUrl = "http://127.0.0.1:8000/api";
+  static Map<String, String> headers = {"Content-Type": "application/json"};
 
   static Stream<List<CategoryController>> getCategoriesStream() async* {
     final url = "$mainUrl/category";
@@ -70,44 +71,43 @@ class AppRequest {
     return true;
   }
 
+  static Stream<List<ProductController>> getProductsStream(int? id) async* {
+    final url =
+        id == null ? "$mainUrl/product" : "$mainUrl/product/category/$id";
+    List<ProductController> previousProducts = [];
 
-static Stream<List<ProductController>> getProductsStream(int? id) async* {
-  final url = id == null ? "$mainUrl/product" : "$mainUrl/product/category/$id";
-  List<ProductController> previousProducts = [];
+    while (true) {
+      try {
+        final request = await http.get(Uri.parse(url));
 
-  while (true) {
-    try {
-      final request = await http.get(Uri.parse(url));
+        if (request.statusCode == 200) {
+          final body = jsonDecode(request.body);
+          final List productsList = body["products"];
 
-      if (request.statusCode == 200) {
-        final body = jsonDecode(request.body);
-        final List productsList = body["products"];
+          final List<ProductController> currentProducts = productsList
+              .map((element) => ProductController.fromJson(element))
+              .toList();
 
-    
-        final List<ProductController> currentProducts = productsList
-            .map((element) => ProductController.fromJson(element))
-            .toList();
-
-        // Only yield new data if it has changed
-        if (!_areListsEqual(previousProducts, currentProducts)) {
-          previousProducts = currentProducts; // Update the cache
-          yield currentProducts;
+          // Only yield new data if it has changed
+          if (!_areListsEqual(previousProducts, currentProducts)) {
+            previousProducts = currentProducts; // Update the cache
+            yield currentProducts;
+          }
+        } else {
+          // Log error and yield an empty list
+          print("Response code error ${request.statusCode}");
+          yield [];
         }
-      } else {
-        // Log error and yield an empty list
-        print("Response code error ${request.statusCode}");
+      } catch (e) {
+        // Log exception and yield an empty list
+        print("Error fetching products: $e");
         yield [];
       }
-    } catch (e) {
-      // Log exception and yield an empty list
-      print("Error fetching products: $e");
-      yield [];
-    }
 
-    // Poll every 3 seconds
-    await Future.delayed(Duration(seconds: 10));
+      // Poll every 3 seconds
+      await Future.delayed(Duration(seconds: 10));
+    }
   }
-}
 
 // Helper method to compare two lists of ProductController
   static bool _areListsEqual(
@@ -127,11 +127,10 @@ static Stream<List<ProductController>> getProductsStream(int? id) async* {
       // this is for handle the activate and deactive  status of a product
       required bool isOnSwitch,
       int? Productid,
-     int? stockId,
+      int? stockId,
       Map<String, dynamic>? productData,
-     Map<String, dynamic> ?stockData,
-     VoidCallback? callback
-     }) async {
+      Map<String, dynamic>? stockData,
+      VoidCallback? callback}) async {
     try {
       final Appbloc bloc = context.read<Appbloc>();
       bloc.changeLoading(true);
@@ -176,7 +175,7 @@ static Stream<List<ProductController>> getProductsStream(int? id) async* {
           print("stock error $stock_body");
         }
       }
-        if (isOnSwitch) {
+      if (isOnSwitch) {
         final Uri productSwitchUri = Uri.parse("$mainUrl/product/$Productid");
         final http.Response switch_Response = await http.patch(productSwitchUri,
             headers: {"Content-Type": "application/json"},
@@ -197,7 +196,6 @@ static Stream<List<ProductController>> getProductsStream(int? id) async* {
               ),
             ),
           );
-
         } else {
           bloc.changeLoading(false);
           ScaffoldMessenger.of(context).showSnackBar(
@@ -216,8 +214,6 @@ static Stream<List<ProductController>> getProductsStream(int? id) async* {
           print("stock error $switch_body");
         }
       }
-      
-      
 
       final Uri product_uri = Uri.parse("$mainUrl/product/$Productid");
       final Uri stock_uri = Uri.parse("$mainUrl/stock/$stockId");
@@ -578,5 +574,33 @@ static Stream<List<ProductController>> getProductsStream(int? id) async* {
       }
     }
     return true;
+  }
+
+  static Future StockMovement(
+      {required BuildContext context,
+      required Map<String, dynamic> body}) async {
+    final Uri uri = Uri.parse("$mainUrl/stock_movement");
+    print(jsonEncode(body));
+    final response =
+        await http.post(uri, headers: headers, body: jsonEncode(body));
+
+    final rsBody = jsonDecode(response.body);
+    if (rsBody["rsp"]) {
+      CherryToast.success(
+        title: Text(
+          "Success",
+          style: GoogleFonts.poppins(fontWeight: FontWeight.bold),
+        ),
+        description: Text(
+          "Restocked",
+          style: GoogleFonts.abel(),
+        ),
+        animationDuration: Duration(milliseconds: 200),
+        animationCurve: Curves.easeInOut,
+      ).show(context);
+    } else {
+      print("------- movement stock error ${rsBody["msg"]} ");
+      _showErrorSnackBar(context, rsBody["msg"]);
+    }
   }
 }

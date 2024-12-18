@@ -6,7 +6,6 @@ import 'package:application/widgets/state/AppBloc.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:application/widgets/AddItem/AddProduct.dart';
 import 'package:application/widgets/Globals.dart';
 import 'package:application/widgets/controllers/CategorySerializers.dart';
 import 'package:application/widgets/requests/Request.dart';
@@ -15,6 +14,8 @@ import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 
 class InventoryPage extends StatefulWidget {
+  const InventoryPage({super.key});
+
   @override
   _InventoryPageState createState() => _InventoryPageState();
 }
@@ -43,7 +44,7 @@ class _InventoryPageState extends State<InventoryPage>
       vsync: this,
     );
     _offsetAnimation = Tween<Offset>(
-      begin: Offset(1.0, 0.0),
+      begin: const Offset(1.0, 0.0),
       end: Offset.zero,
     ).animate(CurvedAnimation(
       parent: _controller,
@@ -65,7 +66,7 @@ class _InventoryPageState extends State<InventoryPage>
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => Globals.switchScreens(
           context: context,
-          screen: ProductPage(isCreate: true),
+          screen: const ProductPage(isCreate: true),
         ),
         backgroundColor: Colors.blue[600],
         label: const Text(
@@ -241,9 +242,9 @@ class _InventoryPageState extends State<InventoryPage>
               );
             } else if (snapshot.data!.isEmpty) {
               print("Data is Empty: ${snapshot.data?.isEmpty}");
-              return NoDataScreen();
+              return const NoDataScreen();
             } else {
-              return NoDataScreen();
+              return const NoDataScreen();
             }
           },
         ),
@@ -488,13 +489,13 @@ class _InventoryPageState extends State<InventoryPage>
 
             return const Center(child: CircularProgressIndicator());
           } else if (snapshot.data!.isEmpty) {
-            return NoDataScreen();
+            return const NoDataScreen();
           } else if (snapshot.hasError) {
             return Center(child: Text('Error: ${snapshot.error}'));
           } else if (snapshot.hasData) {
             return _buildProductListView(snapshot.data!);
           } else {
-            return Center(child: NoDataScreen());
+            return const Center(child: NoDataScreen());
           }
         },
       ),
@@ -912,7 +913,7 @@ class _InventoryPageState extends State<InventoryPage>
       {required BuildContext context, required ProductData product}) {
     TextEditingController restockController = TextEditingController();
     final Appbloc bloc = Provider.of<Appbloc>(context, listen: false);
-    String last_restock =
+    String lastRestock =
         DateFormat('EEEE, MMMM d, yyyy, hh:mm a').format(product.lastRestocked);
 
     showDialog(
@@ -923,7 +924,7 @@ class _InventoryPageState extends State<InventoryPage>
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
-          contentPadding: EdgeInsets.all(16),
+          contentPadding: const EdgeInsets.all(16),
           title: Container(
             padding: const EdgeInsets.only(bottom: 12),
             decoration: BoxDecoration(
@@ -963,7 +964,7 @@ class _InventoryPageState extends State<InventoryPage>
                     ],
                   ),
                 ),
-                SizedBox(width: 8),
+                const SizedBox(width: 8),
                 Text(
                   'Restock ${product.name}',
                   style: TextStyle(
@@ -975,7 +976,7 @@ class _InventoryPageState extends State<InventoryPage>
               ],
             ),
           ),
-          content: Container(
+          content: SizedBox(
             width: MediaQuery.of(context).size.width * 0.35,
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -983,7 +984,7 @@ class _InventoryPageState extends State<InventoryPage>
               children: [
                 // Product Info Section
                 Container(
-                  padding: EdgeInsets.all(12),
+                  padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
                     color: Colors.grey.shade100,
                     borderRadius: BorderRadius.circular(8),
@@ -994,7 +995,7 @@ class _InventoryPageState extends State<InventoryPage>
                       Row(
                         children: [
                           Icon(Icons.tag, size: 16, color: Colors.grey[600]),
-                          SizedBox(width: 8),
+                          const SizedBox(width: 8),
                           Text(
                             'Item ID: ${product.id}',
                             style: TextStyle(
@@ -1004,11 +1005,11 @@ class _InventoryPageState extends State<InventoryPage>
                           ),
                         ],
                       ),
-                      SizedBox(height: 8),
+                      const SizedBox(height: 8),
                       Row(
                         children: [
-                          Icon(Icons.inventory, size: 16, color: Colors.green),
-                          SizedBox(width: 8),
+                          const Icon(Icons.inventory, size: 16, color: Colors.green),
+                          const SizedBox(width: 8),
                           Text(
                             'Current Stock: ${product.quantity}',
                             style: TextStyle(
@@ -1022,7 +1023,7 @@ class _InventoryPageState extends State<InventoryPage>
                     ],
                   ),
                 ),
-                SizedBox(height: 16),
+                const SizedBox(height: 16),
 
                 // Restock Input Field
                 Text(
@@ -1033,7 +1034,7 @@ class _InventoryPageState extends State<InventoryPage>
                     fontWeight: FontWeight.w500,
                   ),
                 ),
-                SizedBox(height: 8),
+                const SizedBox(height: 8),
                 TextField(
                   controller: restockController,
                   keyboardType: TextInputType.number,
@@ -1055,7 +1056,7 @@ class _InventoryPageState extends State<InventoryPage>
                           BorderSide(color: Colors.blue.shade600, width: 1.5),
                     ),
                     contentPadding:
-                        EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                        const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
                   ),
                   style: TextStyle(
                     color: Colors.grey[800],
@@ -1063,11 +1064,11 @@ class _InventoryPageState extends State<InventoryPage>
                   ),
                 ),
 
-                SizedBox(height: 16),
+                const SizedBox(height: 16),
 
                 // Last Restock Info
                 Container(
-                  padding: EdgeInsets.all(12),
+                  padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
                     color: Colors.blue[50],
                     borderRadius: BorderRadius.circular(8),
@@ -1078,7 +1079,7 @@ class _InventoryPageState extends State<InventoryPage>
                       Row(
                         children: [
                           Icon(Icons.update, size: 16, color: Colors.blue[700]),
-                          SizedBox(width: 8),
+                          const SizedBox(width: 8),
                           Text(
                             'Last Restocked',
                             style: TextStyle(
@@ -1089,20 +1090,20 @@ class _InventoryPageState extends State<InventoryPage>
                           ),
                         ],
                       ),
-                      SizedBox(height: 4),
+                      const SizedBox(height: 4),
                       Text(
-                        last_restock,
+                        lastRestock,
                         style: TextStyle(
                           color: Colors.grey[800],
                           fontSize: 14,
                         ),
                       ),
-                      SizedBox(height: 8),
+                      const SizedBox(height: 8),
                       Row(
                         children: [
                           Icon(Icons.person_outline,
                               size: 16, color: Colors.blue[700]),
-                          SizedBox(width: 8),
+                          const SizedBox(width: 8),
                           Text(
                             'Restocked By: John Doe',
                             style: TextStyle(
@@ -1131,18 +1132,18 @@ class _InventoryPageState extends State<InventoryPage>
               ),
             ),
             Container(
-              margin: EdgeInsets.only(left: 8, right: 8),
+              margin: const EdgeInsets.only(left: 8, right: 8),
               child: ElevatedButton(
                 onPressed: () async {
                   int newQuantity = int.parse(restockController.text);
-                  final _quantity = product.quantity + newQuantity;
-                  final body = {"quantity": _quantity};
+                  final quantity = product.quantity + newQuantity;
+                  final body = {"quantity": quantity};
 
 // this is for the stockmovement table
                   final Map<String, dynamic> restockBody = {
                     "movement_type": "Restock",
                     "product": product.id,
-                    "quantity_change": "${_quantity - product.quantity}"
+                    "quantity_change": "${quantity - product.quantity}"
                   };
                  
 
@@ -1162,7 +1163,7 @@ class _InventoryPageState extends State<InventoryPage>
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.blue[600],
                   foregroundColor: Colors.white,
-                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
@@ -1172,7 +1173,7 @@ class _InventoryPageState extends State<InventoryPage>
                         color: Colors.white,
                         size: 18,
                       )
-                    : Row(
+                    : const Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Icon(Icons.add, size: 16),

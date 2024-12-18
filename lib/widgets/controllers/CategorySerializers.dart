@@ -14,7 +14,7 @@ class CategoryController {
         id: json["id"],
       );
     } else {
-      throw FormatException("Missing required keys for CategoryController");
+      throw const FormatException("Missing required keys for CategoryController");
     }
   }
 

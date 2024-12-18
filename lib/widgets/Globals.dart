@@ -9,7 +9,7 @@ class Globals {
 
 // Widget to show when data is being loaded
 static Widget buildLoadingCard() {
-  return Center(
+  return const Center(
     child: CircularProgressIndicator(),
   );
 }
@@ -19,13 +19,13 @@ static Widget buildErrorCard(String errorMessage) {
   return Center(
     child: Text(
       "Error: $errorMessage",
-      style: TextStyle(color: Colors.red),
+      style: const TextStyle(color: Colors.red),
     ),
   );
 }
 
 static Widget buildEmptyCard() {
-  return Center(
+  return const Center(
     child: Text("No stock data available."),
   );
 }
@@ -37,7 +37,7 @@ static Widget buildEmptyCard() {
       return Navigator.push(
           context,
           PageRouteBuilder(
-            transitionDuration: Duration(
+            transitionDuration: const Duration(
                 milliseconds:
                     600), // Increase duration for a smoother transition
             pageBuilder: (context, animation, secondaryAnimation) => screen,
@@ -130,12 +130,12 @@ static void showAddBrandOrCategoryDialog(
                             color: Theme.of(context).colorScheme.secondary,
                             size: 20),
                         contentPadding:
-                            EdgeInsets.symmetric(vertical: 10, horizontal: 15),
+                            const EdgeInsets.symmetric(vertical: 10, horizontal: 15),
                       ),
                       style: GoogleFonts.poppins(
                           color: Colors.black87, fontSize: 14),
                     ),
-                    SizedBox(height: 15),
+                    const SizedBox(height: 15),
                     Text(
                       "Existing ${title.toLowerCase()}:",
                       style: GoogleFonts.poppins(
@@ -144,7 +144,7 @@ static void showAddBrandOrCategoryDialog(
                         fontSize: 14,
                       ),
                     ),
-                    SizedBox(height: 5),
+                    const SizedBox(height: 5),
                     Container(
                         height: 200, // Reduced height
                         decoration: BoxDecoration(
@@ -198,25 +198,12 @@ static void showAddBrandOrCategoryDialog(
                   },
                 ),
                 ElevatedButton(
-                  child: context.watch<Appbloc>().isloading
-                      ? LoadingAnimationWidget.staggeredDotsWave(
-                          color: Colors.white,
-                          size: 20,
-                        )
-                      : Text(
-                          'Add',
-                          style: GoogleFonts.poppins(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 14,
-                          ),
-                        ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Theme.of(context).primaryColor,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(20),
                     ),
-                    padding: EdgeInsets.symmetric(horizontal: 15, vertical: 8),
+                    padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
                   ),
                  // Function to handle button press
 onPressed: () async {
@@ -253,6 +240,19 @@ onPressed: () async {
     throw Exception("Error: $e");
   }
 },
+                  child: context.watch<Appbloc>().isloading
+                      ? LoadingAnimationWidget.staggeredDotsWave(
+                          color: Colors.white,
+                          size: 20,
+                        )
+                      : Text(
+                          'Add',
+                          style: GoogleFonts.poppins(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                          ),
+                        ),
 
                 ),
               ],
@@ -272,17 +272,17 @@ onPressed: () async {
     return Row(
       children: [
         Expanded(child: dropdown),
-        SizedBox(width: 10),
+        const SizedBox(width: 10),
         ElevatedButton.icon(
           onPressed: addNewItem,
-          icon: Icon(Icons.add),
+          icon: const Icon(Icons.add),
           label: Text('New', style: GoogleFonts.poppins(color: Colors.white)),
           style: ElevatedButton.styleFrom(
             backgroundColor: Theme.of(context).colorScheme.secondary,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(15),
             ),
-            padding: EdgeInsets.symmetric(horizontal: 15, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
           ),
         ),
       ],
@@ -303,7 +303,7 @@ onPressed: () async {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -316,10 +316,10 @@ onPressed: () async {
                 ),
                 TextButton.icon(
                   onPressed: addNewItem,
-                  icon: Icon(Icons.add, size: 18),
+                  icon: const Icon(Icons.add, size: 18),
                   label: Text('Add $label'),
                   style: TextButton.styleFrom(
-                    foregroundColor: Color(0xFF4CAF50),
+                    foregroundColor: const Color(0xFF4CAF50),
                   ),
                 ),
               ],

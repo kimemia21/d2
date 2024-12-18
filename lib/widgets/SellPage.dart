@@ -14,7 +14,7 @@ void sellAlert(BuildContext context) {
         contentPadding: EdgeInsets.zero,
         content: SizedBox(
           width: MediaQuery.of(context).size.width * 0.7,
-          child: MotorbikePOSPage(),
+          child: const MotorbikePOSPage(),
         ),
       ).animate().scale(duration: 300.ms);
     },
@@ -22,6 +22,8 @@ void sellAlert(BuildContext context) {
 }
 
 class MotorbikePOSPage extends StatefulWidget {
+  const MotorbikePOSPage({super.key});
+
   @override
   _MotorbikePOSPageState createState() => _MotorbikePOSPageState();
 }
@@ -65,7 +67,7 @@ class _MotorbikePOSPageState extends State<MotorbikePOSPage> {
         appBar: AppBar(
           backgroundColor: Colors.blue[700],
           elevation: 0,
-          title: Text(
+          title: const Text(
             'New Sale',
             style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
           ).animate().fade(duration: 500.ms),

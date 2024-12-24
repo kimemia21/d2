@@ -78,6 +78,7 @@ flutter:
     - assets/images/login.png
     - assets/images/signup.png
     - assets/sounds/error.mp3
+    - assets/images/forgotPassword.png
 
     # - images/a_dot_ham.jpeg
 

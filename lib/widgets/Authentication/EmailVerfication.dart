@@ -1,61 +1,67 @@
 import 'dart:async';
-import 'package:application/main.dart';
+import 'package:application/widgets/Authentication/login.dart';
 import 'package:application/widgets/Globals.dart';
-import 'package:application/widgets/HomePage.dart';
-import 'package:application/widgets/commsRepo/commsRepo.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lottie/lottie.dart';
 
-class Emailverification extends StatefulWidget {
-  final bool isLoggedin;
-  const Emailverification({this.isLoggedin = false});
+class EmailVerification extends StatefulWidget {
+  final bool isLoggedIn;
+  const EmailVerification({this.isLoggedIn = false, Key? key})
+      : super(key: key);
 
   @override
-  State<Emailverification> createState() => _EmailverificationState();
+  State<EmailVerification> createState() => _EmailVerificationState();
 }
 
-class _EmailverificationState extends State<Emailverification>
+class _EmailVerificationState extends State<EmailVerification>
     with SingleTickerProviderStateMixin {
   late Timer timer;
   late AnimationController _controller;
   late Animation<double> _animation;
   bool _isVisible = false;
 
+  // Modern color palette
+  final Color primaryColor = const Color(0xFF6366F1); // Indigo
+  final Color secondaryColor = const Color(0xFF10B981); // Emerald
+  final Color backgroundColor = const Color(0xFFF9FAFB); // Cool Gray 50
+  final Color surfaceColor = Colors.white;
+  final Color textColor = const Color(0xFF1F2937); // Cool Gray 800
+
   @override
   void initState() {
     super.initState();
-
     _controller = AnimationController(
-      duration: const Duration(seconds: 4),
+      duration: const Duration(milliseconds: 500),
       vsync: this,
-    )..repeat(reverse: true);
+    );
 
     _animation = CurvedAnimation(
       parent: _controller,
-      curve: Curves.easeInOut,
+      curve: Curves.easeOutCubic,
     );
-    // this code is for sending verification email if the user had logged in and not verified
-    WidgetsBinding.instance.addPostFrameCallback((_) {});
 
-    if (widget.isLoggedin) {
+    _initializeVerification();
+    _controller.forward();
+  }
+
+  void _initializeVerification() {
+    if (widget.isLoggedIn) {
       FirebaseAuth.instance.currentUser?.sendEmailVerification();
     }
 
-    timer = Timer.periodic(Duration(seconds: 3), (timer) {
-      FirebaseAuth auth = firebaseAuth;
-
+    timer = Timer.periodic(const Duration(seconds: 3), (timer) {
+      FirebaseAuth auth = FirebaseAuth.instance;
       auth.currentUser?.reload();
+
       if (auth.currentUser?.emailVerified == true) {
-        // addAuthData();
         timer.cancel();
-        Globals.switchScreens(context: context, screen: MotorbikePOSHomePage());
+        Globals.switchScreens(context: context, screen: LoginScreen());
       }
     });
 
-    // Schedule the visibility change
-    Future.delayed(Duration(seconds: 10), () {
+    Future.delayed(const Duration(seconds: 10), () {
       if (mounted) {
         setState(() {
           _isVisible = true;
@@ -64,19 +70,32 @@ class _EmailverificationState extends State<Emailverification>
     });
   }
 
-  // Future addAuthData() async {
-  //   FirebaseFirestore firestore = FirebaseFirestore.instance;
-  //   // create a user after email verification
-  //   // await firestore
-  //   //     .collection("users")
-  //   //     .doc(auth.currentUser?.email)
-  //   //     .set({"email": auth.currentUser?.email, "performance": "0.0"});
-  //   // create  auth user for authenticating only admins to the admin side
-  //   await firestore
-  //       .collection("auth")
-  //       .doc(auth.currentUser?.email)
-  //       .set({"email": auth.currentUser?.email});
-  // }
+  Widget _buildCard({required Widget child}) {
+    return Container(
+      decoration: BoxDecoration(
+        color: surfaceColor,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.03),
+            spreadRadius: 0,
+            blurRadius: 20,
+            offset: const Offset(0, 4),
+          ),
+          BoxShadow(
+            color: Colors.black.withOpacity(0.02),
+            spreadRadius: 0,
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: child,
+      ),
+    );
+  }
 
   @override
   void dispose() {
@@ -87,132 +106,258 @@ class _EmailverificationState extends State<Emailverification>
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isSmallScreen = screenWidth < 900;
+
     return Scaffold(
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [Colors.white, Colors.blue.shade100],
-          ),
-        ),
-        child: Row(
-          children: [
+      backgroundColor: backgroundColor,
+      body: Row(
+        children: [
+          if (!isSmallScreen)
             Expanded(
-              flex: 1,
+              flex: 5,
               child: SlideTransition(
                 position: Tween<Offset>(
-                  begin: Offset(-1, 0),
+                  begin: const Offset(-1, 0),
                   end: Offset.zero,
-                ).animate(CurvedAnimation(
-                  parent: _controller,
-                  curve: Curves.elasticOut,
-                )),
-                child: Lottie.network(
-                  'https://assets9.lottiefiles.com/packages/lf20_qmfs6c3i.json',
-                  fit: BoxFit.contain,
+                ).animate(_animation),
+                child: Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        primaryColor.withOpacity(0.1),
+                        primaryColor.withOpacity(0.05),
+                      ],
+                    ),
+                  ),
+                  child: Lottie.network(
+                    'https://assets9.lottiefiles.com/packages/lf20_qmfs6c3i.json',
+                    fit: BoxFit.contain,
+                  ),
                 ),
               ),
             ),
-            Expanded(
-              flex: 1,
-              child: Padding(
-                padding: const EdgeInsets.all(32.0),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Email Verification',
-                      style: GoogleFonts.poppins(
-                        fontSize: 36,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black,
-                      ),
-                    ),
-                    SizedBox(height: 20),
-                    Text(
-                      'We\'ve sent a verification link to ${firebaseAuth.currentUser?.email}.',
-                      style: GoogleFonts.poppins(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w500,
-                        color: Colors.black87,
-                      ),
-                    ),
-                    Text(
-                      'Please check your inbox and click the link to verify your account.',
-                      style: GoogleFonts.poppins(
-                        fontSize: 16,
-                        color: Colors.black54,
-                      ),
-                    ),
-                    SizedBox(height: 20),
-                    Text(
-                      'Important:',
-                      style: GoogleFonts.poppins(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.redAccent,
-                      ),
-                    ),
-                    SizedBox(height: 8),
-                    Text(
-                      '• Check your spam folder if you don\'t see the email\n'
-                      '• The link expires in 24 hours\n'
-                      '• Make sure to use a valid email address',
-                      style: GoogleFonts.poppins(
-                        fontSize: 14,
-                        height: 1.5,
-                        color: Colors.black87,
-                      ),
-                    ),
-                    SizedBox(height: 30),
-                    Visibility(
-                      visible: _isVisible,
-                      child: ElevatedButton(
-                        onPressed: () {
-                          FirebaseAuth.instance.currentUser
-                              ?.sendEmailVerification();
-
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text('Verification email sent again'),
-                              backgroundColor: Colors.green,
-                            ),
-                          );
-                        },
-                        style: ElevatedButton.styleFrom(
-                          padding: EdgeInsets.symmetric(
-                              horizontal: 42, vertical: 26),
-                          backgroundColor: Colors.blue.shade600,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(30),
+          Expanded(
+            flex: isSmallScreen ? 10 : 5,
+            child: Center(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(24),
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 480),
+                  child: ScaleTransition(
+                    scale: _animation,
+                    child: _buildCard(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Container(
+                                width: 56,
+                                height: 56,
+                                decoration: BoxDecoration(
+                                  color: primaryColor.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                                child: Icon(Icons.mail_outline,
+                                    color: primaryColor, size: 28),
+                              ),
+                              const SizedBox(width: 20),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Verify Your Email',
+                                      style: GoogleFonts.plusJakartaSans(
+                                        fontSize: 28,
+                                        fontWeight: FontWeight.bold,
+                                        color: textColor,
+                                        height: 1.2,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      'Complete your account setup',
+                                      style: GoogleFonts.plusJakartaSans(
+                                        fontSize: 16,
+                                        color: Colors.grey[600],
+                                        height: 1.5,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
                           ),
-                        ),
-                        child: Text(
-                          'Resend Verification Email',
-                          style: GoogleFonts.poppins(
-                              fontSize: 16, fontWeight: FontWeight.w600),
-                        ),
+                          const SizedBox(height: 40),
+                          Container(
+                            padding: const EdgeInsets.all(20),
+                            decoration: BoxDecoration(
+                              color: primaryColor.withOpacity(0.05),
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(
+                                color: primaryColor.withOpacity(0.1),
+                                width: 1,
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(Icons.mail,
+                                    color: primaryColor.withOpacity(0.8),
+                                    size: 24),
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: Text(
+                                    '${FirebaseAuth.instance.currentUser?.email}',
+                                    style: GoogleFonts.plusJakartaSans(
+                                      fontSize: 16,
+                                      color: textColor,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 24),
+                          Container(
+                            padding: const EdgeInsets.all(24),
+                            decoration: BoxDecoration(
+                              color: Colors.grey[50],
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(
+                                color: Colors.grey[200]!,
+                                width: 1,
+                              ),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Icon(Icons.info_outline,
+                                        color: primaryColor, size: 20),
+                                    const SizedBox(width: 12),
+                                    Text(
+                                      'Important Information',
+                                      style: GoogleFonts.plusJakartaSans(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w600,
+                                        color: textColor,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 16),
+                                _buildInfoItem(
+                                  icon: Icons.inbox,
+                                  text:
+                                      'Check your spam folder if you don\'t see the email',
+                                ),
+                                const SizedBox(height: 12),
+                                _buildInfoItem(
+                                  icon: Icons.timer,
+                                  text:
+                                      'The verification link expires in 24 hours',
+                                ),
+                                const SizedBox(height: 12),
+                                _buildInfoItem(
+                                  icon: Icons.verified_user,
+                                  text:
+                                      'Make sure to use a valid email address',
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 32),
+                          if (_isVisible)
+                            ElevatedButton(
+                              onPressed: () {
+                                FirebaseAuth.instance.currentUser
+                                    ?.sendEmailVerification();
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Row(
+                                      children: [
+                                        const Icon(Icons.check_circle,
+                                            color: Colors.white, size: 20),
+                                        const SizedBox(width: 12),
+                                        Text(
+                                          'Verification email sent successfully',
+                                          style: GoogleFonts.plusJakartaSans(
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    backgroundColor: secondaryColor,
+                                    behavior: SnackBarBehavior.floating,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    duration: const Duration(seconds: 4),
+                                  ),
+                                );
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: primaryColor,
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 32, vertical: 20),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                                elevation: 0,
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  const Icon(Icons.refresh, size: 20),
+                                  const SizedBox(width: 12),
+                                  Text(
+                                    'Resend Verification Email',
+                                    style: GoogleFonts.plusJakartaSans(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                        ],
                       ),
                     ),
-                    SizedBox(height: 20),
-                    // TextButton(
-                    //   onPressed: () {
-                    //     // Add logic to go back or cancel
-                    //   },
-                    //   child: Text(
-                    //     'Cancel',
-                    //     style: GoogleFonts.poppins(fontSize: 16, color: Colors.blue.shade900),
-                    //   ),
-                    // ),
-                  ],
+                  ),
                 ),
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
+    );
+  }
+
+  Widget _buildInfoItem({required IconData icon, required String text}) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, size: 18, color: Colors.grey[600]),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Text(
+            text,
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 14,
+              height: 1.5,
+              color: Colors.grey[700],
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

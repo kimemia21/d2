@@ -1,4 +1,5 @@
 import 'package:application/widgets/Authentication/EmailVerfication.dart';
+import 'package:application/widgets/Authentication/login.dart';
 import 'package:application/widgets/Globals.dart';
 import 'package:application/widgets/commsRepo/commsRepo.dart';
 import 'package:application/widgets/homepage.dart';
@@ -20,13 +21,11 @@ class FirebaseReq {
           .signInWithEmailAndPassword(
               email: loginBody["email"], password: loginBody["password"])
           .then((value) {
-            
-      bloc.changeLoading(false);
+        bloc.changeLoading(false);
         Globals.switchScreens(context: context, screen: MotorbikePOSHomePage());
         print(value);
       });
     } on FirebaseAuthException catch (e) {
-      
       bloc.changeLoading(false);
       if (e.code == 'user-not-found') {
         print('No user found for that email.');
@@ -55,13 +54,11 @@ class FirebaseReq {
           .createUserWithEmailAndPassword(
               email: SignupBody["email"], password: SignupBody["password"])
           .then((value) {
-            
-      bloc.changeLoading(false);
-        Globals.switchScreens(context: context, screen: Emailverification(isLoggedin: false,));
+        bloc.changeLoading(false);
+        Globals.switchScreens(context: context, screen: EmailVerification());
         print(value);
       });
     } on FirebaseAuthException catch (e) {
-      
       bloc.changeLoading(false);
       if (e.code == 'user-not-found') {
         print('No user found for that email.');
@@ -79,4 +76,31 @@ class FirebaseReq {
     }
   }
 
+  static forgotPassword(
+      {required BuildContext context, required String email}) async {
+    Appbloc bloc = context.read<Appbloc>();
+    try {
+      bloc.changeLoading(true);
+      firebaseAuth.sendPasswordResetEmail(email: email).then((value) {
+        CherryToast.success(
+          title: Text("Email Sent"),
+          description: Text("Please check your email to reset your password"),
+          animationDuration: Duration(milliseconds: 400),
+          autoDismiss: true,
+        ).show(context);
+      });
+
+      bloc.changeLoading(false);
+      Future.delayed(Duration(seconds: 10)).then((onValue) =>
+          Globals.switchScreens(context: context, screen: LoginScreen()));
+    } on FirebaseAuthException catch (e) {
+      bloc.changeLoading(true);
+      CherryToast.error(
+        title: Text("Email Reset"),
+        description: Text("Error $e"),
+        animationDuration: Duration(milliseconds: 100),
+        autoDismiss: true,
+      ).show(context);
+    }
+  }
 }

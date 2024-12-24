@@ -7,6 +7,8 @@ import 'package:intl/intl.dart';
 class MotorbikePOSHomePage extends StatelessWidget {
   final formatter = NumberFormat("#,##0.00", "en_US");
 
+  MotorbikePOSHomePage({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -14,7 +16,7 @@ class MotorbikePOSHomePage extends StatelessWidget {
       appBar: AppBar(
         toolbarHeight: 70,
         title: Text(
-          'Turbo Moto POS',
+          'Firebase Moto POS',
           style: GoogleFonts.poppins(
             fontSize: 24,
             fontWeight: FontWeight.w600,
@@ -24,24 +26,24 @@ class MotorbikePOSHomePage extends StatelessWidget {
         foregroundColor: Colors.grey[800],
         actions: [
           IconButton(
-            icon: Icon(Icons.notifications_outlined, size: 28),
+            icon: const Icon(Icons.notifications_outlined, size: 28),
             onPressed: () {},
           ),
           Padding(
-            padding: EdgeInsets.symmetric(horizontal: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 8),
             child: CircleAvatar(
               radius: 20,
               backgroundColor: Colors.blue[50],
-              child: Icon(Icons.person_outline, color: Colors.blue, size: 24),
+              child: const Icon(Icons.person_outline, color: Colors.blue, size: 24),
             ),
           ),
-          SizedBox(width: 8),
+          const SizedBox(width: 8),
         ],
         elevation: 0,
       ),
       body: AnimationLimiter(
         child: ListView(
-          padding: EdgeInsets.all(20),
+          padding: const EdgeInsets.all(20),
           children: AnimationConfiguration.toStaggeredList(
             duration: const Duration(milliseconds: 375),
             childAnimationBuilder: (widget) => SlideAnimation(
@@ -50,13 +52,13 @@ class MotorbikePOSHomePage extends StatelessWidget {
             ),
             children: [
               _buildHeader(),
-              SizedBox(height: 28),
+              const SizedBox(height: 28),
               _buildQuickActions(context),
-              SizedBox(height: 28),
+              const SizedBox(height: 28),
               _buildSalesOverview(),
-              SizedBox(height: 28),
+              const SizedBox(height: 28),
               _buildInventoryOverview(),
-              SizedBox(height: 28),
+              const SizedBox(height: 28),
               _buildRecentTransactions(),
             ],
           ),
@@ -64,7 +66,7 @@ class MotorbikePOSHomePage extends StatelessWidget {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () {},
-        icon: Icon(Icons.add_shopping_cart, size: 28),
+        icon: const Icon(Icons.add_shopping_cart, size: 28),
         label: Text(
           'New Sale',
           style: GoogleFonts.poppins(
@@ -93,11 +95,11 @@ class MotorbikePOSHomePage extends StatelessWidget {
             color: Colors.blue.withOpacity(0.2),
             spreadRadius: 2,
             blurRadius: 10,
-            offset: Offset(0, 4),
+            offset: const Offset(0, 4),
           ),
         ],
       ),
-      padding: EdgeInsets.all(24),
+      padding: const EdgeInsets.all(24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -111,9 +113,9 @@ class MotorbikePOSHomePage extends StatelessWidget {
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child:
-                    Icon(Icons.person_outline, color: Colors.white, size: 36),
+                    const Icon(Icons.person_outline, color: Colors.white, size: 36),
               ),
-              SizedBox(width: 20),
+              const SizedBox(width: 20),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -138,7 +140,7 @@ class MotorbikePOSHomePage extends StatelessWidget {
               ),
             ],
           ),
-          SizedBox(height: 20),
+          const SizedBox(height: 20),
           // Container(
           //   padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           //   decoration: BoxDecoration(
@@ -175,15 +177,15 @@ class MotorbikePOSHomePage extends StatelessWidget {
     return GridView.count(
       crossAxisCount: 3,
       shrinkWrap: true,
-      physics: NeverScrollableScrollPhysics(),
+      physics: const NeverScrollableScrollPhysics(),
       crossAxisSpacing: 16,
       mainAxisSpacing: 16,
       childAspectRatio: 0.85,
       children: [
-        _buildActionItem('Sell', Icons.sell_outlined, Colors.purple, context,  InventoryPage()),
+        _buildActionItem('Sell', Icons.sell_outlined, Colors.purple, context,  const InventoryPage()),
         _buildActionItem(
-            'Inventory', Icons.inventory_2_outlined, Colors.orange, context, InventoryPage()),
-        _buildActionItem('Reports', Icons.assessment_outlined, Colors.green, context, InventoryPage()),
+            'Inventory', Icons.inventory_2_outlined, Colors.orange, context, const InventoryPage()),
+        _buildActionItem('Reports', Icons.assessment_outlined, Colors.green, context, const InventoryPage()),
       ],
     );
   }
@@ -199,7 +201,7 @@ class MotorbikePOSHomePage extends StatelessWidget {
             color: color.withOpacity(0.1),
             spreadRadius: 2,
             blurRadius: 10,
-            offset: Offset(0, 4),
+            offset: const Offset(0, 4),
           ),
         ],
       ),
@@ -215,14 +217,14 @@ class MotorbikePOSHomePage extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Container(
-                padding: EdgeInsets.all(16),
+                padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   color: color.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: Icon(icon, size: 40, color: color),
               ),
-              SizedBox(height: 12),
+              const SizedBox(height: 12),
               Text(
                 label,
                 style: GoogleFonts.poppins(
@@ -248,11 +250,11 @@ class MotorbikePOSHomePage extends StatelessWidget {
             color: Colors.grey.withOpacity(0.1),
             spreadRadius: 2,
             blurRadius: 10,
-            offset: Offset(0, 4),
+            offset: const Offset(0, 4),
           ),
         ],
       ),
-      padding: EdgeInsets.all(24),
+      padding: const EdgeInsets.all(24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -268,7 +270,7 @@ class MotorbikePOSHomePage extends StatelessWidget {
                 ),
               ),
               Container(
-                padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
                   color: Colors.blue[50],
                   borderRadius: BorderRadius.circular(20),
@@ -284,13 +286,13 @@ class MotorbikePOSHomePage extends StatelessWidget {
               ),
             ],
           ),
-          SizedBox(height: 24),
+          const SizedBox(height: 24),
           Row(
             children: [
               Expanded(child: _buildSalesStat('Today', '\$1,250', 12.5, true)),
-              SizedBox(width: 16),
+              const SizedBox(width: 16),
               Expanded(child: _buildSalesStat('Week', '\$8,750', -2.3, false)),
-              SizedBox(width: 16),
+              const SizedBox(width: 16),
               Expanded(child: _buildSalesStat('Month', '\$32,500', 8.7, true)),
             ],
           ),
@@ -302,7 +304,7 @@ class MotorbikePOSHomePage extends StatelessWidget {
   Widget _buildSalesStat(
       String period, String amount, double change, bool isPositive) {
     return Container(
-      padding: EdgeInsets.all(16),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.grey[50],
         borderRadius: BorderRadius.circular(16),
@@ -318,7 +320,7 @@ class MotorbikePOSHomePage extends StatelessWidget {
               fontSize: 16,
             ),
           ),
-          SizedBox(height: 8),
+          const SizedBox(height: 8),
           Text(
             amount,
             style: GoogleFonts.poppins(
@@ -327,9 +329,9 @@ class MotorbikePOSHomePage extends StatelessWidget {
               color: Colors.grey[800],
             ),
           ),
-          SizedBox(height: 8),
+          const SizedBox(height: 8),
           Container(
-            padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
               color: isPositive ? Colors.green[50] : Colors.red[50],
               borderRadius: BorderRadius.circular(20),
@@ -342,7 +344,7 @@ class MotorbikePOSHomePage extends StatelessWidget {
                   size: 18,
                   color: isPositive ? Colors.green : Colors.red,
                 ),
-                SizedBox(width: 4),
+                const SizedBox(width: 4),
                 Text(
                   '${change.abs()}%',
                   style: GoogleFonts.poppins(
@@ -369,11 +371,11 @@ class MotorbikePOSHomePage extends StatelessWidget {
             color: Colors.grey.withOpacity(0.1),
             spreadRadius: 2,
             blurRadius: 10,
-            offset: Offset(0, 4),
+            offset: const Offset(0, 4),
           ),
         ],
       ),
-      padding: EdgeInsets.all(24),
+      padding: const EdgeInsets.all(24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -385,19 +387,19 @@ class MotorbikePOSHomePage extends StatelessWidget {
               color: Colors.grey[800],
             ),
           ),
-          SizedBox(height: 24),
+          const SizedBox(height: 24),
           Row(
             children: [
               Expanded(
                 child: _buildInventoryStat(
                     'Bikes', '24', Icons.motorcycle_outlined, Colors.blue),
               ),
-              SizedBox(width: 16),
+              const SizedBox(width: 16),
               Expanded(
                 child: _buildInventoryStat(
                     'Parts', '543', Icons.settings_outlined, Colors.orange),
               ),
-              SizedBox(width: 16),
+              const SizedBox(width: 16),
               Expanded(
                 child: _buildInventoryStat('Accessories', '128',
                     Icons.category_outlined, Colors.green),
@@ -412,7 +414,7 @@ class MotorbikePOSHomePage extends StatelessWidget {
   Widget _buildInventoryStat(
       String category, String count, IconData icon, Color color) {
     return Container(
-      padding: EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+      padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [color.withOpacity(0.1), color.withOpacity(0.05)],
@@ -425,7 +427,7 @@ class MotorbikePOSHomePage extends StatelessWidget {
       child: Column(
         children: [
           Icon(icon, size: 36, color: color),
-          SizedBox(height: 12),
+          const SizedBox(height: 12),
           Text(
             count,
             style: GoogleFonts.poppins(
@@ -434,7 +436,7 @@ class MotorbikePOSHomePage extends StatelessWidget {
               color: Colors.grey[800],
             ),
           ),
-          SizedBox(height: 4),
+          const SizedBox(height: 4),
           Text(
             category,
             style: GoogleFonts.poppins(
@@ -458,11 +460,11 @@ class MotorbikePOSHomePage extends StatelessWidget {
             color: Colors.grey.withOpacity(0.1),
             spreadRadius: 2,
             blurRadius: 10,
-            offset: Offset(0, 4),
+            offset: const Offset(0, 4),
           ),
         ],
       ),
-      padding: EdgeInsets.all(24),
+      padding: const EdgeInsets.all(24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -490,7 +492,7 @@ class MotorbikePOSHomePage extends StatelessWidget {
               ),
             ],
           ),
-          SizedBox(height: 20),
+          const SizedBox(height: 20),
           _buildTransactionItem(
             'John Doe',
             'Motorcycle Service',
@@ -499,21 +501,21 @@ class MotorbikePOSHomePage extends StatelessWidget {
             Colors.orange,
             Icons.build_outlined,
           ),
-          Divider(height: 32, thickness: 1),
+          const Divider(height: 32, thickness: 1),
           _buildTransactionItem(
             'Jane Smith',
             'Motorbike Sale',
             '\$2,500',
-            DateTime.now().subtract(Duration(days: 1)),
+            DateTime.now().subtract(const Duration(days: 1)),
             Colors.green,
             Icons.monetization_on,
           ),
-          Divider(height: 32, thickness: 1),
+          const Divider(height: 32, thickness: 1),
           _buildTransactionItem(
             'Alice Johnson',
             'Accessory Sale',
             '\$45',
-            DateTime.now().subtract(Duration(days: 2)),
+            DateTime.now().subtract(const Duration(days: 2)),
             Colors.blue,
             Icons.category_outlined,
           ),
@@ -530,7 +532,7 @@ class MotorbikePOSHomePage extends StatelessWidget {
         Row(
           children: [
             Icon(icon, size: 36, color: color),
-            SizedBox(width: 12),
+            const SizedBox(width: 12),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [

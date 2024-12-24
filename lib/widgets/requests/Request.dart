@@ -55,7 +55,7 @@ class AppRequest {
       }
 
       // Wait for a certain duration before fetching again
-      await Future.delayed(Duration(seconds: 10));
+      await Future.delayed(const Duration(seconds: 10));
     }
   }
 
@@ -105,7 +105,7 @@ class AppRequest {
       }
 
       // Poll every 3 seconds
-      await Future.delayed(Duration(seconds: 10));
+      await Future.delayed(const Duration(seconds: 10));
     }
   }
 
@@ -136,12 +136,12 @@ class AppRequest {
       bloc.changeLoading(true);
 
       if (isRestock) {
-        final Uri stock_uri = Uri.parse("$mainUrl/stock/$stockId");
-        final http.Response stock_Response = await http.patch(stock_uri,
+        final Uri stockUri = Uri.parse("$mainUrl/stock/$stockId");
+        final http.Response stockResponse = await http.patch(stockUri,
             headers: {"Content-Type": "application/json"},
             body: jsonEncode(stockData));
-        final stock_body = jsonDecode(stock_Response.body);
-        if (stock_body["rsp"] == true) {
+        final stockBody = jsonDecode(stockResponse.body);
+        if (stockBody["rsp"] == true) {
           bloc.changeLoading(false);
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -162,7 +162,7 @@ class AppRequest {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
-                "stock error $stock_body",
+                "stock error $stockBody",
                 style: GoogleFonts.poppins(color: Colors.white),
               ),
               backgroundColor: Colors.red,
@@ -172,16 +172,16 @@ class AppRequest {
               ),
             ),
           );
-          print("stock error $stock_body");
+          print("stock error $stockBody");
         }
       }
       if (isOnSwitch) {
         final Uri productSwitchUri = Uri.parse("$mainUrl/product/$Productid");
-        final http.Response switch_Response = await http.patch(productSwitchUri,
+        final http.Response switchResponse = await http.patch(productSwitchUri,
             headers: {"Content-Type": "application/json"},
             body: jsonEncode(productData));
-        final switch_body = jsonDecode(switch_Response.body);
-        if (switch_body["rsp"] == true) {
+        final switchBody = jsonDecode(switchResponse.body);
+        if (switchBody["rsp"] == true) {
           bloc.changeLoading(false);
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -201,7 +201,7 @@ class AppRequest {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
-                "stock error $switch_body",
+                "stock error $switchBody",
                 style: GoogleFonts.poppins(color: Colors.white),
               ),
               backgroundColor: Colors.red,
@@ -211,25 +211,25 @@ class AppRequest {
               ),
             ),
           );
-          print("stock error $switch_body");
+          print("stock error $switchBody");
         }
       }
 
-      final Uri product_uri = Uri.parse("$mainUrl/product/$Productid");
-      final Uri stock_uri = Uri.parse("$mainUrl/stock/$stockId");
+      final Uri productUri = Uri.parse("$mainUrl/product/$Productid");
+      final Uri stockUri = Uri.parse("$mainUrl/stock/$stockId");
 
-      final http.Response product_Response = await http.patch(product_uri,
+      final http.Response productResponse = await http.patch(productUri,
           headers: {"Content-Type": "application/json"},
           body: jsonEncode(productData));
 
-      final http.Response stock_Response = await http.patch(stock_uri,
+      final http.Response stockResponse = await http.patch(stockUri,
           headers: {"Content-Type": "application/json"},
           body: jsonEncode(stockData));
 
-      final product_body = jsonDecode(product_Response.body);
-      final stock_body = jsonDecode(stock_Response.body);
+      final productBody = jsonDecode(productResponse.body);
+      final stockBody = jsonDecode(stockResponse.body);
 
-      if (product_body["rsp"] == true && stock_body["rsp"] == true) {
+      if (productBody["rsp"] == true && stockBody["rsp"] == true) {
         bloc.changeLoading(false);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -246,13 +246,13 @@ class AppRequest {
         );
         isRestock
             ? Navigator.pop(context)
-            : Globals.switchScreens(context: context, screen: InventoryPage());
+            : Globals.switchScreens(context: context, screen: const InventoryPage());
       } else {
         bloc.changeLoading(false);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              "product error $product_body and stock error $stock_body",
+              "product error $productBody and stock error $stockBody",
               style: GoogleFonts.poppins(color: Colors.white),
             ),
             backgroundColor: Colors.red,
@@ -262,7 +262,7 @@ class AppRequest {
             ),
           ),
         );
-        print("product error $product_body and stock error $stock_body");
+        print("product error $productBody and stock error $stockBody");
       }
     } catch (e) {
       print("err in patchProduct $e");
@@ -346,7 +346,7 @@ class AppRequest {
           description: Text(
               "added  ${isBrand ? "brand" : "category"} successfully",
               style: GoogleFonts.abel()),
-          animationDuration: Duration(milliseconds: 200),
+          animationDuration: const Duration(milliseconds: 200),
           animationCurve: Curves.easeInOut,
         ).show(context);
       } else {
@@ -392,7 +392,7 @@ class AppRequest {
             headers: headers,
             body: jsonEncode(Productbody),
           )
-          .timeout(Duration(seconds: 3)); // Add a timeout
+          .timeout(const Duration(seconds: 3)); // Add a timeout
 
       if (response.statusCode == 201) {
         final PB = jsonDecode(response.body);
@@ -408,7 +408,7 @@ class AppRequest {
                 headers: headers,
                 body: jsonEncode(stockBody),
               )
-              .timeout(Duration(seconds: 3));
+              .timeout(const Duration(seconds: 3));
 
           if (stockResponse.statusCode == 201) {
             final SB = jsonDecode(stockResponse.body);
@@ -422,7 +422,7 @@ class AppRequest {
                   "Product added successfully",
                   style: GoogleFonts.abel(),
                 ),
-                animationDuration: Duration(milliseconds: 200),
+                animationDuration: const Duration(milliseconds: 200),
                 animationCurve: Curves.easeInOut,
               ).show(context);
               Navigator.of(context).pop();
@@ -523,7 +523,7 @@ class AppRequest {
 
     final stockUrl = "$mainUrl/stock";
 
-    List<ProductData> _previousData = [];
+    List<ProductData> previousData = [];
 
     while (true) {
       try {
@@ -538,15 +538,15 @@ class AppRequest {
           final List productsList = productsBody["products"];
 
           // Combine product and stock data
-          final List<ProductData> _currentData = productsList.map((product) {
+          final List<ProductData> currentData = productsList.map((product) {
             return ProductData.fromJson(product);
           }).toList();
 
           // Only yield new data if it has changed
-          if (!_ProductDataListsEqual(_previousData, _currentData)) {
-            _previousData = _currentData;
+          if (!_ProductDataListsEqual(previousData, currentData)) {
+            previousData = currentData;
 
-            yield _currentData;
+            yield currentData;
           }
         } else {
           throw Exception(
@@ -558,7 +558,7 @@ class AppRequest {
       }
 
       // Poll every 3 seconds
-      await Future.delayed(Duration(seconds: 10));
+      await Future.delayed(const Duration(seconds: 10));
     }
   }
 
@@ -595,7 +595,7 @@ class AppRequest {
           "Restocked",
           style: GoogleFonts.abel(),
         ),
-        animationDuration: Duration(milliseconds: 200),
+        animationDuration: const Duration(milliseconds: 200),
         animationCurve: Curves.easeInOut,
       ).show(context);
     } else {

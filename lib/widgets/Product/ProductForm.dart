@@ -17,8 +17,7 @@ class ProductPage extends StatefulWidget {
   final ProductData? product;
   final bool isCreate;
 
-  const ProductPage({Key? key, this.product, required this.isCreate})
-      : super(key: key);
+  const ProductPage({super.key, this.product, required this.isCreate});
 
   @override
   _ProductPageState createState() => _ProductPageState();
@@ -120,8 +119,8 @@ class _ProductPageState extends State<ProductPage>
       SnackBar(
         content: Row(
           children: [
-            Icon(Icons.error_outline, color: Colors.white),
-            SizedBox(width: 8),
+            const Icon(Icons.error_outline, color: Colors.white),
+            const SizedBox(width: 8),
             Expanded(child: Text(message)),
           ],
         ),
@@ -150,11 +149,9 @@ class _ProductPageState extends State<ProductPage>
       isBrand: true,
       selectedCategory: _selectedCategoryId,
     );
-    if (onInvoked != null) {
-      print("Calling onInvoked callback");
-      await onInvoked;
+    print("Calling onInvoked callback");
+    onInvoked;
     }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -188,19 +185,19 @@ class _ProductPageState extends State<ProductPage>
         key: _formKey,
         child: Center(
           child: Container(
-            constraints: BoxConstraints(maxWidth: 800),
+            constraints: const BoxConstraints(maxWidth: 800),
             child: SingleChildScrollView(
-              padding: EdgeInsets.all(16),
+              padding: const EdgeInsets.all(16),
               child: ScaleTransition(
                 scale: _animation,
                 child: Column(
                   children: [
                     _buildProductInfoCard(),
-                    SizedBox(height: 16),
+                    const SizedBox(height: 16),
                     _buildPricingCard(),
-                    SizedBox(height: 16),
+                    const SizedBox(height: 16),
                     _buildStockCard(),
-                    SizedBox(height: 16),
+                    const SizedBox(height: 16),
                     _buildActionCard(bloc),
                   ],
                 ),
@@ -226,13 +223,13 @@ class _ProductPageState extends State<ProductPage>
                   color: Colors.grey[100],
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: Icon(
+                child: const Icon(
                   Icons.inventory_2_outlined,
                   color: Colors.grey,
                   size: 30,
                 ),
               ),
-              SizedBox(width: 16),
+              const SizedBox(width: 16),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -245,7 +242,7 @@ class _ProductPageState extends State<ProductPage>
                         color: Colors.grey[800],
                       ),
                     ),
-                    SizedBox(height: 4),
+                    const SizedBox(height: 4),
                     Text(
                       'Basic details about the product',
                       style: TextStyle(
@@ -258,17 +255,17 @@ class _ProductPageState extends State<ProductPage>
               ),
             ],
           ),
-          SizedBox(height: 24),
+          const SizedBox(height: 24),
           _buildTextField(
             _productNameController,
             'Product Name',
             Icons.shopping_bag_outlined,
           ),
-          SizedBox(height: 16),
+          const SizedBox(height: 16),
           Row(
             children: [
               Expanded(child: _buildBrandDropdown()),
-              SizedBox(width: 16),
+              const SizedBox(width: 16),
               Expanded(child: _buildCategoryDropdown()),
             ],
           ),
@@ -284,12 +281,12 @@ class _ProductPageState extends State<ProductPage>
         children: [
           Row(
             children: [
-              Icon(
+              const Icon(
                 Icons.payments_outlined,
                 size: 24,
                 color: Colors.blue,
               ),
-              SizedBox(width: 12),
+              const SizedBox(width: 12),
               Text(
                 'Pricing Information',
                 style: TextStyle(
@@ -300,7 +297,7 @@ class _ProductPageState extends State<ProductPage>
               ),
             ],
           ),
-          SizedBox(height: 24),
+          const SizedBox(height: 24),
           Row(
             children: [
               Expanded(
@@ -312,7 +309,7 @@ class _ProductPageState extends State<ProductPage>
                   isNumber: true,
                 ),
               ),
-              SizedBox(width: 16),
+              const SizedBox(width: 16),
               Expanded(
                 child: _buildTextField(
                   _sellingPriceController,
@@ -336,12 +333,12 @@ class _ProductPageState extends State<ProductPage>
         children: [
           Row(
             children: [
-              Icon(
+              const Icon(
                 Icons.inventory,
                 size: 24,
                 color: Colors.green,
               ),
-              SizedBox(width: 12),
+              const SizedBox(width: 12),
               Text(
                 'Stock Information',
                 style: TextStyle(
@@ -356,7 +353,7 @@ class _ProductPageState extends State<ProductPage>
             visible: widget.isCreate,
             child: Column(
               children: [
-                SizedBox(height: 24),
+                const SizedBox(height: 24),
                 _buildTextField(
                   _quantityController,
                   'Quantity in Stock',
@@ -366,7 +363,7 @@ class _ProductPageState extends State<ProductPage>
               ],
             ),
           ),
-          SizedBox(height: 24),
+          const SizedBox(height: 24),
           _buildTextField(
             _restockController,
             'Restock Level',
@@ -386,18 +383,18 @@ class _ProductPageState extends State<ProductPage>
         children: [
           OutlinedButton.icon(
             onPressed: () => Navigator.pop(context),
-            icon: Icon(Icons.close, size: 16),
-            label: Text('Cancel', style: TextStyle(fontSize: 12)),
+            icon: const Icon(Icons.close, size: 16),
+            label: const Text('Cancel', style: TextStyle(fontSize: 12)),
             style: OutlinedButton.styleFrom(
               foregroundColor: Colors.grey[700],
               side: BorderSide(color: Colors.grey[400]!),
-              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8),
               ),
             ),
           ),
-          SizedBox(width: 12),
+          const SizedBox(width: 12),
           ElevatedButton.icon(
             onPressed: () {
               if (widget.isCreate && _formKey.currentState!.validate()) {
@@ -469,13 +466,13 @@ class _ProductPageState extends State<ProductPage>
                     color: Colors.white,
                     size: 16,
                   )
-                : Icon(Icons.save, size: 16),
+                : const Icon(Icons.save, size: 16),
             label: Text(widget.isCreate ? "Create" : 'Save Changes',
-                style: TextStyle(fontSize: 12)),
+                style: const TextStyle(fontSize: 12)),
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.green,
               foregroundColor: Colors.white,
-              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8),
               ),
@@ -497,12 +494,12 @@ class _ProductPageState extends State<ProductPage>
             color: Colors.grey.withOpacity(0.1),
             spreadRadius: 1,
             blurRadius: 6,
-            offset: Offset(0, 2),
+            offset: const Offset(0, 2),
           ),
         ],
       ),
       child: Padding(
-        padding: EdgeInsets.all(24),
+        padding: const EdgeInsets.all(24),
         child: child,
       ),
     );
@@ -562,13 +559,13 @@ class _ProductPageState extends State<ProductPage>
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide(color: Colors.blue, width: 1),
+          borderSide: const BorderSide(color: Colors.blue, width: 1),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
           borderSide: BorderSide(color: Colors.grey[300]!),
         ),
-        contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       ),
       style: TextStyle(
         fontSize: 14,
@@ -600,7 +597,7 @@ class _ProductPageState extends State<ProductPage>
                 },
               );
             },
-            icon: Icon(
+            icon: const Icon(
               Icons.add_outlined,
               color: Colors.green,
             ),
@@ -660,7 +657,7 @@ class _ProductPageState extends State<ProductPage>
                 }
               });
             },
-            icon: Icon(
+            icon: const Icon(
               Icons.add_outlined,
               color: Colors.green,
             )),
@@ -694,13 +691,13 @@ class _ProductPageState extends State<ProductPage>
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide(color: Colors.blue, width: 1),
+          borderSide: const BorderSide(color: Colors.blue, width: 1),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
           borderSide: BorderSide(color: Colors.grey[300]!),
         ),
-        contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       ),
       style: TextStyle(
         fontSize: 14,

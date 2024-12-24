@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 class ProductPage extends StatefulWidget {
   final productName;
   final productData;
-  const ProductPage({required this.productName, required this.productData});
+  const ProductPage({super.key, required this.productName, required this.productData});
   @override
   _ProductPageState createState() => _ProductPageState();
 }
@@ -75,7 +75,7 @@ class Product {
 class ProductDisplay extends StatelessWidget {
   final Product product;
 
-  const ProductDisplay({Key? key, required this.product}) : super(key: key);
+  const ProductDisplay({super.key, required this.product});
 
   @override
   Widget build(BuildContext context) {
@@ -85,19 +85,19 @@ class ProductDisplay extends StatelessWidget {
         children: [
           Text(
             product.name,
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
           ),
-          SizedBox(height: 20),
+          const SizedBox(height: 20),
           Text('Total: ${product.total}'),
           Text('Sold: ${product.sold}'),
           Text('Remaining: ${product.remaining}'),
-          SizedBox(height: 20),
+          const SizedBox(height: 20),
           CircularProgressIndicator(
             value: product.sold / product.total,
             backgroundColor: Colors.grey[300],
-            valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
+            valueColor: const AlwaysStoppedAnimation<Color>(Colors.blue),
           ),
-          SizedBox(height: 10),
+          const SizedBox(height: 10),
           Text(
               '${(product.sold / product.total * 100).toStringAsFixed(1)}% Sold'),
         ],

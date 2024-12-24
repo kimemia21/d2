@@ -1,14 +1,10 @@
-import 'package:application/widgets/AddItem/AddProduct.dart';
 import 'package:application/widgets/Globals.dart';
 import 'package:application/widgets/Product/ProductForm.dart';
-import 'package:flutter/material.dart';
-import 'package:application/widgets/AddItem/AddProduct.dart';
-import 'package:application/widgets/Globals.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class NoDataScreen extends StatelessWidget {
-  const NoDataScreen({Key? key}) : super(key: key);
+  const NoDataScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -78,7 +74,7 @@ class NoDataScreen extends StatelessWidget {
               ElevatedButton.icon(
                 onPressed: () => Globals.switchScreens(
                   context: context,
-                  screen: ProductPage(isCreate: true,),
+                  screen: const ProductPage(isCreate: true,),
                 ),
                 icon: const Icon(Icons.add_shopping_cart, size: 20),
                 label: const Text('Add Product'),

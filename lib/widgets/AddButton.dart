@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 class AddButton extends StatelessWidget {
+  const AddButton({super.key});
+
   @override
   Widget build(BuildContext context) {
     return SizedBox(
@@ -12,14 +14,14 @@ class AddButton extends StatelessWidget {
         },
         style: ElevatedButton.styleFrom(
           elevation: 8, // Adds elevation for shadow effect
-          padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12), // Responsive padding
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12), // Responsive padding
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(8), // Rounded corners
           ),
           backgroundColor: Colors.blue, // Background color of the button
           shadowColor: Colors.grey, // Shadow color for elevation
         ),
-        child: Text(
+        child: const Text(
           'Add',
           style: TextStyle(
             color: Colors.white,

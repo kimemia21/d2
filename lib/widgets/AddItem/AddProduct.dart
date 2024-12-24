@@ -1,9 +1,6 @@
-import 'package:application/main.dart';
 import 'package:application/widgets/AddItem/BrandDrop.dart';
 import 'package:application/widgets/AddItem/CatDropDown.dart';
 import 'package:application/widgets/Globals.dart';
-import 'package:application/widgets/controllers/BrandSerializer.dart';
-import 'package:application/widgets/controllers/CategorySerializers.dart';
 import 'package:application/widgets/requests/Request.dart';
 import 'package:application/widgets/state/AppBloc.dart';
 import 'package:cherry_toast/cherry_toast.dart';
@@ -14,7 +11,7 @@ import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:provider/provider.dart';
 
 class AddProductForm extends StatefulWidget {
-  const AddProductForm({Key? key}) : super(key: key);
+  const AddProductForm({super.key});
 
   @override
   _AddProductFormState createState() => _AddProductFormState();
@@ -49,7 +46,7 @@ class _AddProductFormState extends State<AddProductForm>
     super.initState();
     _animationController = AnimationController(
       vsync: this,
-      duration: Duration(milliseconds: 300),
+      duration: const Duration(milliseconds: 300),
     );
     _animation = CurvedAnimation(
       parent: _animationController,
@@ -126,9 +123,9 @@ class _AddProductFormState extends State<AddProductForm>
     
 
         CherryToast.success(
-          title: Text("Product saved successfully"),
-          toastDuration: Duration(seconds: 2),
-          animationDuration: Duration(seconds: 2),
+          title: const Text("Product saved successfully"),
+          toastDuration: const Duration(seconds: 2),
+          animationDuration: const Duration(seconds: 2),
         ).show(context);
       } catch (e) {
         print("Create Product error $e");
@@ -162,8 +159,8 @@ class _AddProductFormState extends State<AddProductForm>
   void error({required String title}) {
     CherryToast.error(
       title: Text(title),
-      toastDuration: Duration(seconds: 2),
-      animationDuration: Duration(seconds: 2),
+      toastDuration: const Duration(seconds: 2),
+      animationDuration: const Duration(seconds: 2),
     ).show(context);
   }
 
@@ -234,7 +231,7 @@ class _AddProductFormState extends State<AddProductForm>
                   fontWeight: FontWeight.bold,
                   color: primaryColor),
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
 
             Globals.buildDropdownWithButton(
               context: context,
@@ -245,7 +242,7 @@ class _AddProductFormState extends State<AddProductForm>
               }),
               addNewItem: addNewCategory,
             ),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
              Globals.buildDropdownWithButton(
               context: context,
               dropdown: BrandDropdown(
@@ -263,16 +260,16 @@ class _AddProductFormState extends State<AddProductForm>
             }),
 
 
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
             buildTextField('Product Name', nameController, Icons.shopping_bag,
                 type: TextInputType.text),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
             buildNumberTextField(
                 'Buying Price', buyingPriceController, Icons.attach_money),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
             buildNumberTextField(
                 'Selling Price', sellingPriceController, Icons.attach_money),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
             buildNumberTextField(
                 'Quantity', quantityController, Icons.inventory),
             buildNumberTextField(
@@ -287,7 +284,7 @@ class _AddProductFormState extends State<AddProductForm>
       String label, TextEditingController controller, IconData icon,
       {TextInputType type = TextInputType.text}) {
     return TweenAnimationBuilder(
-      duration: Duration(milliseconds: 500),
+      duration: const Duration(milliseconds: 500),
       tween: Tween<double>(begin: 0, end: 1),
       builder: (context, double opacity, child) {
         return Opacity(
@@ -315,7 +312,7 @@ class _AddProductFormState extends State<AddProductForm>
               prefixIcon: Icon(icon,
                   color: Theme.of(context).colorScheme.secondary, size: 20),
               contentPadding:
-                  EdgeInsets.symmetric(vertical: 10, horizontal: 15),
+                  const EdgeInsets.symmetric(vertical: 10, horizontal: 15),
             ),
             style: GoogleFonts.poppins(color: Colors.black87, fontSize: 14),
           ),
@@ -327,7 +324,7 @@ class _AddProductFormState extends State<AddProductForm>
   Widget buildNumberTextField(
       String label, TextEditingController controller, IconData icon) {
     return TweenAnimationBuilder(
-      duration: Duration(milliseconds: 500),
+      duration: const Duration(milliseconds: 500),
       tween: Tween<double>(begin: 0, end: 1),
       builder: (context, double opacity, child) {
         return Opacity(
@@ -353,7 +350,7 @@ class _AddProductFormState extends State<AddProductForm>
               prefixIcon: Icon(icon,
                   color: Theme.of(context).colorScheme.secondary, size: 20),
               contentPadding:
-                  EdgeInsets.symmetric(vertical: 10, horizontal: 15),
+                  const EdgeInsets.symmetric(vertical: 10, horizontal: 15),
             ),
             style: GoogleFonts.poppins(color: Colors.black87, fontSize: 14),
           ),
@@ -381,25 +378,25 @@ class _AddProductFormState extends State<AddProductForm>
           ),
         ),
         leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios, color: Colors.white),
+          icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
           onPressed: () => Navigator.pop(context),
         ),
       ),
       body: Center(
         child: Container(
           width: formWidth,
-          margin: EdgeInsets.symmetric(vertical: 20),
+          margin: const EdgeInsets.symmetric(vertical: 20),
           child: Card(
             elevation: 4,
             shape:
                 RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
             child: SingleChildScrollView(
-              padding: EdgeInsets.all(24),
+              padding: const EdgeInsets.all(24),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   _buildHeader(),
-                  SizedBox(height: 32),
+                  const SizedBox(height: 32),
                   _buildCategorySection(),
                   _buildProductDetailsSection(),
                   _buildPricingSection(),
@@ -415,7 +412,7 @@ class _AddProductFormState extends State<AddProductForm>
 
   Widget _buildHeader() {
     return Container(
-      padding: EdgeInsets.all(16),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: primaryColor.withOpacity(0.1),
         borderRadius: BorderRadius.circular(15),
@@ -423,7 +420,7 @@ class _AddProductFormState extends State<AddProductForm>
       child: Row(
         children: [
           Icon(Icons.inventory_2, color: primaryColor, size: 32),
-          SizedBox(width: 16),
+          const SizedBox(width: 16),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -454,7 +451,7 @@ class _AddProductFormState extends State<AddProductForm>
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _buildSectionTitle('Category & Brand'),
-        SizedBox(height: 16),
+        const SizedBox(height: 16),
         Row(
           children: [
             Expanded(
@@ -470,7 +467,7 @@ class _AddProductFormState extends State<AddProductForm>
             ),
           ],
         ),
-        SizedBox(height: 16),
+        const SizedBox(height: 16),
         Row(
           children: [
             Expanded(
@@ -498,16 +495,16 @@ class _AddProductFormState extends State<AddProductForm>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        SizedBox(height: 24),
+        const SizedBox(height: 24),
         _buildSectionTitle('Product Details'),
-        SizedBox(height: 16),
+        const SizedBox(height: 16),
         _buildAnimatedTextField(
           'Product Name',
           nameController,
           Icons.shopping_bag_outlined,
           TextInputType.text,
         ),
-        SizedBox(height: 16),
+        const SizedBox(height: 16),
         _buildAnimatedTextField(
           'Quantity',
           quantityController,
@@ -524,9 +521,9 @@ class _AddProductFormState extends State<AddProductForm>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        SizedBox(height: 24),
+        const SizedBox(height: 24),
         _buildSectionTitle('Pricing Information'),
-        SizedBox(height: 16),
+        const SizedBox(height: 16),
         Row(
           children: [
             Expanded(
@@ -537,7 +534,7 @@ class _AddProductFormState extends State<AddProductForm>
                 TextInputType.number,
               ),
             ),
-            SizedBox(width: 16),
+            const SizedBox(width: 16),
             Expanded(
               child: _buildAnimatedTextField(
                 'Selling Price',
@@ -572,7 +569,7 @@ class _AddProductFormState extends State<AddProductForm>
     TextInputType keyboardType,
   ) {
     return TweenAnimationBuilder(
-      duration: Duration(milliseconds: 500),
+      duration: const Duration(milliseconds: 500),
       tween: Tween<double>(begin: 0, end: 1),
       builder: (context, double opacity, child) {
         return Opacity(
@@ -583,7 +580,7 @@ class _AddProductFormState extends State<AddProductForm>
               border: Border.all(color: Colors.grey.shade300),
               color: surfaceColor,
             ),
-            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
             child: TextField(
               controller: controller,
               keyboardType: keyboardType,
@@ -609,7 +606,7 @@ class _AddProductFormState extends State<AddProductForm>
 
   Widget _buildActionButtons(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.only(top: 32),
+      padding: const EdgeInsets.only(top: 32),
       child: Row(
         children: [
           Expanded(
@@ -620,7 +617,7 @@ class _AddProductFormState extends State<AddProductForm>
                       color: Colors.white,
                       size: 20,
                     )
-                  : Icon(Icons.save_outlined),
+                  : const Icon(Icons.save_outlined),
               label: Text(
                 'Save Product',
                 style: GoogleFonts.poppins(
@@ -629,18 +626,18 @@ class _AddProductFormState extends State<AddProductForm>
               ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: secondaryColor,
-                padding: EdgeInsets.symmetric(vertical: 16),
+                padding: const EdgeInsets.symmetric(vertical: 16),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
               ),
             ),
           ),
-          SizedBox(width: 16),
+          const SizedBox(width: 16),
           Expanded(
             child: OutlinedButton.icon(
               onPressed: () => Navigator.pop(context),
-              icon: Icon(Icons.close),
+              icon: const Icon(Icons.close),
               label: Text(
                 'Cancel',
                 style: GoogleFonts.poppins(
@@ -650,7 +647,7 @@ class _AddProductFormState extends State<AddProductForm>
               style: OutlinedButton.styleFrom(
                 foregroundColor: errorColor,
                 side: BorderSide(color: errorColor),
-                padding: EdgeInsets.symmetric(vertical: 16),
+                padding: const EdgeInsets.symmetric(vertical: 16),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),

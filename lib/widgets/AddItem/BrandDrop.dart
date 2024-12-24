@@ -1,5 +1,4 @@
 import 'package:application/widgets/AddItem/BrandReq.dart';
-import 'package:application/widgets/AddItem/CatRequest.dart';
 import 'package:application/widgets/controllers/BrandSerializer.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -7,7 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 class BrandDropdown extends StatefulWidget {
   final Function(String) onbrandChange;
 
-  const BrandDropdown({Key? key, required this.onbrandChange}) : super(key: key);
+  const BrandDropdown({super.key, required this.onbrandChange});
 
   @override
   _BrandDropdownState createState() => _BrandDropdownState();
@@ -32,13 +31,13 @@ class _BrandDropdownState extends State<BrandDropdown> {
         print('Error fetching brands: $e');
         yield [];
       }
-      await Future.delayed(Duration(seconds: 5)); // Poll every 5 seconds
+      await Future.delayed(const Duration(seconds: 5)); // Poll every 5 seconds
     }
   }
 
   Widget _buildBrandDropdown(List<BrandController> brands) {
     return Container(
-      margin: EdgeInsets.symmetric(vertical: 10),
+      margin: const EdgeInsets.symmetric(vertical: 10),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(10),
         color: Colors.white,
@@ -47,7 +46,7 @@ class _BrandDropdownState extends State<BrandDropdown> {
             color: Colors.grey.withOpacity(0.2),
             spreadRadius: 1,
             blurRadius: 5,
-            offset: Offset(0, 3),
+            offset: const Offset(0, 3),
           ),
         ],
       ),
@@ -65,7 +64,7 @@ class _BrandDropdownState extends State<BrandDropdown> {
           filled: true,
           fillColor: Colors.white,
           prefixIcon: Icon(Icons.branding_watermark, color: Colors.green.shade600),
-          contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         ),
         value: _selectedBrand,
         items: brands
@@ -104,7 +103,7 @@ class _BrandDropdownState extends State<BrandDropdown> {
       stream: _brandsStream,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return Center(
+          return const Center(
             child: CircularProgressIndicator(
               valueColor: AlwaysStoppedAnimation<Color>(Colors.green),
             ),
@@ -112,7 +111,7 @@ class _BrandDropdownState extends State<BrandDropdown> {
         } else if (snapshot.hasError) {
           return Center(child: Text('Error: ${snapshot.error}'));
         } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-          return Center(child: Text('No brands available'));
+          return const Center(child: Text('No brands available'));
         } else {
           return _buildBrandDropdown(snapshot.data!);
         }

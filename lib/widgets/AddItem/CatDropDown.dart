@@ -7,9 +7,9 @@ class CategoryDropdown extends StatefulWidget {
   final Function(String?) onchangeCategory;
 
   const CategoryDropdown({
-    Key? key,
+    super.key,
     required this.onchangeCategory,
-  }) : super(key: key);
+  });
 
   @override
   _CategoryDropdownState createState() => _CategoryDropdownState();
@@ -35,13 +35,13 @@ class _CategoryDropdownState extends State<CategoryDropdown> {
         print('Error fetching categories: $e');
         yield [];
       }
-      await Future.delayed(Duration(seconds:5)); // Poll every 5 seconds
+      await Future.delayed(const Duration(seconds:5)); // Poll every 5 seconds
     }
   }
 
   Widget _buildCategoryDropdown( List<CategoryController> categories) {
     return Container(
-      margin: EdgeInsets.symmetric(vertical: 10),
+      margin: const EdgeInsets.symmetric(vertical: 10),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(10),
         color: Colors.white,
@@ -50,7 +50,7 @@ class _CategoryDropdownState extends State<CategoryDropdown> {
             color: Colors.grey.withOpacity(0.2),
             spreadRadius: 1,
             blurRadius: 5,
-            offset: Offset(0, 3),
+            offset: const Offset(0, 3),
           ),
         ],
       ),
@@ -68,7 +68,7 @@ class _CategoryDropdownState extends State<CategoryDropdown> {
           filled: true,
           fillColor: Colors.white,
           prefixIcon: Icon(Icons.category, color: Colors.green.shade600),
-          contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         ),
         value: _selectedCategory,
         items: categories
@@ -107,7 +107,7 @@ class _CategoryDropdownState extends State<CategoryDropdown> {
       stream: _categoriesStream,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return Center(
+          return const Center(
             child: CircularProgressIndicator(
               valueColor: AlwaysStoppedAnimation<Color>(Colors.green),
             ),
@@ -115,7 +115,7 @@ class _CategoryDropdownState extends State<CategoryDropdown> {
         } else if (snapshot.hasError) {
           return Center(child: Text('Error: ${snapshot.error}'));
         } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-          return Center(child: Text('No categories available'));
+          return const Center(child: Text('No categories available'));
         } else {
           return _buildCategoryDropdown(snapshot.data!);
         }

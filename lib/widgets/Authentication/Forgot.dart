@@ -1,38 +1,27 @@
-import 'package:application/widgets/Authentication/Forgot.dart';
-import 'package:application/widgets/Authentication/signup.dart';
 import 'package:application/widgets/Firebase/ReqFirebase.dart';
-import 'package:application/widgets/Globals.dart';
-import 'package:application/widgets/commsRepo/commsRepo.dart';
-import 'package:application/widgets/state/AppBloc.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
-import 'package:provider/provider.dart';
 
-class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+class ForgotPasswordScreen extends StatefulWidget {
+  const ForgotPasswordScreen({Key? key}) : super(key: key);
 
   @override
-  _LoginScreenState createState() => _LoginScreenState();
+  _ForgotPasswordScreenState createState() => _ForgotPasswordScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen>
+class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
     with SingleTickerProviderStateMixin {
-  // Color Palette matching ProductPage
   final Color primaryColor = const Color(0xFF1A237E);
   final Color secondaryColor = const Color(0xFF4CAF50);
   final Color backgroundColor = const Color(0xFFF8F9FA);
   final Color surfaceColor = Colors.white;
-  final Color textColor = const Color(0xFF2C3E50);
 
-  final _formKey = GlobalKey<FormState>();
   final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _passwordController = TextEditingController();
-  bool _isPasswordVisible = false;
-
+  final _formKey = GlobalKey<FormState>();
   late AnimationController _animationController;
   late Animation<double> _animation;
+  bool _isLoading = false;
 
   @override
   void initState() {
@@ -51,19 +40,18 @@ class _LoginScreenState extends State<LoginScreen>
   @override
   void dispose() {
     _emailController.dispose();
-    _passwordController.dispose();
     _animationController.dispose();
     super.dispose();
   }
 
-  void _login() async {
+  Future<void> _resetPassword() async {
     if (_formKey.currentState!.validate()) {
-      Map<String, dynamic> loginBody = {
-        "email": _emailController.text,
-        "password": _passwordController.text,
-      };
-      await FirebaseReq.loginEmailPassword(
-          loginBody: loginBody, context: context);
+      setState(() => _isLoading = true);
+      // await ReqFirebase.resetPassword(
+      //   email: _emailController.text,
+      //   context: context,
+      // );
+      setState(() => _isLoading = false);
     }
   }
 
@@ -88,18 +76,15 @@ class _LoginScreenState extends State<LoginScreen>
     );
   }
 
-  Widget _buildTextField({
-    required String label,
-    required TextEditingController controller,
-    required IconData icon,
-    bool isPassword = false,
-  }) {
+  Widget _buildTextField({required String label}) {
     return TextFormField(
-      controller: controller,
-      obscureText: isPassword ? !_isPasswordVisible : false,
+      controller: _emailController,
       validator: (value) {
         if (value == null || value.isEmpty) {
           return "$label can't be empty";
+        }
+        if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+\$').hasMatch(value)) {
+          return "Enter a valid email";
         }
         return null;
       },
@@ -109,21 +94,7 @@ class _LoginScreenState extends State<LoginScreen>
           color: Colors.grey[600],
           fontSize: 12,
         ),
-        prefixIcon: Icon(icon, size: 18, color: Colors.grey[600]),
-        suffixIcon: isPassword
-            ? IconButton(
-                icon: Icon(
-                  _isPasswordVisible ? Icons.visibility : Icons.visibility_off,
-                  color: Colors.grey[600],
-                  size: 18,
-                ),
-                onPressed: () {
-                  setState(() {
-                    _isPasswordVisible = !_isPasswordVisible;
-                  });
-                },
-              )
-            : null,
+        prefixIcon: Icon(Icons.email_outlined, size: 18, color: Colors.grey[600]),
         filled: true,
         fillColor: Colors.grey[50],
         border: OutlineInputBorder(
@@ -151,7 +122,6 @@ class _LoginScreenState extends State<LoginScreen>
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
-    final screenHeight = MediaQuery.of(context).size.height;
     final isSmallScreen = screenWidth < 900;
 
     return Scaffold(
@@ -163,25 +133,14 @@ class _LoginScreenState extends State<LoginScreen>
               flex: 5,
               child: Container(
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.all(Radius.circular(10)),
-                  image: DecorationImage(
-                    image: AssetImage('images/login.png'),
+                  borderRadius: const BorderRadius.all(Radius.circular(10)),
+                  image: const DecorationImage(
+                    image: AssetImage('images/forgot_password.png'),
                     fit: BoxFit.contain,
-                     // This will cover the entire container
                   ),
-                  // You can add an overlay color if you want
-                  // gradient: LinearGradient(
-                  //   begin: Alignment.topRight,
-                  //   end: Alignment.bottomLeft,
-                  //   colors: [
-                  //     primaryColor.withOpacity(0.8),
-                  //     primaryColor.withOpacity(0.6),
-                  //   ],
-                  // ),
                 ),
               ),
             ),
-          // Login form
           Expanded(
             flex: isSmallScreen ? 10 : 5,
             child: Center(
@@ -198,7 +157,6 @@ class _LoginScreenState extends State<LoginScreen>
                           mainAxisSize: MainAxisSize.min,
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            // Header
                             Row(
                               children: [
                                 Container(
@@ -208,7 +166,7 @@ class _LoginScreenState extends State<LoginScreen>
                                     color: primaryColor.withOpacity(0.1),
                                     borderRadius: BorderRadius.circular(12),
                                   ),
-                                  child: Icon(Icons.lock_outline,
+                                  child: Icon(Icons.lock_reset_outlined,
                                       color: primaryColor),
                                 ),
                                 const SizedBox(width: 16),
@@ -218,7 +176,7 @@ class _LoginScreenState extends State<LoginScreen>
                                         CrossAxisAlignment.start,
                                     children: [
                                       Text(
-                                        'Welcome Back',
+                                        'Reset Password',
                                         style: GoogleFonts.poppins(
                                           fontSize: 24,
                                           fontWeight: FontWeight.bold,
@@ -226,7 +184,7 @@ class _LoginScreenState extends State<LoginScreen>
                                         ),
                                       ),
                                       Text(
-                                        'Sign in to continue',
+                                        'Enter your email to reset',
                                         style: GoogleFonts.poppins(
                                           fontSize: 14,
                                           color: Colors.grey[600],
@@ -238,33 +196,17 @@ class _LoginScreenState extends State<LoginScreen>
                               ],
                             ),
                             const SizedBox(height: 32),
-
-                            // Email field
-                            _buildTextField(
-                              label: 'Email Address',
-                              controller: _emailController,
-                              icon: Icons.email_outlined,
-                            ),
-                            const SizedBox(height: 16),
-
-                            // Password field
-                            _buildTextField(
-                              label: 'Password',
-                              controller: _passwordController,
-                              icon: Icons.lock_outline,
-                              isPassword: true,
-                            ),
+                            _buildTextField(label: 'Email Address'),
                             const SizedBox(height: 24),
-                            context.watch<Appbloc>().isloading
-                                ? LoadingAnimationWidget.fourRotatingDots(
-                                    color: secondaryColor,
-                                    size: 50,
+                            _isLoading
+                                ? Center(
+                                    child: LoadingAnimationWidget.fourRotatingDots(
+                                      color: secondaryColor,
+                                      size: 50,
+                                    ),
                                   )
-                                :
-
-                                // Login button
-                                ElevatedButton(
-                                    onPressed: _login,
+                                : ElevatedButton(
+                                    onPressed: _resetPassword,
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: secondaryColor,
                                       foregroundColor: Colors.white,
@@ -275,56 +217,13 @@ class _LoginScreenState extends State<LoginScreen>
                                       ),
                                     ),
                                     child: Text(
-                                      'Sign In',
+                                      'Send Reset Link',
                                       style: GoogleFonts.poppins(
                                         fontSize: 14,
                                         fontWeight: FontWeight.w600,
                                       ),
                                     ),
                                   ),
-
-                            const SizedBox(height: 16),
-
-                            // Forgot password
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                TextButton(
-                                  onPressed: () {
-                                    Globals.switchScreens(
-                                        context: context,
-                                        screen: SignupScreen());
-                         
-                                  },
-                                  child: Text(
-                                    'Create Account',
-                                    style: GoogleFonts.poppins(
-                                      color: primaryColor,
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                ),
-                                TextButton(
-
-                                  onPressed: () {
-                                     Globals.switchScreens(
-                                        context: context,
-                                        screen: ForgotPasswordScreen());
-
-                                    // Forgot password logic
-                                  },
-                                  child: Text(
-                                    'Forgot Password?',
-                                    style: GoogleFonts.poppins(
-                                      color: primaryColor,
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
                           ],
                         ),
                       ),

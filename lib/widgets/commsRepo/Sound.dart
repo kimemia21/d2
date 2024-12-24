@@ -14,7 +14,7 @@ class SoundButton extends StatefulWidget {
     Key? key,
     required this.child,
     required this.onPressed,
-    this.soundUrl = '/assets/click.mp3',
+    this.soundUrl = '/assets/sounds/error.mp3',
   }) : super(key: key);
 
   @override
@@ -70,14 +70,18 @@ class _SoundButtonState extends State<SoundButton> {
   }
 }
 
+
+
+
+
 // Usage example with your login button:
-class LoginScreen extends StatelessWidget {
+class Screen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Center(
         child: SoundButton(
-          soundUrl: 'assets/click.mp3', // Your sound file path
+          soundUrl: 'assets/click.mp3', 
           onPressed: () {
             // Your login logic
             print('Button clicked with sound!');

@@ -156,7 +156,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
     child: Container(
       decoration: BoxDecoration(
         image: DecorationImage(
-          image: NetworkImage('https://bikedesk.com/wp-content/uploads/2023/08/Header_frontpage.png'),
+          image:AssetImage('assets/images/login.png'),
           fit: BoxFit.cover,  // This will cover the entire container
         ),
         // You can add an overlay color if you want

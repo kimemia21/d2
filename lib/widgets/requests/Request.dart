@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:application/main.dart';
 import 'package:application/widgets/Globals.dart';
 import 'package:application/widgets/Inventory.dart';
 import 'package:application/widgets/controllers/BrandSerializer.dart';
@@ -17,7 +16,6 @@ import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 
 import 'package:cherry_toast/cherry_toast.dart';
-import 'package:rxdart/rxdart.dart';
 
 class AppRequest {
   static String mainUrl = "http://127.0.0.1:8000/api";

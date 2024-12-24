@@ -1,5 +1,5 @@
 import 'package:application/widgets/AddItem/CatRequest.dart';
-import 'package:application/widgets/controllers/CategorySerializers.dart';
+import 'package:application/widgets/Models/CategorySerializers.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 

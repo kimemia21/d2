@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:application/widgets/controllers/BrandSerializer.dart';
+import 'package:application/widgets/Models/BrandSerializer.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 

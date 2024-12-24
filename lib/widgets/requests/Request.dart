@@ -4,11 +4,11 @@ import 'dart:io';
 
 import 'package:application/widgets/Globals.dart';
 import 'package:application/widgets/Inventory.dart';
-import 'package:application/widgets/controllers/BrandSerializer.dart';
-import 'package:application/widgets/controllers/CategorySerializers.dart';
-import 'package:application/widgets/controllers/ProductQuantity.dart';
-import 'package:application/widgets/controllers/ProductSerializer.dart';
-import 'package:application/widgets/controllers/ProductWithStock.dart';
+import 'package:application/widgets/Models/BrandSerializer.dart';
+import 'package:application/widgets/Models/CategorySerializers.dart';
+import 'package:application/widgets/Models/ProductQuantity.dart';
+import 'package:application/widgets/Models/ProductSerializer.dart';
+import 'package:application/widgets/Models/ProductWithStock.dart';
 import 'package:application/widgets/state/AppBloc.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';

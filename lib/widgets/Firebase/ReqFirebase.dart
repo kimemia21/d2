@@ -1,3 +1,4 @@
+import 'package:application/widgets/Authentication/EmailVerfication.dart';
 import 'package:application/widgets/Globals.dart';
 import 'package:application/widgets/commsRepo/commsRepo.dart';
 import 'package:application/widgets/homepage.dart';
@@ -42,4 +43,40 @@ class FirebaseReq {
       }
     }
   }
+
+  static SignUpEmailPassword(
+      {required Map<String, dynamic> SignupBody,
+      required BuildContext context}) async {
+    Appbloc bloc = context.read<Appbloc>();
+    try {
+      print(SignupBody);
+      bloc.changeLoading(true);
+      await firebaseAuth
+          .createUserWithEmailAndPassword(
+              email: SignupBody["email"], password: SignupBody["password"])
+          .then((value) {
+            
+      bloc.changeLoading(false);
+        Globals.switchScreens(context: context, screen: Emailverification(isLoggedin: false,));
+        print(value);
+      });
+    } on FirebaseAuthException catch (e) {
+      
+      bloc.changeLoading(false);
+      if (e.code == 'user-not-found') {
+        print('No user found for that email.');
+      } else if (e.code == 'wrong-password') {
+        print('Wrong password provided for that user.');
+      } else {
+        CherryToast.error(
+          title: Text("SignUp Error"),
+          description: Text(e.code.toString()),
+          animationDuration: Duration(milliseconds: 100),
+          autoDismiss: true,
+        ).show(context);
+        print(e.code);
+      }
+    }
+  }
+
 }

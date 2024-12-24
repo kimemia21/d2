@@ -1,5 +1,5 @@
 import 'package:application/widgets/AddItem/BrandReq.dart';
-import 'package:application/widgets/controllers/BrandSerializer.dart';
+import 'package:application/widgets/Models/BrandSerializer.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 

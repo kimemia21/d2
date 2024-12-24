@@ -27,7 +27,8 @@ class _SignupScreenState extends State<SignupScreen>
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-  final TextEditingController _confirmPasswordController = TextEditingController();
+  final TextEditingController _confirmPasswordController =
+      TextEditingController();
   bool _isPasswordVisible = false;
   bool _isConfirmPasswordVisible = false;
 
@@ -65,8 +66,8 @@ class _SignupScreenState extends State<SignupScreen>
         "email": _emailController.text,
         "password": _passwordController.text,
       };
-      // Implement your signup logic here
-      // await FirebaseReq.signupEmailPassword(signupBody: signupBody, context: context);
+      await FirebaseReq.SignUpEmailPassword(
+          SignupBody: signupBody, context: context);
     }
   }
 
@@ -96,19 +97,28 @@ class _SignupScreenState extends State<SignupScreen>
     required TextEditingController controller,
     required IconData icon,
     bool isPassword = false,
+    bool isConfirmPassword = false,
     String? Function(String?)? validator,
   }) {
     return TextFormField(
       controller: controller,
-      obscureText: isPassword ? 
-        (label == 'Confirm Password' ? !_isConfirmPasswordVisible : !_isPasswordVisible) 
-        : false,
-      validator: validator ?? (value) {
-        if (value == null || value.isEmpty) {
-          return "$label can't be empty";
-        }
-        return null;
-      },
+      obscureText: isPassword
+          ? (label == 'Confirm Password'
+              ? !_isConfirmPasswordVisible
+              : !_isPasswordVisible)
+          : false,
+      validator: validator ??
+          (value) {
+            if (value == null || value.isEmpty) {
+              return "$label can't be empty";
+            }
+            if (isConfirmPassword) {
+              if (value != _passwordController.text) {
+                return "Passwords don't match";
+              }
+              return null;
+            }
+          },
       decoration: InputDecoration(
         labelText: label,
         labelStyle: TextStyle(
@@ -119,7 +129,9 @@ class _SignupScreenState extends State<SignupScreen>
         suffixIcon: isPassword
             ? IconButton(
                 icon: Icon(
-                  (label == 'Confirm Password' ? _isConfirmPasswordVisible : _isPasswordVisible)
+                  (label == 'Confirm Password'
+                          ? _isConfirmPasswordVisible
+                          : _isPasswordVisible)
                       ? Icons.visibility
                       : Icons.visibility_off,
                   color: Colors.grey[600],
@@ -150,7 +162,8 @@ class _SignupScreenState extends State<SignupScreen>
           borderRadius: BorderRadius.circular(8),
           borderSide: BorderSide(color: Colors.grey[300]!),
         ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       ),
       style: TextStyle(
         fontSize: 14,
@@ -175,7 +188,8 @@ class _SignupScreenState extends State<SignupScreen>
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.all(Radius.circular(10)),
                   image: DecorationImage(
-                    image: AssetImage('images/signup.png'), // Update with your signup image
+                    image: AssetImage(
+                        'images/signup.png'), // Update with your signup image
                     fit: BoxFit.contain,
                   ),
                 ),
@@ -214,7 +228,8 @@ class _SignupScreenState extends State<SignupScreen>
                                 const SizedBox(width: 16),
                                 Expanded(
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Text(
                                         'Create Account',
@@ -288,6 +303,7 @@ class _SignupScreenState extends State<SignupScreen>
                               controller: _confirmPasswordController,
                               icon: Icons.lock_outline,
                               isPassword: true,
+                              isConfirmPassword: true,
                               validator: (value) {
                                 if (value == null || value.isEmpty) {
                                   return 'Please confirm your password';
@@ -303,7 +319,8 @@ class _SignupScreenState extends State<SignupScreen>
                             // Signup button
                             context.watch<Appbloc>().isloading
                                 ? Center(
-                                    child: LoadingAnimationWidget.fourRotatingDots(
+                                    child:
+                                        LoadingAnimationWidget.fourRotatingDots(
                                       color: secondaryColor,
                                       size: 50,
                                     ),

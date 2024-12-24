@@ -1,5 +1,5 @@
 import 'package:application/widgets/Product/ProductForm.dart';
-import 'package:application/widgets/controllers/ProductWithStock.dart';
+import 'package:application/widgets/Models/ProductWithStock.dart';
 import 'package:application/widgets/homepage.dart';
 import 'package:application/widgets/nodata/nodata.dart';
 import 'package:application/widgets/state/AppBloc.dart';
@@ -7,7 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:application/widgets/Globals.dart';
-import 'package:application/widgets/controllers/CategorySerializers.dart';
+import 'package:application/widgets/Models/CategorySerializers.dart';
 import 'package:application/widgets/requests/Request.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:provider/provider.dart';

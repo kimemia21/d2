@@ -1,8 +1,8 @@
 
 import 'package:application/widgets/Globals.dart';
-import 'package:application/widgets/controllers/BrandSerializer.dart';
-import 'package:application/widgets/controllers/CategorySerializers.dart';
-import 'package:application/widgets/controllers/ProductWithStock.dart';
+import 'package:application/widgets/Models/BrandSerializer.dart';
+import 'package:application/widgets/Models/CategorySerializers.dart';
+import 'package:application/widgets/Models/ProductWithStock.dart';
 import 'package:application/widgets/requests/Request.dart';
 import 'package:application/widgets/state/AppBloc.dart';
 import 'package:flutter/material.dart';

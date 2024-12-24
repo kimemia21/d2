@@ -155,19 +155,20 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
     flex: 5,
     child: Container(
       decoration: BoxDecoration(
+        borderRadius: BorderRadius.all(Radius.circular(10)),
         image: DecorationImage(
-          image:AssetImage('assets/images/login.png'),
-          fit: BoxFit.cover,  // This will cover the entire container
+          image:AssetImage('images/login.png'),
+          fit: BoxFit.contain,  // This will cover the entire container
         ),
         // You can add an overlay color if you want
-        gradient: LinearGradient(
-          begin: Alignment.topRight,
-          end: Alignment.bottomLeft,
-          colors: [
-            primaryColor.withOpacity(0.8),
-            primaryColor.withOpacity(0.6),
-          ],
-        ),
+        // gradient: LinearGradient(
+        //   begin: Alignment.topRight,
+        //   end: Alignment.bottomLeft,
+        //   colors: [
+        //     primaryColor.withOpacity(0.8),
+        //     primaryColor.withOpacity(0.6),
+        //   ],
+        // ),
       ),
     ),
   ),

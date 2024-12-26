@@ -179,6 +179,10 @@ class Globals {
                                     child: Text('Error: ${snapshot.error}'));
                               } else {
                                 final data = snapshot.data;
+                                if (data == null || data.isEmpty) {
+                                  return Center(
+                                      child: Text('No $title available'));
+                                }
                                 return ListView.builder(
                                   itemCount: data!.length,
                                   itemBuilder: (context, index) {
@@ -240,19 +244,26 @@ class Globals {
                                     .toUpperCase(), // Only name for non-brand items
                               };
 
-                        // Make the API request to create the brand or category
-
+                        // Create instances of both brand and category
+                        String id = uuid.v4().toString();
                         Category category = Category(
-                            id: uuid.v4().toString(),
+                            id: id, name: newItem, createdAt: DateTime.now());
+                        Brand brand = Brand(
+                            id: id,
                             name: newItem,
-                            createdAt: DateTime.now());
+                            categoryId: selectedCategory!);
+
 
                         await FirestoreService().createCollection(
                             context: context,
-                            isCategory: true,
-                            isBrand: isBrand,
-                            category: category);
+                            // isBrand is checking for both category and brand
+                            isBrand: true,
+                            isProduct: false,
+                            category: category,
+                            brand: brand);
 
+
+// django
                         // await AppRequest.CreateBrandOrCategory(
                         //   isBrand: isBrand,
                         //   body: body,

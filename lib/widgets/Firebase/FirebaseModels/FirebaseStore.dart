@@ -56,9 +56,9 @@ class Brand {
     };
   }
 
-  static Brand fromMap(Map<String, dynamic> map, String id) {
+  static Brand fromMap(Map<String, dynamic> map) {
     return Brand(
-      id: id,
+      id: map["id"],
       name: map['name'],
       categoryId: map['categoryId'],
     );
@@ -203,27 +203,48 @@ class FirestoreService {
       'movements': [],
     });
   }
-
+//  dynamic functions 
   Future<void> createCollection(
-      {required bool isCategory,
-      required BuildContext context,
+      {required BuildContext context,
       required bool isBrand,
+      required bool isProduct,
       Category? category,
-      Brand? brand}) async {
-    String id = isCategory ? category!.id : brand!.id;
-    String collectName = isCategory ? kCategoriesCollection : kBrandsCollection;
-    dynamic model = isCategory ? category : brand;
+      Brand? brand,
+      Stock? stock,
+      Product? product}) async {
+    String id = isBrand
+        ? brand!.id
+        : isProduct
+            ? product!.id
+            : category!.id;
+    String collectName = isBrand
+        ? kBrandsCollection
+        : isProduct
+            ? kProductsCollection
+            : kCategoriesCollection;
+    dynamic model = isBrand
+        ? brand
+        : isProduct
+            ? product
+            : category;
     Appbloc bloc = context.read<Appbloc>();
     try {
       bloc.changeLoading(true);
       await _firestore.collection(collectName).doc(id).set(
             model.toMap(),
           );
+      isProduct
+          ? await _firestore
+              .collection(kStockCollection)
+              .doc(product!.id)
+              .set(stock!.toMap())
+          : null;
+
       Navigator.pop(context);
       Globals().snackbar(
           context: context,
           isError: false,
-          message: "Category with name ${model.name} Was Created Successfully");
+          message: "Item with name ${model.name} Was Created Successfully");
 
       bloc.changeLoading(false);
     } on FirebaseFirestore catch (e) {
@@ -417,12 +438,11 @@ class FirestoreService {
     }
   }
 
-
   Future<List<Category>> getAllCategories() async {
     try {
-      final QuerySnapshot<Map<String, dynamic>> snapshot = 
+      final QuerySnapshot<Map<String, dynamic>> snapshot =
           await getAllDataFromCollection(kCategoriesCollection);
-      
+
       return snapshot.docs.map((doc) {
         return Category.fromMap(doc.data(), doc.id);
       }).toList();
@@ -432,21 +452,17 @@ class FirestoreService {
     }
   }
 
-    Future<List<Brand>> getAllBrands() async {
+  Future<List<Brand>> getAllBrands() async {
     try {
-      final QuerySnapshot<Map<String, dynamic>> snapshot = 
-          await getAllDataFromCollection(kCategoriesCollection);
-      
+      final QuerySnapshot<Map<String, dynamic>> snapshot =
+          await getAllDataFromCollection(kBrandsCollection);
+
       return snapshot.docs.map((doc) {
-        return Brand.fromMap(doc.data(), doc.id);
+        return Brand.fromMap(doc.data());
       }).toList();
     } catch (e) {
       print('Error fetching brands: $e');
       throw Exception("Error fetching brands: $e");
     }
   }
-
-
-
 }
-

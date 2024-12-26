@@ -1,4 +1,3 @@
-
 import 'package:application/widgets/Firebase/FirebaseModels/FirebaseStore.dart';
 import 'package:application/widgets/Globals.dart';
 import 'package:application/widgets/Models/BrandSerializer.dart';
@@ -6,11 +5,13 @@ import 'package:application/widgets/Models/CategorySerializers.dart';
 import 'package:application/widgets/Models/ProductWithStock.dart';
 import 'package:application/widgets/requests/Request.dart';
 import 'package:application/widgets/state/AppBloc.dart';
+import 'package:flutter/foundation.dart' as debug;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
+import 'package:uuid/uuid.dart';
 
 class ProductPage extends StatefulWidget {
   final ProductData? product;
@@ -39,7 +40,7 @@ class _ProductPageState extends State<ProductPage>
 
   List<Brand> _brands = [];
   // django  List<CategoryController> _category = [];
-    List<Category> _category = [];
+  List<Category> _category = [];
   String? _selectedBrand;
   String? _selectedBrandId;
 
@@ -89,7 +90,8 @@ class _ProductPageState extends State<ProductPage>
       //               orElse: () => brands.first)
       //           .id;
       // });
-       List<Brand> brands = await FirestoreService().getAllBrands();
+
+      List<Brand> brands = await FirestoreService().getAllBrands();
       setState(() {
         _brands = brands;
         _selectedBrandId = widget.isCreate
@@ -99,6 +101,7 @@ class _ProductPageState extends State<ProductPage>
                     orElse: () => brands.first)
                 .id;
       });
+      print("brand id is $_selectedBrandId");
     } catch (e) {
       _showError('Error fetching brands: $e');
     }
@@ -120,9 +123,8 @@ class _ProductPageState extends State<ProductPage>
       //               orElse: () => category.first)
       //           .id;
       // });
-    // firebase implementation
-      List<Category> category =
-          await FirestoreService().getAllCategories();
+      // firebase implementation
+      List<Category> category = await FirestoreService().getAllCategories();
       setState(() {
         _category = category;
         _selectedCategoryId = widget.isCreate
@@ -169,22 +171,26 @@ class _ProductPageState extends State<ProductPage>
     Globals.showAddBrandOrCategoryDialog(
       context: context,
       title: "Brand",
-      future: AppRequest.FutureGetBrands(null),
+      future: FirestoreService().getAllBrands(),
       isBrand: true,
       selectedCategory: _selectedCategoryId,
     );
     print("Calling onInvoked callback");
     onInvoked;
-    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final bloc = context.watch<Appbloc>();
-    _quantityController.text = "15";
-    _productNameController.text = "restock color";
-    _restockController.text = "30";
-    _buyingPriceController.text = "100";
-    _sellingPriceController.text = "140";
+
+    if (debug.kDebugMode) {
+      _quantityController.text = "15";
+      _productNameController.text = "restock color";
+      _restockController.text = "10";
+      _buyingPriceController.text = "100";
+      _sellingPriceController.text = "140";
+    }
+
     return Scaffold(
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
@@ -420,70 +426,114 @@ class _ProductPageState extends State<ProductPage>
           ),
           const SizedBox(width: 12),
           ElevatedButton.icon(
-            onPressed: () {
+            onPressed: () async {
               if (widget.isCreate && _formKey.currentState!.validate()) {
-                final Map<String, dynamic> productbody = {
-                  "brand_id": _selectedBrandId,
-                  "category_id": _selectedCategoryId,
-                  "name": _productNameController.text,
-                  "buying_price": _buyingPriceController.text,
-                  "selling_price": _sellingPriceController.text,
-                  "barcode": "",
-                  "is_active": true,
-                };
+                try {
+                  var uuid = Uuid();
+                  String id = uuid.v4();
 
-                final Map<String, dynamic> stockBody = {
-                  "quantity": _quantityController.text,
-                  "reorder_level": _restockController.text,
-                };
+                  final Product product = Product(
+                      id: id,
+                      name: _productNameController.text,
+                      categoryId: _selectedCategoryId!,
+                      brandId: _selectedBrandId!,
+                      buyingPrice:
+                          double.parse(_buyingPriceController.text.trim()),
+                      sellingPrice:
+                          double.parse(_sellingPriceController.text.trim()),
+                      isActive: true,
+                      lastUpdated: DateTime.now());
 
-                AppRequest.CreateProduct(
-                    stockBody: stockBody,
-                    Productbody: productbody,
-                    context: context);
-              }
+                  StockMovement stockMovement = StockMovement(
+                      type: "Create",
+                      quantityChange:
+                          int.parse(_quantityController.text.trim()),
+                      createdAt: DateTime.now());
 
-              final Map<String, dynamic> PatchProductdata = {
-                "brand_id": _selectedBrandId,
-                "id": widget.product!.id,
-                "category_id": _selectedCategoryId,
-                "name": _productNameController.text,
-                "buying_price": _buyingPriceController.text,
-                "selling_price": _sellingPriceController.text,
-                // "quantity": _quantityController.text
-              };
-              final Map<String, dynamic> Patchstockdata = {
-                "id": widget.product!.stockId,
-                "reorder_level": _restockController.text,
-              };
+                  Stock stock = Stock(
+                      productId: id,
+                      quantity: int.parse(_quantityController.text.trim()),
+                      reorderLevel: int.parse(_restockController.text.trim()),
+                      lastRestocked: DateTime.now(),
+                      movements: [stockMovement]);
 
-              for (var entry in PatchProductdata.entries) {
-                if (entry.value == null ||
-                    entry.value == '' ||
-                    entry.value == 0) {
-                  print(
-                      'Field ${entry.key} contains a null/empty value: ${entry.value}');
+                  await FirestoreService().createCollection(
+                      context: context,
+                      isBrand: false,
+                      isProduct: true,
+                      stock: stock,
+                      product: product);
+                } catch (e) {
+                  Globals().snackbar(
+                      context: context, isError: true, message: e.toString());
+                  context.read<Appbloc>().changeLoading(false);
+                  throw Exception("error on create product $e");
                 }
-              }
 
-              for (var entry in Patchstockdata.entries) {
-                if (entry.value == null ||
-                    entry.value == '' ||
-                    entry.value == 0) {
-                  print(
-                      'Field ${entry.key} contains a null/empty value: ${entry.value}');
-                }
-              }
+                // -----------------commented code is the django setup --------------------------------------
 
-              AppRequest.patchProduct(
-                productData: PatchProductdata,
-                stockData: Patchstockdata,
-                isRestock: false,
-                context: context,
-                Productid: widget.product!.id,
-                stockId: widget.product!.stockId,
-                isOnSwitch: false
-              );
+                // final Map<String, dynamic> productbody = {
+                //   "brand_id": _selectedBrandId,
+                //   "category_id": _selectedCategoryId,
+                //   "name": _productNameController.text,
+                //   "buying_price": _buyingPriceController.text,
+                //   "selling_price": _sellingPriceController.text,
+                //   "barcode": "",
+                //   "is_active": true,
+                // };
+
+                // final Map<String, dynamic> stockBody = {
+                //   "quantity": _quantityController.text,
+                //   "reorder_level": _restockController.text,
+                // };
+
+                //   AppRequest.CreateProduct(
+                //       stockBody: stockBody,
+                //       Productbody: productbody,
+                //       context: context);
+                // }
+
+                // final Map<String, dynamic> PatchProductdata = {
+                //   "brand_id": _selectedBrandId,
+                //   "id": widget.product!.id,
+                //   "category_id": _selectedCategoryId,
+                //   "name": _productNameController.text,
+                //   "buying_price": _buyingPriceController.text,
+                //   "selling_price": _sellingPriceController.text,
+                //   // "quantity": _quantityController.text
+                // };
+                // final Map<String, dynamic> Patchstockdata = {
+                //   "id": widget.product!.stockId,
+                //   "reorder_level": _restockController.text,
+                // };
+
+                // for (var entry in PatchProductdata.entries) {
+                //   if (entry.value == null ||
+                //       entry.value == '' ||
+                //       entry.value == 0) {
+                //     print(
+                //         'Field ${entry.key} contains a null/empty value: ${entry.value}');
+                //   }
+                // }
+
+                // for (var entry in Patchstockdata.entries) {
+                //   if (entry.value == null ||
+                //       entry.value == '' ||
+                //       entry.value == 0) {
+                //     print(
+                //         'Field ${entry.key} contains a null/empty value: ${entry.value}');
+                //   }
+                // }
+
+                // AppRequest.patchProduct(
+                //     productData: PatchProductdata,
+                //     stockData: Patchstockdata,
+                //     isRestock: false,
+                //     context: context,
+                //     Productid: widget.product!.id,
+                //     stockId: widget.product!.stockId,
+                //     isOnSwitch: false);
+              }
             },
             icon: bloc.isloading
                 ? LoadingAnimationWidget.staggeredDotsWave(
@@ -589,7 +639,8 @@ class _ProductPageState extends State<ProductPage>
           borderRadius: BorderRadius.circular(8),
           borderSide: BorderSide(color: Colors.grey[300]!),
         ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       ),
       style: TextStyle(
         fontSize: 14,
@@ -721,7 +772,8 @@ class _ProductPageState extends State<ProductPage>
           borderRadius: BorderRadius.circular(8),
           borderSide: BorderSide(color: Colors.grey[300]!),
         ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       ),
       style: TextStyle(
         fontSize: 14,

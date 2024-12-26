@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:application/widgets/Firebase/FirebaseModels/FirebaseStore.dart';
 import 'package:application/widgets/requests/Request.dart';
 import 'package:application/widgets/state/AppBloc.dart';
@@ -5,8 +7,11 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:provider/provider.dart';
+import 'package:uuid/uuid.dart';
 
 class Globals {
+  static var uuid = Uuid();
+
 // SnackBar for in app activities
 
   void snackbar(
@@ -21,7 +26,6 @@ class Globals {
       ),
     );
   }
-  
 
 // Widget to show when data is being loaded
 
@@ -88,7 +92,7 @@ class Globals {
     required String title,
     required Future future,
     required bool isBrand,
-    required int? selectedCategory,
+    required String? selectedCategory,
   }) {
     String newItem = '';
 
@@ -237,8 +241,11 @@ class Globals {
                               };
 
                         // Make the API request to create the brand or category
+
                         Category category = Category(
-                            id: "3", name: newItem, createdAt: DateTime.now());
+                            id: uuid.v4().toString(),
+                            name: newItem,
+                            createdAt: DateTime.now());
 
                         await FirestoreService().createCollection(
                             context: context,

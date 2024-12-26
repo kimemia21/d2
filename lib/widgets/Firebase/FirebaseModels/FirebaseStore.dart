@@ -2,18 +2,11 @@
 
 import 'package:application/main.dart';
 import 'package:application/widgets/Globals.dart';
+import 'package:application/widgets/commsRepo/commsRepo.dart';
 import 'package:application/widgets/state/AppBloc.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-
-const String kCategoriesCollection = 'categories';
-const String kBrandsCollection = 'brands';
-const String kProductsCollection = 'products';
-const String kStockCollection = 'stock';
-const String kCustomersCollection = 'customers';
-const String kSalesCollection = 'sales';
-const String kReportsCollection = 'reports';
 
 // Models
 class Category {
@@ -227,12 +220,15 @@ class FirestoreService {
             model.toMap(),
           );
       Navigator.pop(context);
-      Globals().snackbar(context: context, isError: false, message:"Category with name ${model.name} Was Created Successfully");
+      Globals().snackbar(
+          context: context,
+          isError: false,
+          message: "Category with name ${model.name} Was Created Successfully");
 
       bloc.changeLoading(false);
     } on FirebaseFirestore catch (e) {
       bloc.changeLoading(false);
-           Globals().snackbar(context: context, isError:true, message:"Error $e");
+      Globals().snackbar(context: context, isError: true, message: "Error $e");
       print("error");
       throw Exception('Error creating collection: $e');
     }
@@ -410,23 +406,47 @@ class FirestoreService {
   //   }
   // }
 
-  Future<List<Map<String, dynamic>>> getAllDataFromCollection(
-      String collectionName) async {
+  Future<QuerySnapshot<Map<String, dynamic>>> getAllDataFromCollection(
+    String collectionName,
+  ) async {
     try {
-      // Fetch all documents in the collection
-      QuerySnapshot snapshot =
-          await _firestore.collection(collectionName).get();
-
-      // Convert the documents into a list of maps
-      List<Map<String, dynamic>> data = snapshot.docs.map((doc) {
-        return doc.data() as Map<String, dynamic>;
-      }).toList();
-
-      return data;
+      return await _firestore.collection(collectionName).get();
     } catch (e) {
-      // Handle errors
       print('Error fetching data from Firestore: $e');
-      return [];
+      throw Exception("Error fetching data from Firestore: $e");
     }
   }
+
+
+  Future<List<Category>> getAllCategories() async {
+    try {
+      final QuerySnapshot<Map<String, dynamic>> snapshot = 
+          await getAllDataFromCollection(kCategoriesCollection);
+      
+      return snapshot.docs.map((doc) {
+        return Category.fromMap(doc.data(), doc.id);
+      }).toList();
+    } catch (e) {
+      print('Error fetching categories: $e');
+      throw Exception("Error fetching categories: $e");
+    }
+  }
+
+    Future<List<Brand>> getAllBrands() async {
+    try {
+      final QuerySnapshot<Map<String, dynamic>> snapshot = 
+          await getAllDataFromCollection(kCategoriesCollection);
+      
+      return snapshot.docs.map((doc) {
+        return Brand.fromMap(doc.data(), doc.id);
+      }).toList();
+    } catch (e) {
+      print('Error fetching brands: $e');
+      throw Exception("Error fetching brands: $e");
+    }
+  }
+
+
+
 }
+

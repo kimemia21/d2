@@ -4,6 +4,7 @@ import 'package:application/widgets/Firebase/ReqFirebase.dart';
 import 'package:application/widgets/Globals.dart';
 import 'package:application/widgets/commsRepo/commsRepo.dart';
 import 'package:application/widgets/state/AppBloc.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -153,6 +154,11 @@ class _LoginScreenState extends State<LoginScreen>
     final screenWidth = MediaQuery.of(context).size.width;
     final screenHeight = MediaQuery.of(context).size.height;
     final isSmallScreen = screenWidth < 900;
+    if(kDebugMode){
+  _emailController.text = "bobbymbogo71@gmail.com";
+    _passwordController.text = "12345678";
+    }
+  
 
     return Scaffold(
       backgroundColor: backgroundColor,
@@ -167,7 +173,7 @@ class _LoginScreenState extends State<LoginScreen>
                   image: DecorationImage(
                     image: AssetImage('images/login.png'),
                     fit: BoxFit.contain,
-                     // This will cover the entire container
+                    // This will cover the entire container
                   ),
                   // You can add an overlay color if you want
                   // gradient: LinearGradient(
@@ -294,7 +300,6 @@ class _LoginScreenState extends State<LoginScreen>
                                     Globals.switchScreens(
                                         context: context,
                                         screen: SignupScreen());
-                         
                                   },
                                   child: Text(
                                     'Create Account',
@@ -306,9 +311,8 @@ class _LoginScreenState extends State<LoginScreen>
                                   ),
                                 ),
                                 TextButton(
-
                                   onPressed: () {
-                                     Globals.switchScreens(
+                                    Globals.switchScreens(
                                         context: context,
                                         screen: ForgotPasswordScreen());
 

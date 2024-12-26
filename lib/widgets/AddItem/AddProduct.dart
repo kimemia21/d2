@@ -1,6 +1,8 @@
 import 'package:application/widgets/AddItem/BrandDrop.dart';
 import 'package:application/widgets/AddItem/CatDropDown.dart';
+import 'package:application/widgets/Firebase/FirebaseModels/FirebaseStore.dart';
 import 'package:application/widgets/Globals.dart';
+import 'package:application/widgets/commsRepo/commsRepo.dart';
 import 'package:application/widgets/requests/Request.dart';
 import 'package:application/widgets/state/AppBloc.dart';
 import 'package:cherry_toast/cherry_toast.dart';
@@ -40,6 +42,7 @@ class _AddProductFormState extends State<AddProductForm>
   final Color errorColor = const Color(0xFFEF5350); // Red
   final Color textColor = const Color(0xFF2C3E50);
   final Color cardColor = Colors.white;
+ 
 
   @override
   void initState() {
@@ -120,8 +123,6 @@ class _AddProductFormState extends State<AddProductForm>
           "quantity": quantityController.text
         };
 
-    
-
         CherryToast.success(
           title: const Text("Product saved successfully"),
           toastDuration: const Duration(seconds: 2),
@@ -134,16 +135,14 @@ class _AddProductFormState extends State<AddProductForm>
     }
   }
 
-
-
   void addNewCategory() async {
-   
     Globals.showAddBrandOrCategoryDialog(
-        context: context,
-        title: "Category",
-        future: AppRequest.FutureGetCategories(),
-        isBrand: false,
-        selectedCategory: 1,);
+      context: context,
+      title: "Category",
+      future: FirestoreService().getAllCategories(),
+      isBrand: false,
+      selectedCategory: "1",
+    );
   }
 
   void addNewBrand() async {
@@ -152,9 +151,8 @@ class _AddProductFormState extends State<AddProductForm>
         title: "Brand",
         future: AppRequest.FutureGetBrands(null),
         isBrand: true,
-        selectedCategory: 1);
+        selectedCategory: "1");
   }
-
 
   void error({required String title}) {
     CherryToast.error(
@@ -212,8 +210,6 @@ class _AddProductFormState extends State<AddProductForm>
   //   );
   // }
 
-
-
   Widget buildProductCard() {
     return Card(
       elevation: 4,
@@ -232,7 +228,6 @@ class _AddProductFormState extends State<AddProductForm>
                   color: primaryColor),
             ),
             const SizedBox(height: 16),
-
             Globals.buildDropdownWithButton(
               context: context,
               dropdown: CategoryDropdown(onchangeCategory: (value) {
@@ -243,23 +238,22 @@ class _AddProductFormState extends State<AddProductForm>
               addNewItem: addNewCategory,
             ),
             const SizedBox(height: 20),
-             Globals.buildDropdownWithButton(
-              context: context,
-              dropdown: BrandDropdown(
-              onbrandChange: (value) {
-                setState(() {
-                  selectedBrand = value;
-                  print(value);
-                });
-              },
-            ), addNewItem: () {
-              try {} catch (e) {}
-              selectedCategory != null
-                  ? addNewBrand()
-                  : error(title: "please select category");
-            }),
-
-
+            Globals.buildDropdownWithButton(
+                context: context,
+                dropdown: BrandDropdown(
+                  onbrandChange: (value) {
+                    setState(() {
+                      selectedBrand = value;
+                      print(value);
+                    });
+                  },
+                ),
+                addNewItem: () {
+                  try {} catch (e) {}
+                  selectedCategory != null
+                      ? addNewBrand()
+                      : error(title: "please select category");
+                }),
             const SizedBox(height: 20),
             buildTextField('Product Name', nameController, Icons.shopping_bag,
                 type: TextInputType.text),
@@ -559,8 +553,6 @@ class _AddProductFormState extends State<AddProductForm>
       ),
     );
   }
-
-
 
   Widget _buildAnimatedTextField(
     String label,

@@ -1,4 +1,5 @@
 
+import 'package:application/widgets/Firebase/FirebaseModels/FirebaseStore.dart';
 import 'package:application/widgets/Globals.dart';
 import 'package:application/widgets/Models/BrandSerializer.dart';
 import 'package:application/widgets/Models/CategorySerializers.dart';
@@ -36,13 +37,14 @@ class _ProductPageState extends State<ProductPage>
   late AnimationController _animationController;
   late Animation<double> _animation;
 
-  List<BrandController> _brands = [];
-  List<CategoryController> _category = [];
+  List<Brand> _brands = [];
+  // django  List<CategoryController> _category = [];
+    List<Category> _category = [];
   String? _selectedBrand;
-  int? _selectedBrandId;
+  String? _selectedBrandId;
 
   String? _selectedCategory;
-  int? _selectedCategoryId;
+  String? _selectedCategoryId;
 
   @override
   void initState() {
@@ -77,7 +79,17 @@ class _ProductPageState extends State<ProductPage>
   Future<void> _fetchBrands() async {
     print("invoked brands");
     try {
-      List<BrandController> brands = await AppRequest.FutureGetBrands(null);
+      // List<Brand> brands = await AppRequest.FutureGetBrands(null);
+      // setState(() {
+      //   _brands = brands;
+      //   _selectedBrandId = widget.isCreate
+      //       ? null
+      //       : brands
+      //           .firstWhere((brand) => brand.id == widget.product!.brand_id,
+      //               orElse: () => brands.first)
+      //           .id;
+      // });
+       List<Brand> brands = await FirestoreService().getAllBrands();
       setState(() {
         _brands = brands;
         _selectedBrandId = widget.isCreate
@@ -95,8 +107,22 @@ class _ProductPageState extends State<ProductPage>
   Future<void> _fetchCategory() async {
     print("invoked fetch category");
     try {
-      List<CategoryController> category =
-          await AppRequest.FutureGetCategories();
+      //  django implementation
+      // List<CategoryController> category =
+      //     await AppRequest.FutureGetCategories();
+      // setState(() {
+      //   _category = category;
+      //   _selectedCategoryId = widget.isCreate
+      //       ? null
+      //       : category
+      //           .firstWhere(
+      //               (element) => element.id == widget.product!.category_id,
+      //               orElse: () => category.first)
+      //           .id;
+      // });
+    // firebase implementation
+      List<Category> category =
+          await FirestoreService().getAllCategories();
       setState(() {
         _category = category;
         _selectedCategoryId = widget.isCreate
@@ -133,7 +159,7 @@ class _ProductPageState extends State<ProductPage>
     Globals.showAddBrandOrCategoryDialog(
       context: context,
       title: "Category",
-      future: AppRequest.FutureGetCategories(),
+      future: FirestoreService().getAllCategories(),
       isBrand: false,
       selectedCategory: _selectedCategoryId,
     );
@@ -611,7 +637,7 @@ class _ProductPageState extends State<ProductPage>
               }).toList(),
               onChanged: (value) {
                 setState(() {
-                  _selectedBrandId = value as int?;
+                  _selectedBrandId = value as String?;
                 });
               },
               label: 'Brand',
@@ -637,7 +663,7 @@ class _ProductPageState extends State<ProductPage>
             }).toList(),
             onChanged: (value) {
               setState(() {
-                _selectedCategoryId = value as int?;
+                _selectedCategoryId = value as String;
               });
             },
             label: 'Category',
@@ -666,11 +692,11 @@ class _ProductPageState extends State<ProductPage>
   Widget _buildDropdown({
     required String label,
     required IconData icon,
-    required List<DropdownMenuItem<int>> items,
+    required List<DropdownMenuItem<String>> items,
     required void Function(Object?) onChanged,
-    required int? value,
+    required String? value,
   }) {
-    return DropdownButtonFormField<int>(
+    return DropdownButtonFormField<String>(
       value: widget.isCreate ? null : value,
       items: items,
       onChanged: onChanged,

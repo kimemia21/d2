@@ -692,16 +692,17 @@ class _ProductPageState extends State<ProductPage>
                 );
               }).toList(),
               onChanged: (value) {
-              if (value != null) {
-      final sB = _brands.firstWhere(
-        (brand) => brand.id == value,
-        orElse: () => _brands.first,
-      );
-      setState(() {
-        _selectedBrandId = value as String?;
-        _selectedBrand = sB.name; 
-      });
-    }
+                if (value != null) {
+                  final sB = _brands.firstWhere(
+                    (brand) => brand.id == value,
+                    orElse: () => _brands.first,
+                  );
+                  setState(() {
+                    _selectedBrandId = value as String?;
+                    _selectedBrand = sB.name;
+                    print("################## sB $_selectedBrand");
+                  });
+                }
               },
               label: 'Brand',
               icon: Icons.business_outlined,
@@ -725,14 +726,15 @@ class _ProductPageState extends State<ProductPage>
               );
             }).toList(),
             onChanged: (value) {
-            final sC = _category.firstWhere(
-              (category) => category.id == value,
-              orElse: () => _category.first,
-            );
+              final sC = _category.firstWhere(
+                (category) => category.id == value,
+                orElse: () => _category.first,
+              );
 
               setState(() {
                 _selectedCategoryId = value as String;
-              _selectedCategory = sC.name;
+                _selectedCategory = sC.name;
+                print("################## sC $_selectedCategory");
               });
             },
             label: 'Category',

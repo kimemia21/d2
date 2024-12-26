@@ -98,22 +98,32 @@ class Product {
       'name': name,
       'categoryId': categoryId,
       'brandId': brandId,
-      'barcode': barcode,
+      'barcode': "empty",
       'buyingPrice': buyingPrice,
       'sellingPrice': sellingPrice,
       'isActive': isActive,
+      'categoryName': categoryName,
+      'brandName': brandName,
       'lastUpdated': lastUpdated.toIso8601String(),
       'priceHistory': [], // Embedded array for price history
     };
   }
 
-  static Product fromMap(Map<String, dynamic> map, String id) {
+  static Product fromMap(Map<String, dynamic> map) {
+      map.forEach((key, value) {
+        if (value == null) {
+            print('#################### Null value found for key3: $key');
+          } else {
+            print("######################## no null values found3");
+          }
+
+    });
     return Product(
-      id: id,
+      id: map["id"],
       name: map['name'],
       categoryId: map['categoryId'],
       brandId: map['brandId'],
-      barcode: map['barcode'],
+      barcode: map['barcode'] != null ? map['barcode'] : "",
       buyingPrice: map['buyingPrice'],
       sellingPrice: map['sellingPrice'],
       isActive: map['isActive'],
@@ -148,10 +158,20 @@ class Stock {
       'reorderLevel': reorderLevel,
       'lastRestocked': lastRestocked.toIso8601String(),
       'movements': movements.map((m) => m.toMap()).toList(),
+      "product": product.toMap()
     };
   }
 
   static Stock fromMap(Map<String, dynamic> map) {
+    print("this is value of map $map");
+    map.forEach((key, value) {
+        if (value == null) {
+            print('#################### Null value found for key1: $key');
+          } else {
+            print("######################## no null values found1");
+          }
+
+    });
     return Stock(
       productId: map['productId'],
       quantity: map['quantity'],
@@ -160,7 +180,7 @@ class Stock {
       movements: (map['movements'] as List)
           .map((m) => StockMovement.fromMap(m))
           .toList(),
-      product: Product.fromMap(map, map['product']),    
+      product: Product.fromMap(map),
     );
   }
 }
@@ -185,6 +205,14 @@ class StockMovement {
   }
 
   static StockMovement fromMap(Map<String, dynamic> map) {
+      map.forEach((key, value) {
+        if (value == null) {
+            print('#################### Null value found for key2: $key');
+          } else {
+            print("######################## no null values found2");
+          }
+
+    });
     return StockMovement(
       type: map['type'],
       quantityChange: map['quantityChange'],
@@ -275,7 +303,7 @@ class FirestoreService {
 
     await _firestore.runTransaction((transaction) async {
       final productDoc = await transaction.get(productRef);
-      final product = Product.fromMap(productDoc.data()!, productDoc.id);
+      final product = Product.fromMap(productDoc.data()!);
 
       // Add to price history
       transaction.update(productRef, {
@@ -493,7 +521,9 @@ class FirestoreService {
       }
 
       return snapshot.docs.map((doc) {
-        return Product.fromMap(doc.data(), doc.id);
+        return Product.fromMap(
+          doc.data(),
+        );
       }).toList();
     } catch (e) {
       print('Error fetching products: $e');
@@ -501,7 +531,7 @@ class FirestoreService {
     }
   }
 
-    Future<List<Stock>> getStock(
+  Future<List<Stock>> getStock(
       {required isFiltered, String? filterName, String? filterValue}) async {
     try {
       final QuerySnapshot<Map<String, dynamic>> snapshot;
@@ -514,10 +544,22 @@ class FirestoreService {
         snapshot = await getAllDataFromCollection(kStockCollection);
       }
 
+      snapshot.docs.forEach((doc) {
+        Map<String, dynamic> data = doc.data();
+        data.forEach((key, value) {
+          if (value == null) {
+            print('####################Null value found for key: $key');
+          } else {
+            print("######################## no null values found");
+          }
+        });
+      });
+
       return snapshot.docs.map((doc) {
         return Stock.fromMap(doc.data());
       }).toList();
     } catch (e) {
+      
       print('Error fetching stock: $e');
       throw Exception("Error fetching stock: $e");
     }

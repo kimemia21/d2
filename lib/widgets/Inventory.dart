@@ -433,8 +433,11 @@ class _InventoryPageState extends State<InventoryPage>
                       onTap: () {
                         setState(() {
                           selectedCategoryIndex = index;
-                          stockFuture = FirestoreService().getStock(isFiltered: true,filterName:"categoryId",filterValue: category.id);
-                          
+                          stockFuture = FirestoreService().getStock(
+                              isFiltered: true,
+                              filterName: "categoryId",
+                              filterValue: category.id);
+
                           // selectedCategoryIndex = index;
                           // productsStream =
                           //     AppRequest.getProductStream(category.id);
@@ -486,7 +489,7 @@ class _InventoryPageState extends State<InventoryPage>
     return SlideTransition(
       position: _offsetAnimation,
       child: FutureBuilder<List<Stock>>(
-        future: stockFuture,
+        future: FirestoreService().getStock(isFiltered: false),
         builder: (BuildContext context, AsyncSnapshot<List<Stock>> snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             print(
@@ -498,7 +501,16 @@ class _InventoryPageState extends State<InventoryPage>
           } else if (snapshot.hasError) {
             return Center(child: Text('Error: ${snapshot.error}'));
           } else if (snapshot.hasData) {
-            return _buildProductListView(snapshot.data!);
+            print("this is the list data ${snapshot.data}");
+            return ListView.builder(
+                itemCount: snapshot.data!.length,
+                itemBuilder: (context, index) {
+                 return ListTile(
+                    title:Text(index.toString())
+                  ,
+                  );
+                });
+            // _buildProductListView(snapshot.data!);
           } else {
             return const Center(child: NoDataScreen());
           }

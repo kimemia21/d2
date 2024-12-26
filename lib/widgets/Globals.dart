@@ -1,3 +1,4 @@
+import 'package:application/widgets/Firebase/FirebaseModels/FirebaseStore.dart';
 import 'package:application/widgets/requests/Request.dart';
 import 'package:application/widgets/state/AppBloc.dart';
 import 'package:flutter/material.dart';
@@ -6,30 +7,45 @@ import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:provider/provider.dart';
 
 class Globals {
+// SnackBar for in app activities
+
+  void snackbar(
+      {required BuildContext context,
+      required bool isError,
+      required String message}) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message), // Message to user
+        backgroundColor:
+            isError ? Colors.red : Colors.green, // Red background for error
+      ),
+    );
+  }
+  
 
 // Widget to show when data is being loaded
-static Widget buildLoadingCard() {
-  return const Center(
-    child: CircularProgressIndicator(),
-  );
-}
+
+  static Widget buildLoadingCard() {
+    return const Center(
+      child: CircularProgressIndicator(),
+    );
+  }
 
 // Widget to show when an error occurs
-static Widget buildErrorCard(String errorMessage) {
-  return Center(
-    child: Text(
-      "Error: $errorMessage",
-      style: const TextStyle(color: Colors.red),
-    ),
-  );
-}
+  static Widget buildErrorCard(String errorMessage) {
+    return Center(
+      child: Text(
+        "Error: $errorMessage",
+        style: const TextStyle(color: Colors.red),
+      ),
+    );
+  }
 
-static Widget buildEmptyCard() {
-  return const Center(
-    child: Text("No stock data available."),
-  );
-}
-
+  static Widget buildEmptyCard() {
+    return const Center(
+      child: Text("No stock data available."),
+    );
+  }
 
   static Future<void> switchScreens(
       {required BuildContext context, required Widget screen}) {
@@ -67,17 +83,13 @@ static Widget buildEmptyCard() {
     }
   }
 
-
-
-static void showAddBrandOrCategoryDialog(
-      {required BuildContext context,
-      required String title,
-      required Future future,
-      required bool isBrand,
-      required int? selectedCategory,
-
-      
-      }) {
+  static void showAddBrandOrCategoryDialog({
+    required BuildContext context,
+    required String title,
+    required Future future,
+    required bool isBrand,
+    required int? selectedCategory,
+  }) {
     String newItem = '';
 
     showDialog(
@@ -129,8 +141,8 @@ static void showAddBrandOrCategoryDialog(
                         prefixIcon: Icon(Icons.add_circle_outline,
                             color: Theme.of(context).colorScheme.secondary,
                             size: 20),
-                        contentPadding:
-                            const EdgeInsets.symmetric(vertical: 10, horizontal: 15),
+                        contentPadding: const EdgeInsets.symmetric(
+                            vertical: 10, horizontal: 15),
                       ),
                       style: GoogleFonts.poppins(
                           color: Colors.black87, fontSize: 14),
@@ -203,43 +215,58 @@ static void showAddBrandOrCategoryDialog(
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(20),
                     ),
-                    padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
                   ),
-                 // Function to handle button press
-onPressed: () async {
-  try {
-    // Check if the new item name is not empty
-    if (newItem.isNotEmpty) {
-      // Create a request body based on whether it's a brand or category
-      final Map<String, dynamic> body = isBrand ? {
-        "name": newItem.toUpperCase(), // Convert name to uppercase
-        "category": selectedCategory, // Parse the selected category
-      } : {
-        "name": newItem.toUpperCase(), // Only name for non-brand items
-      };
+                  // Function to handle button press
+                  onPressed: () async {
+                    try {
+                      // Check if the new item name is not empty
+                      if (newItem.isNotEmpty) {
+                        // Create a request body based on whether it's a brand or category
+                        final Map<String, dynamic> body = isBrand
+                            ? {
+                                "name": newItem
+                                    .toUpperCase(), // Convert name to uppercase
+                                "category":
+                                    selectedCategory, // Parse the selected category
+                              }
+                            : {
+                                "name": newItem
+                                    .toUpperCase(), // Only name for non-brand items
+                              };
 
-      // Make the API request to create the brand or category
-      await AppRequest.CreateBrandOrCategory(
-        isBrand: isBrand,
-        body: body,
-        context: context,
-      );
+                        // Make the API request to create the brand or category
+                        Category category = Category(
+                            id: "3", name: newItem, createdAt: DateTime.now());
 
-      
-    } else {
-      // Show a Snackbar if the item name is empty
-      ScaffoldMessenger.of(dialogContext).showSnackBar(
-        SnackBar(
-          content: Text('Please enter a $title name'), // Message to user
-          backgroundColor: Colors.red, // Red background for error
-        ),
-      );
-    }
-  } catch (e) {
-    // Handle any exceptions that occur during the process
-    throw Exception("Error: $e");
-  }
-},
+                        await FirestoreService().createCollection(
+                            context: context,
+                            isCategory: true,
+                            isBrand: isBrand,
+                            category: category);
+
+                        // await AppRequest.CreateBrandOrCategory(
+                        //   isBrand: isBrand,
+                        //   body: body,
+                        //   context: context,
+                        // );
+                      } else {
+                        // Show a Snackbar if the item name is empty
+                        ScaffoldMessenger.of(dialogContext).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                                'Please enter a $title name'), // Message to user
+                            backgroundColor:
+                                Colors.red, // Red background for error
+                          ),
+                        );
+                      }
+                    } catch (e) {
+                      // Handle any exceptions that occur during the process
+                      throw Exception("Error: $e");
+                    }
+                  },
                   child: context.watch<Appbloc>().isloading
                       ? LoadingAnimationWidget.staggeredDotsWave(
                           color: Colors.white,
@@ -253,7 +280,6 @@ onPressed: () async {
                             fontSize: 14,
                           ),
                         ),
-
                 ),
               ],
             );
@@ -263,12 +289,10 @@ onPressed: () async {
     );
   }
 
-
-  static  Widget buildDropdownWithButton({
-    required addNewItem,
-    required Widget dropdown,
-    required BuildContext context
-  }) {
+  static Widget buildDropdownWithButton(
+      {required addNewItem,
+      required Widget dropdown,
+      required BuildContext context}) {
     return Row(
       children: [
         Expanded(child: dropdown),
@@ -289,7 +313,7 @@ onPressed: () async {
     );
   }
 
-   static  Widget ShowDropdownWithButton({
+  static Widget ShowDropdownWithButton({
     required Widget dropdown,
     required VoidCallback addNewItem,
     required String label,
@@ -330,6 +354,4 @@ onPressed: () async {
       ),
     );
   }
-
-
 }

@@ -10,10 +10,17 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 class FirebaseReq {
+
+
+
+
+
+
   static loginEmailPassword(
       {required Map<String, dynamic> loginBody,
       required BuildContext context}) async {
     Appbloc bloc = context.read<Appbloc>();
+
     try {
       print(loginBody);
       bloc.changeLoading(true);

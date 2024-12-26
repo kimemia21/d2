@@ -124,7 +124,8 @@ class _ProductPageState extends State<ProductPage>
       //           .id;
       // });
       // firebase implementation
-      List<Category> category = await FirestoreService().getAllCategories();
+      List<Category> category =
+          await FirestoreService().getCategories(isFiltered: false);
       setState(() {
         _category = category;
         _selectedCategoryId = widget.isCreate
@@ -161,7 +162,7 @@ class _ProductPageState extends State<ProductPage>
     Globals.showAddBrandOrCategoryDialog(
       context: context,
       title: "Category",
-      future: FirestoreService().getAllCategories(),
+      future: FirestoreService().getCategories(isFiltered: false),
       isBrand: false,
       selectedCategory: _selectedCategoryId,
     );
@@ -433,16 +434,19 @@ class _ProductPageState extends State<ProductPage>
                   String id = uuid.v4();
 
                   final Product product = Product(
-                      id: id,
-                      name: _productNameController.text,
-                      categoryId: _selectedCategoryId!,
-                      brandId: _selectedBrandId!,
-                      buyingPrice:
-                          double.parse(_buyingPriceController.text.trim()),
-                      sellingPrice:
-                          double.parse(_sellingPriceController.text.trim()),
-                      isActive: true,
-                      lastUpdated: DateTime.now());
+                    id: id,
+                    name: _productNameController.text,
+                    categoryId: _selectedCategoryId!,
+                    categoryName: _selectedCategory,
+                    brandId: _selectedBrandId!,
+                    brandName: _selectedBrand!,
+                    buyingPrice:
+                        double.parse(_buyingPriceController.text.trim()),
+                    sellingPrice:
+                        double.parse(_sellingPriceController.text.trim()),
+                    isActive: true,
+                    lastUpdated: DateTime.now(),
+                  );
 
                   StockMovement stockMovement = StockMovement(
                       type: "Create",
@@ -455,6 +459,7 @@ class _ProductPageState extends State<ProductPage>
                       quantity: int.parse(_quantityController.text.trim()),
                       reorderLevel: int.parse(_restockController.text.trim()),
                       lastRestocked: DateTime.now(),
+                      product: product,
                       movements: [stockMovement]);
 
                   await FirestoreService().createCollection(
@@ -687,9 +692,16 @@ class _ProductPageState extends State<ProductPage>
                 );
               }).toList(),
               onChanged: (value) {
-                setState(() {
-                  _selectedBrandId = value as String?;
-                });
+              if (value != null) {
+      final sB = _brands.firstWhere(
+        (brand) => brand.id == value,
+        orElse: () => _brands.first,
+      );
+      setState(() {
+        _selectedBrandId = value as String?;
+        _selectedBrand = sB.name; 
+      });
+    }
               },
               label: 'Brand',
               icon: Icons.business_outlined,
@@ -713,8 +725,14 @@ class _ProductPageState extends State<ProductPage>
               );
             }).toList(),
             onChanged: (value) {
+            final sC = _category.firstWhere(
+              (category) => category.id == value,
+              orElse: () => _category.first,
+            );
+
               setState(() {
                 _selectedCategoryId = value as String;
+              _selectedCategory = sC.name;
               });
             },
             label: 'Category',

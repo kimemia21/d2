@@ -1,3 +1,4 @@
+import 'package:application/widgets/Firebase/FirebaseModels/FirebaseStore.dart';
 import 'package:application/widgets/Product/ProductForm.dart';
 import 'package:application/widgets/Models/ProductWithStock.dart';
 import 'package:application/widgets/homepage.dart';
@@ -26,15 +27,15 @@ class _InventoryPageState extends State<InventoryPage>
   late AnimationController _controller;
   late Animation<Offset> _offsetAnimation;
 
-  late Stream<List<CategoryController>> categoriesStream;
-  late Stream<List<ProductData>> productsStream;
+  late Future<List<Category>> categoriesFuture;
+  late Future<List<Stock>> stockFuture;
   // bool IsToggled = false;
 
   @override
   void initState() {
     super.initState();
-    categoriesStream = AppRequest.getCategoriesStream();
-    productsStream = AppRequest.getProductDataStream(null);
+    categoriesFuture = FirestoreService().getCategories(isFiltered: false);
+    stockFuture = FirestoreService().getStock(isFiltered: false);
     _initAnimation();
   }
 
@@ -156,10 +157,10 @@ class _InventoryPageState extends State<InventoryPage>
       // Modern Body with StreamBuilder
       body: Container(
         color: Colors.grey[100],
-        child: StreamBuilder<List<CategoryController>>(
-          stream: categoriesStream,
-          builder: (BuildContext context,
-              AsyncSnapshot<List<CategoryController>> snapshot) {
+        child: FutureBuilder<List<Category>>(
+          future: categoriesFuture,
+          builder:
+              (BuildContext context, AsyncSnapshot<List<Category>> snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
               print("Connection state: : ${snapshot.connectionState}");
 
@@ -315,8 +316,7 @@ class _InventoryPageState extends State<InventoryPage>
 //   }
 //   return lowStock.toString();
   // }
-  Widget _buildCategoryView(
-      BuildContext context, List<CategoryController> categories) {
+  Widget _buildCategoryView(BuildContext context, List<Category> categories) {
     return Center(
       child: Container(
         width: MediaQuery.of(context).size.width * 0.75,
@@ -332,7 +332,7 @@ class _InventoryPageState extends State<InventoryPage>
     );
   }
 
-  Widget _buildCategorySelector(List<CategoryController> categories) {
+  Widget _buildCategorySelector(List<Category> categories) {
     return Container(
       height: 60,
       decoration: BoxDecoration(
@@ -359,7 +359,10 @@ class _InventoryPageState extends State<InventoryPage>
                 onTap: () {
                   setState(() {
                     selectedCategoryIndex = 100;
-                    productsStream = AppRequest.getProductDataStream(null);
+                    stockFuture =
+                        FirestoreService().getStock(isFiltered: false);
+
+                    // productsStream = AppRequest.getProductStream(null);
                   });
                   _controller.reset();
                   _controller.forward();
@@ -430,8 +433,11 @@ class _InventoryPageState extends State<InventoryPage>
                       onTap: () {
                         setState(() {
                           selectedCategoryIndex = index;
-                          productsStream =
-                              AppRequest.getProductDataStream(category.id);
+                          stockFuture = FirestoreService().getStock(isFiltered: true,filterName:"categoryId",filterValue: category.id);
+                          
+                          // selectedCategoryIndex = index;
+                          // productsStream =
+                          //     AppRequest.getProductStream(category.id);
                         });
                         _controller.reset();
                         _controller.forward();
@@ -479,10 +485,9 @@ class _InventoryPageState extends State<InventoryPage>
   Widget _buildProductList(BuildContext context) {
     return SlideTransition(
       position: _offsetAnimation,
-      child: StreamBuilder<List<ProductData>>(
-        stream: productsStream,
-        builder:
-            (BuildContext context, AsyncSnapshot<List<ProductData>> snapshot) {
+      child: FutureBuilder<List<Stock>>(
+        future: stockFuture,
+        builder: (BuildContext context, AsyncSnapshot<List<Stock>> snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             print(
                 "Connnection State ${snapshot.connectionState} ${snapshot.data!.isEmpty}");
@@ -502,25 +507,25 @@ class _InventoryPageState extends State<InventoryPage>
     );
   }
 
-  Widget _buildProductListView(List<ProductData> products) {
+  Widget _buildProductListView(List<Stock> stock) {
     return ListView.builder(
-      itemCount: products.length,
+      itemCount: stock.length,
       itemBuilder: (context, index) {
-        final product = products[index];
+        final Stock = stock[index];
 
-        return _buildProductCard(context, product);
+        return _buildProductCard(context, Stock);
       },
     );
   }
 
-  Widget _buildProductCard(BuildContext context, ProductData product) {
-    final bool isLowStock = product.quantity <= product.reorderLevel;
+  Widget _buildProductCard(BuildContext context, Stock stock) {
+    final bool isLowStock = stock.quantity <= stock.reorderLevel;
     final formatter = NumberFormat("#,##0.00", "en_US");
 
     return Container(
       margin: const EdgeInsets.all(6),
       decoration: BoxDecoration(
-        color: isLowStock? Colors.red.shade100: Colors.white,
+        color: isLowStock ? Colors.red.shade100 : Colors.white,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
@@ -565,7 +570,7 @@ class _InventoryPageState extends State<InventoryPage>
                             ),
                             const SizedBox(height: 2),
                             Text(
-                              '#${product.id}',
+                              '#${stock.product.id}',
                               style: TextStyle(
                                 color: Colors.grey[600],
                                 fontSize: 10,
@@ -585,7 +590,7 @@ class _InventoryPageState extends State<InventoryPage>
                               children: [
                                 Expanded(
                                   child: Text(
-                                    product.name,
+                                    stock.product.name,
                                     style: const TextStyle(
                                       fontSize: 16,
                                       fontWeight: FontWeight.bold,
@@ -593,18 +598,18 @@ class _InventoryPageState extends State<InventoryPage>
                                   ),
                                 ),
                                 Switch(
-                                  value: product.isActive,
+                                  value: stock.product.isActive,
                                   onChanged: (value) {
                                     print(
                                         value); // Debug print to confirm value
 
-                                    AppRequest.patchProduct(
-                                      isRestock: false,
-                                      context: context,
-                                      isOnSwitch: true,
-                                      Productid: product.id,
-                                      productData: {"is_active": value},
-                                    );
+                                    // AppRequest.patchProduct(
+                                    //   isRestock: false,
+                                    //   context: context,
+                                    //   isOnSwitch: true,
+                                    //   Productid: product.id,
+                                    //   product: {"is_active": value},
+                                    // );
 
                                     // Handle status change
                                   },
@@ -634,7 +639,7 @@ class _InventoryPageState extends State<InventoryPage>
                                       ),
                                       const SizedBox(width: 3),
                                       Text(
-                                        'Category ${product.category}',
+                                        'Category ${stock.product.categoryName}',
                                         style: const TextStyle(
                                           color: Colors.blue,
                                           fontSize: 10,
@@ -663,7 +668,7 @@ class _InventoryPageState extends State<InventoryPage>
                                       ),
                                       const SizedBox(width: 3),
                                       Text(
-                                        'Brand ${product.brand}',
+                                        'Brand ${stock.product.brandName}',
                                         style: const TextStyle(
                                           color: Colors.purple,
                                           fontSize: 10,
@@ -712,7 +717,7 @@ class _InventoryPageState extends State<InventoryPage>
                             ),
                             const SizedBox(height: 2),
                             Text(
-                              '${product.quantity}',
+                              '${stock.quantity}',
                               style: TextStyle(
                                 color: isLowStock ? Colors.red : Colors.green,
                                 fontWeight: FontWeight.bold,
@@ -743,7 +748,7 @@ class _InventoryPageState extends State<InventoryPage>
                             ),
                             const SizedBox(height: 2),
                             Text(
-                              '${product.reorderLevel}',
+                              '${stock.reorderLevel}',
                               style: TextStyle(
                                 color: Colors.grey[800],
                                 fontWeight: FontWeight.bold,
@@ -773,15 +778,15 @@ class _InventoryPageState extends State<InventoryPage>
                               ],
                             ),
                             const SizedBox(height: 2),
-                            Text(
-                              DateFormat('MM/dd/yy')
-                                  .format(product.lastRestocked),
-                              style: TextStyle(
-                                color: Colors.grey[800],
-                                fontWeight: FontWeight.bold,
-                                fontSize: 14,
-                              ),
-                            ),
+                            // Text(
+                            //   DateFormat('MM/dd/yy')
+                            //       .format(product.lastRestocked),
+                            //   style: TextStyle(
+                            //     color: Colors.grey[800],
+                            //     fontWeight: FontWeight.bold,
+                            //     fontSize: 14,
+                            //   ),
+                            // ),
                           ],
                         ),
                       ],
@@ -815,7 +820,7 @@ class _InventoryPageState extends State<InventoryPage>
                           ),
                           const SizedBox(height: 2),
                           Text(
-                            '\$${formatter.format(product.buyingPrice)}',
+                            '\$${formatter.format(stock.product.buyingPrice)}',
                             style: const TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 14,
@@ -846,7 +851,7 @@ class _InventoryPageState extends State<InventoryPage>
                           ),
                           const SizedBox(height: 2),
                           Text(
-                            '\$${formatter.format(product.sellingPrice)}',
+                            '\$${formatter.format(stock.product.sellingPrice)}',
                             style: const TextStyle(
                               color: Colors.green,
                               fontWeight: FontWeight.bold,
@@ -863,13 +868,14 @@ class _InventoryPageState extends State<InventoryPage>
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
                       OutlinedButton.icon(
-                        onPressed: () => Globals.switchScreens(
-                          context: context,
-                          screen: ProductPage(
-                            product: product,
-                            isCreate: false,
-                          ),
-                        ),
+                        onPressed: () {},
+                        // Globals.switchScreens(
+                        //   context: context,
+                        //   screen: ProductPage(
+                        //     product: product,
+                        //     isCreate: false,
+                        //   ),
+                        // ),
                         icon: const Icon(Icons.edit_outlined, size: 16),
                         label:
                             const Text('Edit', style: TextStyle(fontSize: 12)),
@@ -884,8 +890,8 @@ class _InventoryPageState extends State<InventoryPage>
                       ),
                       const SizedBox(width: 8),
                       ElevatedButton.icon(
-                        onPressed: () => _showRestockAlert(
-                            context: context, product: product),
+                        onPressed: () =>
+                            _showRestockAlert(context: context, stock: stock),
                         icon: const Icon(Icons.add, size: 16),
                         label: const Text('Restock',
                             style: TextStyle(fontSize: 12)),
@@ -910,11 +916,11 @@ class _InventoryPageState extends State<InventoryPage>
   }
 
   void _showRestockAlert(
-      {required BuildContext context, required ProductData product}) {
+      {required BuildContext context, required Stock stock}) {
     TextEditingController restockController = TextEditingController();
     final Appbloc bloc = Provider.of<Appbloc>(context, listen: false);
     String lastRestock =
-        DateFormat('EEEE, MMMM d, yyyy, hh:mm a').format(product.lastRestocked);
+        DateFormat('EEEE, MMMM d, yyyy, hh:mm a').format(stock.lastRestocked);
 
     showDialog(
       context: context,
@@ -955,7 +961,7 @@ class _InventoryPageState extends State<InventoryPage>
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        '#${product.id}',
+                        '#${stock.product.id}',
                         style: TextStyle(
                           color: Colors.grey[600],
                           fontSize: 10,
@@ -966,7 +972,7 @@ class _InventoryPageState extends State<InventoryPage>
                 ),
                 const SizedBox(width: 8),
                 Text(
-                  'Restock ${product.name}',
+                  'Restock ${stock.product.name}',
                   style: TextStyle(
                     color: Colors.grey[800],
                     fontWeight: FontWeight.w600,
@@ -997,7 +1003,7 @@ class _InventoryPageState extends State<InventoryPage>
                           Icon(Icons.tag, size: 16, color: Colors.grey[600]),
                           const SizedBox(width: 8),
                           Text(
-                            'Item ID: ${product.id}',
+                            'Item ID: ${stock.product.id}',
                             style: TextStyle(
                               color: Colors.grey[700],
                               fontSize: 14,
@@ -1008,10 +1014,11 @@ class _InventoryPageState extends State<InventoryPage>
                       const SizedBox(height: 8),
                       Row(
                         children: [
-                          const Icon(Icons.inventory, size: 16, color: Colors.green),
+                          const Icon(Icons.inventory,
+                              size: 16, color: Colors.green),
                           const SizedBox(width: 8),
                           Text(
-                            'Current Stock: ${product.quantity}',
+                            'Current Stock: ${stock.quantity}',
                             style: TextStyle(
                               color: Colors.grey[800],
                               fontSize: 14,
@@ -1055,8 +1062,8 @@ class _InventoryPageState extends State<InventoryPage>
                       borderSide:
                           BorderSide(color: Colors.blue.shade600, width: 1.5),
                     ),
-                    contentPadding:
-                        const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                    contentPadding: const EdgeInsets.symmetric(
+                        vertical: 12, horizontal: 16),
                   ),
                   style: TextStyle(
                     color: Colors.grey[800],
@@ -1136,34 +1143,34 @@ class _InventoryPageState extends State<InventoryPage>
               child: ElevatedButton(
                 onPressed: () async {
                   int newQuantity = int.parse(restockController.text);
-                  final quantity = product.quantity + newQuantity;
+                  final quantity = stock.quantity + newQuantity;
                   final body = {"quantity": quantity};
 
 // this is for the stockmovement table
-                  final Map<String, dynamic> restockBody = {
-                    "movement_type": "Restock",
-                    "product": product.id,
-                    "quantity_change": "${quantity - product.quantity}"
-                  };
-                 
+                  // final Map<String, dynamic> restockBody = {
+                  //   "movement_type": "Restock",
+                  //   "product": stock.product.id,
+                  //   "quantity_change": "${quantity - product.quantity}"
+                  // };
 
-                  Future.wait([
-                    AppRequest.patchProduct(
-                        isRestock: true,
-                        context: context,
-                        stockId: product.stockId,
-                        stockData: body,
-                        isOnSwitch: false),
-                    AppRequest.StockMovement(
-                        context: context, body: restockBody)
-                  ]).catchError((error) {
-    print("Error occurred: $error");
-});
+                  // Future.wait([
+                  //   AppRequest.patchProduct(
+                  //       isRestock: true,
+                  //       context: context,
+                  //       stockId: product.stockId,
+                  //       stockData: body,
+                  //       isOnSwitch: false),
+                  //   AppRequest.StockMovement(
+                  //       context: context, body: restockBody)
+                  // ]).catchError((error) {
+                  //   print("Error occurred: $error");
+                  // });
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.blue[600],
                   foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
@@ -1197,19 +1204,19 @@ class _InventoryPageState extends State<InventoryPage>
 
   Widget _buildEditButton({
     required BuildContext context,
-    required ProductData product,
+    required Product product,
   }) {
     return ElevatedButton(
       onPressed: () {
         print("pressed");
         try {
-          Globals.switchScreens(
-            context: context,
-            screen: ProductPage(
-              product: product,
-              isCreate: false,
-            ),
-          );
+          // Globals.switchScreens(
+          //   context: context,
+          //   screen: ProductPage(
+          //     product: product,
+          //     isCreate: false,
+          //   ),
+          // );
         } catch (e) {
           print("Got this error when switching screens $e");
         }

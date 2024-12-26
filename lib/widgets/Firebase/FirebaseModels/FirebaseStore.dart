@@ -76,17 +76,21 @@ class Product {
   final bool isActive;
   final DateTime lastUpdated;
 
-  Product({
-    required this.id,
-    required this.name,
-    required this.categoryId,
-    required this.brandId,
-    this.barcode,
-    required this.buyingPrice,
-    required this.sellingPrice,
-    required this.isActive,
-    required this.lastUpdated,
-  });
+  final categoryName;
+  final brandName;
+
+  Product(
+      {required this.id,
+      required this.name,
+      required this.categoryId,
+      required this.brandId,
+      this.barcode,
+      required this.buyingPrice,
+      required this.sellingPrice,
+      required this.isActive,
+      required this.lastUpdated,
+      required this.brandName,
+      required this.categoryName});
 
   Map<String, dynamic> toMap() {
     return {
@@ -113,6 +117,8 @@ class Product {
       buyingPrice: map['buyingPrice'],
       sellingPrice: map['sellingPrice'],
       isActive: map['isActive'],
+      categoryName: map["categoryName"],
+      brandName: map["brandName"],
       lastUpdated: DateTime.parse(map['lastUpdated']),
     );
   }
@@ -124,6 +130,7 @@ class Stock {
   final int reorderLevel;
   final DateTime lastRestocked;
   final List<StockMovement> movements;
+  final Product product;
 
   Stock({
     required this.productId,
@@ -131,6 +138,7 @@ class Stock {
     required this.reorderLevel,
     required this.lastRestocked,
     required this.movements,
+    required this.product,
   });
 
   Map<String, dynamic> toMap() {
@@ -152,6 +160,7 @@ class Stock {
       movements: (map['movements'] as List)
           .map((m) => StockMovement.fromMap(m))
           .toList(),
+      product: Product.fromMap(map, map['product']),    
     );
   }
 }
@@ -203,7 +212,8 @@ class FirestoreService {
       'movements': [],
     });
   }
-//  dynamic functions 
+
+//  dynamic functions
   Future<void> createCollection(
       {required BuildContext context,
       required bool isBrand,
@@ -428,20 +438,37 @@ class FirestoreService {
   // }
 
   Future<QuerySnapshot<Map<String, dynamic>>> getAllDataFromCollection(
-    String collectionName,
-  ) async {
+      String collectionName,
+      {String? filterName,
+      dynamic filterValue,
+      bool isFiltered = false}) async {
     try {
-      return await _firestore.collection(collectionName).get();
+      if (isFiltered && filterName != null) {
+        return await _firestore
+            .collection(collectionName)
+            .where(filterName, isEqualTo: filterValue)
+            .get();
+      } else {
+        return await _firestore.collection(collectionName).get();
+      }
     } catch (e) {
       print('Error fetching data from Firestore: $e');
       throw Exception("Error fetching data from Firestore: $e");
     }
   }
 
-  Future<List<Category>> getAllCategories() async {
+  Future<List<Category>> getCategories(
+      {required isFiltered, String? filterName, String? filterValue}) async {
     try {
-      final QuerySnapshot<Map<String, dynamic>> snapshot =
-          await getAllDataFromCollection(kCategoriesCollection);
+      final QuerySnapshot<Map<String, dynamic>> snapshot;
+      if (isFiltered && filterName != null && filterValue != null) {
+        snapshot = await getAllDataFromCollection(kCategoriesCollection,
+            isFiltered: isFiltered,
+            filterName: filterName,
+            filterValue: filterValue);
+      } else {
+        snapshot = await getAllDataFromCollection(kCategoriesCollection);
+      }
 
       return snapshot.docs.map((doc) {
         return Category.fromMap(doc.data(), doc.id);
@@ -449,6 +476,50 @@ class FirestoreService {
     } catch (e) {
       print('Error fetching categories: $e');
       throw Exception("Error fetching categories: $e");
+    }
+  }
+
+  Future<List<Product>> getProducts(
+      {required isFiltered, String? filterName, String? filterValue}) async {
+    try {
+      final QuerySnapshot<Map<String, dynamic>> snapshot;
+      if (isFiltered && filterName != null && filterValue != null) {
+        snapshot = await getAllDataFromCollection(kProductsCollection,
+            isFiltered: isFiltered,
+            filterName: filterName,
+            filterValue: filterValue);
+      } else {
+        snapshot = await getAllDataFromCollection(kProductsCollection);
+      }
+
+      return snapshot.docs.map((doc) {
+        return Product.fromMap(doc.data(), doc.id);
+      }).toList();
+    } catch (e) {
+      print('Error fetching products: $e');
+      throw Exception("Error fetching products: $e");
+    }
+  }
+
+    Future<List<Stock>> getStock(
+      {required isFiltered, String? filterName, String? filterValue}) async {
+    try {
+      final QuerySnapshot<Map<String, dynamic>> snapshot;
+      if (isFiltered && filterName != null && filterValue != null) {
+        snapshot = await getAllDataFromCollection(kStockCollection,
+            isFiltered: isFiltered,
+            filterName: filterName,
+            filterValue: filterValue);
+      } else {
+        snapshot = await getAllDataFromCollection(kStockCollection);
+      }
+
+      return snapshot.docs.map((doc) {
+        return Stock.fromMap(doc.data());
+      }).toList();
+    } catch (e) {
+      print('Error fetching stock: $e');
+      throw Exception("Error fetching stock: $e");
     }
   }
 

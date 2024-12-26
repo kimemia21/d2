@@ -139,7 +139,7 @@ class _AddProductFormState extends State<AddProductForm>
     Globals.showAddBrandOrCategoryDialog(
       context: context,
       title: "Category",
-      future: FirestoreService().getAllCategories(),
+      future: FirestoreService().getCategories(isFiltered: false),
       isBrand: false,
       selectedCategory: "1",
     );

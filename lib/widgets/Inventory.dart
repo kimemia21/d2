@@ -501,16 +501,9 @@ class _InventoryPageState extends State<InventoryPage>
           } else if (snapshot.hasError) {
             return Center(child: Text('Error: ${snapshot.error}'));
           } else if (snapshot.hasData) {
-            print("this is the list data ${snapshot.data}");
-            return ListView.builder(
-                itemCount: snapshot.data!.length,
-                itemBuilder: (context, index) {
-                 return ListTile(
-                    title:Text(index.toString())
-                  ,
-                  );
-                });
-            // _buildProductListView(snapshot.data!);
+         
+             print("this is the list data ${snapshot.data!.length}");
+             return  _buildProductListView(snapshot.data!);
           } else {
             return const Center(child: NoDataScreen());
           }

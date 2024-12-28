@@ -110,13 +110,12 @@ class Product {
   }
 
   static Product fromMap(Map<String, dynamic> map) {
-      map.forEach((key, value) {
-        if (value == null) {
-            print('#################### Null value found for key3: $key');
-          } else {
-            print("######################## no null values found3");
-          }
-
+    map.forEach((key, value) {
+      if (value == null) {
+        print('#################### Null value found for key3: $key');
+      } else {
+        print("######################## no null values found3");
+      }
     });
     return Product(
       id: map["id"],
@@ -165,12 +164,12 @@ class Stock {
   static Stock fromMap(Map<String, dynamic> map) {
     print("this is value of map $map");
     map.forEach((key, value) {
-        if (value == null) {
-            print('#################### Null value found for key1: $key');
-          } else {
-            print("######################## no null values found1");
-          }
-
+      print("this is value of key $key  this is value $value");
+      if (value == null) {
+        print('#################### Null value found for key1: $key');
+      } else {
+        print("######################## no null values found1");
+      }
     });
     return Stock(
       productId: map['productId'],
@@ -180,7 +179,7 @@ class Stock {
       movements: (map['movements'] as List)
           .map((m) => StockMovement.fromMap(m))
           .toList(),
-      product: Product.fromMap(map),
+       product: Product.fromMap(map['product'] as Map<String, dynamic>),
     );
   }
 }
@@ -205,13 +204,13 @@ class StockMovement {
   }
 
   static StockMovement fromMap(Map<String, dynamic> map) {
-      map.forEach((key, value) {
-        if (value == null) {
-            print('#################### Null value found for key2: $key');
-          } else {
-            print("######################## no null values found2");
-          }
-
+    map.forEach((key, value) {
+      print("this is value of key stock $key  this is value  stock $value");
+      if (value == null) {
+        print('#################### Null value found for key2: $key');
+      } else {
+        print("######################## no null values found2");
+      }
     });
     return StockMovement(
       type: map['type'],
@@ -532,15 +531,19 @@ class FirestoreService {
   }
 
   Future<List<Stock>> getStock(
-      {required isFiltered, String? filterName, String? filterValue}) async {
+      {required bool isFiltered,
+      String? filterName,
+      String? filterValue}) async {
     try {
       final QuerySnapshot<Map<String, dynamic>> snapshot;
       if (isFiltered && filterName != null && filterValue != null) {
+        print("stock is filtered");
         snapshot = await getAllDataFromCollection(kStockCollection,
             isFiltered: isFiltered,
             filterName: filterName,
             filterValue: filterValue);
       } else {
+          print("stock is not  filtered");
         snapshot = await getAllDataFromCollection(kStockCollection);
       }
 
@@ -559,7 +562,6 @@ class FirestoreService {
         return Stock.fromMap(doc.data());
       }).toList();
     } catch (e) {
-      
       print('Error fetching stock: $e');
       throw Exception("Error fetching stock: $e");
     }

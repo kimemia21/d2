@@ -437,6 +437,7 @@ class _ProductPageState extends State<ProductPage>
                     id: id,
                     name: _productNameController.text,
                     categoryId: _selectedCategoryId!,
+              
                     categoryName: _selectedCategory,
                     brandId: _selectedBrandId!,
                     brandName: _selectedBrand!,

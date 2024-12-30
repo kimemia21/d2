@@ -14,10 +14,11 @@ import 'package:intl/intl.dart';
 import 'package:uuid/uuid.dart';
 
 class ProductPage extends StatefulWidget {
-  final ProductData? product;
+  // final ProductData? product;
+  final Stock? stock;
   final bool isCreate;
 
-  const ProductPage({super.key, this.product, required this.isCreate});
+  const ProductPage({super.key, this.stock, required this.isCreate});
 
   @override
   _ProductPageState createState() => _ProductPageState();
@@ -52,15 +53,15 @@ class _ProductPageState extends State<ProductPage>
     super.initState();
     if (!widget.isCreate) {
       _productNameController =
-          TextEditingController(text: widget.product!.name);
+          TextEditingController(text: widget.stock!.product.name);
       _buyingPriceController =
-          TextEditingController(text: widget.product!.buyingPrice.toString());
+          TextEditingController(text: widget.stock!.product.buyingPrice.toString());
       _sellingPriceController =
-          TextEditingController(text: widget.product!.sellingPrice.toString());
+          TextEditingController(text: widget.stock!.product.sellingPrice.toString());
       _quantityController =
-          TextEditingController(text: widget.product!.quantity.toString());
+          TextEditingController(text: widget.stock!.quantity.toString());
       _restockController =
-          TextEditingController(text: widget.product!.reorderLevel.toString());
+          TextEditingController(text: widget.stock!.reorderLevel.toString());
     }
 
     _fetchBrands();
@@ -97,7 +98,7 @@ class _ProductPageState extends State<ProductPage>
         _selectedBrandId = widget.isCreate
             ? null
             : brands
-                .firstWhere((brand) => brand.id == widget.product!.brand_id,
+                .firstWhere((brand) => brand.id == widget.stock!.product.brandId,
                     orElse: () => brands.first)
                 .id;
       });
@@ -132,7 +133,7 @@ class _ProductPageState extends State<ProductPage>
             ? null
             : category
                 .firstWhere(
-                    (element) => element.id == widget.product!.category_id,
+                    (element) => element.id == widget.stock!.product.categoryId,
                     orElse: () => category.first)
                 .id;
       });
@@ -200,7 +201,7 @@ class _ProductPageState extends State<ProductPage>
         title: Text(
           widget.isCreate
               ? 'Add Product'
-              : 'Edit Product #${widget.product!.id}',
+              : 'Edit Product #${widget.stock!.product.id}',
           style: TextStyle(
             color: Colors.grey[800],
             fontSize: 18,
@@ -437,7 +438,6 @@ class _ProductPageState extends State<ProductPage>
                     id: id,
                     name: _productNameController.text,
                     categoryId: _selectedCategoryId!,
-              
                     categoryName: _selectedCategory,
                     brandId: _selectedBrandId!,
                     brandName: _selectedBrand!,
@@ -475,6 +475,7 @@ class _ProductPageState extends State<ProductPage>
                   context.read<Appbloc>().changeLoading(false);
                   throw Exception("error on create product $e");
                 }
+              
 
                 // -----------------commented code is the django setup --------------------------------------
 
@@ -539,6 +540,9 @@ class _ProductPageState extends State<ProductPage>
                 //     Productid: widget.product!.id,
                 //     stockId: widget.product!.stockId,
                 //     isOnSwitch: false);
+              }
+              else{
+                
               }
             },
             icon: bloc.isloading

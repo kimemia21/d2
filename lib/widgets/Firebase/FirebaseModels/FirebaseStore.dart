@@ -179,7 +179,7 @@ class Stock {
       movements: (map['movements'] as List)
           .map((m) => StockMovement.fromMap(m))
           .toList(),
-       product: Product.fromMap(map['product'] as Map<String, dynamic>),
+      product: Product.fromMap(map['product'] as Map<String, dynamic>),
     );
   }
 }
@@ -320,6 +320,32 @@ class FirestoreService {
         ]),
       });
     });
+  }
+// kimemia wrote this 
+  Future<void> PatchProductAndStock(
+      {required Stock stock, required Product product}) async {
+    final stockRef =
+        _firestore.collection(kStockCollection).doc(stock.productId);
+    final productRef =
+        _firestore.collection(kProductsCollection).doc(stock.productId);
+
+    try {
+      await _firestore.runTransaction((transaction) async {
+        final stockDoc = await transaction.get(stockRef);
+        final productDoc = await transaction.get(productRef);
+        if(!stockDoc.exists&& !productDoc.exists){
+            throw FirebaseException(
+          plugin: 'firestore',
+          message: 'Stock or Product document does not exist'
+        );
+        }
+        transaction.update(stockRef, stock.toMap());
+        transaction.update(productRef, product.toMap());
+
+      });
+    } on FirebaseFirestore catch (e) {
+      throw Exception('Error updating product and stock collection: $e');
+    }
   }
 
   // Stock operations
@@ -543,7 +569,7 @@ class FirestoreService {
             filterName: filterName,
             filterValue: filterValue);
       } else {
-          print("stock is not  filtered");
+        print("stock is not  filtered");
         snapshot = await getAllDataFromCollection(kStockCollection);
       }
 

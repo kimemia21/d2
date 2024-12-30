@@ -873,14 +873,16 @@ class _InventoryPageState extends State<InventoryPage>
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
                       OutlinedButton.icon(
-                        onPressed: () {},
-                        // Globals.switchScreens(
-                        //   context: context,
-                        //   screen: ProductPage(
-                        //     product: product,
-                        //     isCreate: false,
-                        //   ),
-                        // ),
+                        onPressed: ()=> 
+                         Globals.switchScreens(
+                          context: context,
+                          screen: ProductPage(
+                            stock: stock,
+                            isCreate: false,
+                          ),
+                        ),
+                        
+                       
                         icon: const Icon(Icons.edit_outlined, size: 16),
                         label:
                             const Text('Edit', style: TextStyle(fontSize: 12)),

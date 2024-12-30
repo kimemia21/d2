@@ -54,6 +54,15 @@ class _InventoryPageState extends State<InventoryPage>
     _controller.forward();
   }
 
+  void changeCategory({required String categoryId, required int index}) async {
+    setState(() {
+      selectedCategoryIndex = index;
+      stockFuture = FirestoreService().getStock(
+          isFiltered: true, filterName: "categoryId", filterValue: categoryId);
+    });
+    print("### selected index $selectedCategoryIndex");
+  }
+
   @override
   void dispose() {
     _controller.dispose();
@@ -430,18 +439,9 @@ class _InventoryPageState extends State<InventoryPage>
                     duration: const Duration(milliseconds: 200),
                     scale: isSelected ? 1.05 : 1.0,
                     child: GestureDetector(
-                      onTap: () {
-                        setState(() {
-                          selectedCategoryIndex = index;
-                          stockFuture = FirestoreService().getStock(
-                              isFiltered: true,
-                              filterName: "categoryId",
-                              filterValue: category.id);
-
-                          // selectedCategoryIndex = index;
-                          // productsStream =
-                          //     AppRequest.getProductStream(category.id);
-                        });
+                      onTap: () async {
+                        print("### category name ${category.name}");
+                        changeCategory(categoryId: category.id, index: index);
                         _controller.reset();
                         _controller.forward();
                       },
@@ -489,7 +489,7 @@ class _InventoryPageState extends State<InventoryPage>
     return SlideTransition(
       position: _offsetAnimation,
       child: FutureBuilder<List<Stock>>(
-        future: FirestoreService().getStock(isFiltered: false),
+        future: stockFuture,
         builder: (BuildContext context, AsyncSnapshot<List<Stock>> snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             print(
@@ -501,9 +501,8 @@ class _InventoryPageState extends State<InventoryPage>
           } else if (snapshot.hasError) {
             return Center(child: Text('Error: ${snapshot.error}'));
           } else if (snapshot.hasData) {
-         
-             print("this is the list data ${snapshot.data!.length}");
-             return  _buildProductListView(snapshot.data!);
+            print("this is the list data ${snapshot.data!.length}");
+            return _buildProductListView(snapshot.data!);
           } else {
             return const Center(child: NoDataScreen());
           }
@@ -873,16 +872,13 @@ class _InventoryPageState extends State<InventoryPage>
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
                       OutlinedButton.icon(
-                        onPressed: ()=> 
-                         Globals.switchScreens(
+                        onPressed: () => Globals.switchScreens(
                           context: context,
                           screen: ProductPage(
                             stock: stock,
                             isCreate: false,
                           ),
                         ),
-                        
-                       
                         icon: const Icon(Icons.edit_outlined, size: 16),
                         label:
                             const Text('Edit', style: TextStyle(fontSize: 12)),

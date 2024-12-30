@@ -437,6 +437,7 @@ class _ProductPageState extends State<ProductPage>
             onPressed: () async {
               if (_formKey.currentState!.validate()) {
                 try {
+
                   var uuid = Uuid();
                   String id = uuid.v4();
 
@@ -477,6 +478,7 @@ class _ProductPageState extends State<ProductPage>
                         stock: stock,
                         product: product);
                   } else {
+
                     await FirestoreService().patchProductAndStock(
                       stock: stock,
                       product: product,
@@ -492,6 +494,9 @@ class _ProductPageState extends State<ProductPage>
                   context.read<Appbloc>().changeLoading(false);
                   throw Exception("error on create product $e");
                 }
+
+
+
 
                 // -----------------commented code is the django setup --------------------------------------
 
@@ -539,6 +544,7 @@ class _ProductPageState extends State<ProductPage>
                 //   }
                 // }
 
+
                 // for (var entry in Patchstockdata.entries) {
                 //   if (entry.value == null ||
                 //       entry.value == '' ||
@@ -556,7 +562,7 @@ class _ProductPageState extends State<ProductPage>
                 //     Productid: widget.product!.id,
                 //     stockId: widget.product!.stockId,
                 //     isOnSwitch: false);
-              } else {}
+              } 
             },
             icon: bloc.isloading
                 ? LoadingAnimationWidget.staggeredDotsWave(

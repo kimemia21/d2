@@ -1,6 +1,3 @@
-// Collection names
-
-import 'package:application/main.dart';
 import 'package:application/widgets/Globals.dart';
 import 'package:application/widgets/commsRepo/commsRepo.dart';
 import 'package:application/widgets/state/AppBloc.dart';
@@ -332,7 +329,6 @@ class FirestoreService {
 
     try {
       bloc.changeLoading(true);
-  
 
       final stockRef =
           _firestore.collection(kStockCollection).doc(stock.productId);
@@ -455,7 +451,7 @@ class FirestoreService {
       });
     }
 
-    // Update customer loyalty points if customer exists
+//  Update customer loyalty points if customer exists
     if (customerId != null) {
       final customerRef =
           _firestore.collection(kCustomersCollection).doc(customerId);
@@ -532,12 +528,12 @@ class FirestoreService {
       if (isFiltered && filterName != null) {
         return await _firestore
             .collection(collectionName)
-            .where(filterName, isEqualTo: filterValue)
+            .where("product.$filterName" , isEqualTo: filterValue)
             .get();
       } else {
         return await _firestore.collection(collectionName).get();
       }
-    } catch (e) {
+    } catch (e) {   
       print('Error fetching data from Firestore: $e');
       throw Exception("Error fetching data from Firestore: $e");
     }
@@ -594,13 +590,23 @@ class FirestoreService {
       String? filterName,
       String? filterValue}) async {
     try {
+      called += 1;
+      print("Debug values:");
+      print("######### called times $called");
+
+      print("################# isFiltered: $isFiltered");
+      print("################## filterName: $filterName");
+      print("#################### filterValue: $filterValue");
+
       final QuerySnapshot<Map<String, dynamic>> snapshot;
       if (isFiltered && filterName != null && filterValue != null) {
+        print("###### filter words${filterName} ${filterValue}");
         print("stock is filtered");
         snapshot = await getAllDataFromCollection(kStockCollection,
             isFiltered: isFiltered,
             filterName: filterName,
             filterValue: filterValue);
+        print("######data length is  ${snapshot.docs.length}");
       } else {
         print("stock is not  filtered");
         snapshot = await getAllDataFromCollection(kStockCollection);
@@ -622,7 +628,7 @@ class FirestoreService {
       }).toList();
     } catch (e) {
       print('Error fetching stock: $e');
-      throw Exception("Error fetching stock: $e");
+      rethrow;
     }
   }
 

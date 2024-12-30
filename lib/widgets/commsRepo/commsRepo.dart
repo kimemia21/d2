@@ -12,6 +12,7 @@ const String kStockCollection = 'stock';
 const String kCustomersCollection = 'customers';
 const String kSalesCollection = 'sales';
 const String kReportsCollection = 'reports';
+    int called = 0;
 
 // BuildContext context = context;
 // Appbloc Readbloc = context.read<Appbloc>();

@@ -15,11 +15,14 @@ class Globals {
 // SnackBar for in app activities
 
   void snackbar(
+   
       {required BuildContext context,
+       Duration ?duration,
       required bool isError,
       required String message}) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
+        duration: duration!=null?duration :Duration(seconds: 3),
         content: Text(message), // Message to user
         backgroundColor:
             isError ? Colors.red : Colors.green, // Red background for error

@@ -321,30 +321,63 @@ class FirestoreService {
       });
     });
   }
-// kimemia wrote this 
-  Future<void> PatchProductAndStock(
-      {required Stock stock, required Product product}) async {
-    final stockRef =
-        _firestore.collection(kStockCollection).doc(stock.productId);
-    final productRef =
-        _firestore.collection(kProductsCollection).doc(stock.productId);
+
+// kimemia wrote this
+  Future<void> patchProductAndStock({
+    required Stock stock,
+    required Product product,
+    required BuildContext context,
+  }) async {
+    final Appbloc bloc = context.read<Appbloc>();
 
     try {
+      bloc.changeLoading(true);
+  
+
+      final stockRef =
+          _firestore.collection(kStockCollection).doc(stock.productId);
+      final productRef =
+          _firestore.collection(kProductsCollection).doc(stock.productId);
+
       await _firestore.runTransaction((transaction) async {
+        // Check if documents exist
         final stockDoc = await transaction.get(stockRef);
         final productDoc = await transaction.get(productRef);
-        if(!stockDoc.exists&& !productDoc.exists){
-            throw FirebaseException(
-          plugin: 'firestore',
-          message: 'Stock or Product document does not exist'
-        );
+
+        if (!stockDoc.exists || !productDoc.exists) {
+          throw FirebaseException(
+              plugin: 'firestore',
+              message: 'Stock or Product document does not exist');
         }
+
+        // Perform updates
         transaction.update(stockRef, stock.toMap());
         transaction.update(productRef, product.toMap());
-
       });
-    } on FirebaseFirestore catch (e) {
-      throw Exception('Error updating product and stock collection: $e');
+
+      // Success handling
+      Globals().snackbar(
+          context: context,
+          isError: false,
+          message: "Items with id ${stock.productId} was updated successfully");
+      Navigator.pop(context);
+    } on FirebaseException catch (e) {
+      // Handle Firebase-specific errors
+      Globals().snackbar(
+          context: context,
+          isError: true,
+          message: "Firebase error: ${e.message}");
+      throw Exception('Failed to update product: ${e.message}');
+    } catch (e) {
+      // Handle other errors
+      Globals().snackbar(
+          context: context,
+          isError: true,
+          message: "Error updating product: $e");
+      throw Exception('Error updating product and stock: $e');
+    } finally {
+      // Always reset loading state
+      bloc.changeLoading(false);
     }
   }
 

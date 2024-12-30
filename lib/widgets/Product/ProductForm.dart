@@ -5,6 +5,7 @@ import 'package:application/widgets/Models/CategorySerializers.dart';
 import 'package:application/widgets/Models/ProductWithStock.dart';
 import 'package:application/widgets/requests/Request.dart';
 import 'package:application/widgets/state/AppBloc.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart' as debug;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -54,14 +55,18 @@ class _ProductPageState extends State<ProductPage>
     if (!widget.isCreate) {
       _productNameController =
           TextEditingController(text: widget.stock!.product.name);
-      _buyingPriceController =
-          TextEditingController(text: widget.stock!.product.buyingPrice.toString());
-      _sellingPriceController =
-          TextEditingController(text: widget.stock!.product.sellingPrice.toString());
+      _buyingPriceController = TextEditingController(
+          text: widget.stock!.product.buyingPrice.toString());
+      _sellingPriceController = TextEditingController(
+          text: widget.stock!.product.sellingPrice.toString());
       _quantityController =
           TextEditingController(text: widget.stock!.quantity.toString());
       _restockController =
           TextEditingController(text: widget.stock!.reorderLevel.toString());
+      _selectedBrand = widget.stock!.product.brandName;
+      _selectedBrandId = widget.stock!.product.brandId;
+      _selectedCategory = widget.stock!.product.categoryName;
+      _selectedCategoryId = widget.stock!.product.categoryId;
     }
 
     _fetchBrands();
@@ -98,7 +103,8 @@ class _ProductPageState extends State<ProductPage>
         _selectedBrandId = widget.isCreate
             ? null
             : brands
-                .firstWhere((brand) => brand.id == widget.stock!.product.brandId,
+                .firstWhere(
+                    (brand) => brand.id == widget.stock!.product.brandId,
                     orElse: () => brands.first)
                 .id;
       });
@@ -429,13 +435,13 @@ class _ProductPageState extends State<ProductPage>
           const SizedBox(width: 12),
           ElevatedButton.icon(
             onPressed: () async {
-              if (widget.isCreate && _formKey.currentState!.validate()) {
+              if (_formKey.currentState!.validate()) {
                 try {
                   var uuid = Uuid();
                   String id = uuid.v4();
 
                   final Product product = Product(
-                    id: id,
+                    id: widget.isCreate? id: widget.stock!.productId,
                     name: _productNameController.text,
                     categoryId: _selectedCategoryId!,
                     categoryName: _selectedCategory,
@@ -456,26 +462,36 @@ class _ProductPageState extends State<ProductPage>
                       createdAt: DateTime.now());
 
                   Stock stock = Stock(
-                      productId: id,
+                      productId:widget.isCreate? id: widget.stock!.productId,
                       quantity: int.parse(_quantityController.text.trim()),
                       reorderLevel: int.parse(_restockController.text.trim()),
                       lastRestocked: DateTime.now(),
                       product: product,
                       movements: [stockMovement]);
 
-                  await FirestoreService().createCollection(
-                      context: context,
-                      isBrand: false,
-                      isProduct: true,
+                  if (widget.isCreate) {
+                    await FirestoreService().createCollection(
+                        context: context,
+                        isBrand: false,
+                        isProduct: true,
+                        stock: stock,
+                        product: product);
+                  } else {
+                    await FirestoreService().patchProductAndStock(
                       stock: stock,
-                      product: product);
+                      product: product,
+                      context: context,
+                    );
+                  }
                 } catch (e) {
                   Globals().snackbar(
-                      context: context, isError: true, message: e.toString());
+                      duration: Duration(seconds: 5),
+                      context: context,
+                      isError: true,
+                      message: e.toString());
                   context.read<Appbloc>().changeLoading(false);
                   throw Exception("error on create product $e");
                 }
-              
 
                 // -----------------commented code is the django setup --------------------------------------
 
@@ -540,10 +556,7 @@ class _ProductPageState extends State<ProductPage>
                 //     Productid: widget.product!.id,
                 //     stockId: widget.product!.stockId,
                 //     isOnSwitch: false);
-              }
-              else{
-                
-              }
+              } else {}
             },
             icon: bloc.isloading
                 ? LoadingAnimationWidget.staggeredDotsWave(

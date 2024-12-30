@@ -2,6 +2,7 @@ import 'package:application/firebase_options.dart';
 import 'package:application/widgets/Authentication/login.dart';
 import 'package:application/widgets/commsRepo/commsRepo.dart';
 import 'package:application/widgets/homepage.dart';
+import 'package:application/widgets/sell/SellPage.dart';
 import 'package:application/widgets/state/AppBloc.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -31,7 +32,9 @@ class MyApp extends StatelessWidget {
           return MotorbikePOSHomePage();
         }
 
-        return const LoginScreen();
+        return BikePOSPage();
+        //  const
+        //  LoginScreen();
       },
     );
 
@@ -46,6 +49,8 @@ class MyApp extends StatelessWidget {
               colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
               useMaterial3: true,
             ),
-            home: const LoginScreen()));
+            home: BikePOSPage()
+            //  const LoginScreen()
+            ));
   }
 }

@@ -34,7 +34,7 @@ class MyApp extends StatelessWidget {
 
         return BikePOSPage();
         //  const
-        //  LoginScreen();
+        //  LoginScreen()
       },
     );
 

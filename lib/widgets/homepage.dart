@@ -1,581 +1,446 @@
-import 'package:application/widgets/Inventory.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 import 'package:intl/intl.dart';
+import 'package:application/widgets/Firebase/FirebaseModels/FirebaseStore.dart';
+import 'package:application/widgets/Product/ProductForm.dart';
+import 'package:application/widgets/Models/ProductWithStock.dart';
+import 'package:application/widgets/state/AppBloc.dart';
+import 'package:provider/provider.dart';
+import 'package:application/widgets/Globals.dart';
 
-class MotorbikePOSHomePage extends StatelessWidget {
-  final formatter = NumberFormat("#,##0.00", "en_US");
+class POSHomePage extends StatefulWidget {
+  const POSHomePage({Key? key}) : super(key: key);
 
-  MotorbikePOSHomePage({super.key});
+  @override
+  _POSHomePageState createState() => _POSHomePageState();
+}
+
+class _POSHomePageState extends State<POSHomePage> {
+  final FirestoreService _firestoreService = FirestoreService();
+  late Future<List<Stock>> stockFuture;
+  late Future<List<Transaction>> recentTransactionsFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadData();
+  }
+
+  void _loadData() {
+    stockFuture = _firestoreService.getStock(isFiltered: false);
+    // Add your transaction loading logic here
+    // recentTransactionsFuture = _firestoreService.getRecentTransactions();
+  }
 
   @override
   Widget build(BuildContext context) {
+    final appBloc = Provider.of<Appbloc>(context);
+
     return Scaffold(
-      backgroundColor: Colors.grey[100],
-      appBar: AppBar(
-        toolbarHeight: 70,
-        title: Text(
-          'Firebase Moto POS',
-          style: GoogleFonts.poppins(
-            fontSize: 24,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.grey[800],
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.notifications_outlined, size: 28),
-            onPressed: () {},
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8),
-            child: CircleAvatar(
-              radius: 20,
-              backgroundColor: Colors.blue[50],
-              child: const Icon(Icons.person_outline, color: Colors.blue, size: 24),
+      body: SafeArea(
+        child: Column(
+          children: [
+            _buildHeader(context),
+            Expanded(
+              child: Container(
+                color: Colors.grey[100],
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(20.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildQuickActions(context),
+                      const SizedBox(height: 24),
+                      _buildDashboardCards(),
+                      const SizedBox(height: 24),
+                      _buildRecentActivity(),
+                    ],
+                  ),
+                ),
+              ),
             ),
-          ),
-          const SizedBox(width: 8),
-        ],
-        elevation: 0,
-      ),
-      body: AnimationLimiter(
-        child: ListView(
-          padding: const EdgeInsets.all(20),
-          children: AnimationConfiguration.toStaggeredList(
-            duration: const Duration(milliseconds: 375),
-            childAnimationBuilder: (widget) => SlideAnimation(
-              horizontalOffset: 20.0,
-              child: FadeInAnimation(child: widget),
-            ),
-            children: [
-              _buildHeader(),
-              const SizedBox(height: 28),
-              _buildQuickActions(context),
-              const SizedBox(height: 28),
-              _buildSalesOverview(),
-              const SizedBox(height: 28),
-              _buildInventoryOverview(),
-              const SizedBox(height: 28),
-              _buildRecentTransactions(),
-            ],
-          ),
+          ],
         ),
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {},
-        icon: const Icon(Icons.add_shopping_cart, size: 28),
-        label: Text(
-          'New Sale',
-          style: GoogleFonts.poppins(
-            fontSize: 18,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-        backgroundColor: Colors.blue,
-        elevation: 4,
-        // padding: EdgeInsets.symmetric(horizontal: 24, vertical: 16),
       ),
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildHeader(BuildContext context) {
     return Container(
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [Colors.blue[600]!, Colors.blue[800]!],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(20),
+        color: Colors.blue[600],
         boxShadow: [
           BoxShadow(
-            color: Colors.blue.withOpacity(0.2),
-            spreadRadius: 2,
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+            offset: const Offset(0, 2),
+            blurRadius: 4,
+            color: Colors.black.withOpacity(0.1),
           ),
         ],
       ),
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
         children: [
-          Row(
-            children: [
-              Container(
-                width: 72,
-                height: 72,
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Welcome Back',
+                  style: GoogleFonts.poppins(
+                    color: Colors.white,
+                    fontSize: 24,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
-                child:
-                    const Icon(Icons.person_outline, color: Colors.white, size: 36),
-              ),
-              const SizedBox(width: 20),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Welcome back,',
-                      style: GoogleFonts.poppins(
-                        fontSize: 16,
-                        color: Colors.white70,
-                      ),
-                    ),
-                    Text(
-                      'Alex Morgan',
-                      style: GoogleFonts.poppins(
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ],
+                const SizedBox(height: 4),
+                Text(
+                  DateFormat('EEEE, MMMM d, y').format(DateTime.now()),
+                  style: TextStyle(
+                    color: Colors.blue[50],
+                    fontSize: 14,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-          const SizedBox(height: 20),
-          // Container(
-          //   padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          //   decoration: BoxDecoration(
-          //     color: Colors.white.withOpacity(0.1),
-          //     borderRadius: BorderRadius.circular(12),
-          //   ),
-          //   child: Row(
-          //     mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          //     children: [
-          //       Text(
-          //         'Today\'s Revenue',
-          //         style: GoogleFonts.poppins(
-          //           fontSize: 16,
-          //           color: Colors.white70,
-          //         ),
-          //       ),
-          //       // Text(
-          //       //   '\$4,280.50',
-          //       //   style: GoogleFonts.poppins(
-          //       //     fontSize: 24,
-          //       //     fontWeight: FontWeight.bold,
-          //       //     color: Colors.white,
-          //       //   ),
-          //       // ),
-          //     ],
-          //   ),
-          // ),
+          IconButton(
+            onPressed: () {
+              // Add settings navigation
+            },
+            icon: const Icon(
+              Icons.settings,
+              color: Colors.white,
+            ),
+          ),
         ],
       ),
     );
   }
 
   Widget _buildQuickActions(BuildContext context) {
-    return GridView.count(
-      crossAxisCount: 3,
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      crossAxisSpacing: 16,
-      mainAxisSpacing: 16,
-      childAspectRatio: 0.85,
-      children: [
-        _buildActionItem('Sell', Icons.sell_outlined, Colors.purple, context,  const InventoryPage()),
-        _buildActionItem(
-            'Inventory', Icons.inventory_2_outlined, Colors.orange, context, const InventoryPage()),
-        _buildActionItem('Reports', Icons.assessment_outlined, Colors.green, context, const InventoryPage()),
-      ],
-    );
-  }
+    final actions = [
+      {
+        'title': 'New Sale',
+        'icon': Icons.point_of_sale,
+        'onTap': () {
+          // Navigate to New Sale
+        },
+        'color': Colors.blue[600]!,
+      },
+      {
+        'title': 'Inventory',
+        'icon': Icons.inventory_2_outlined,
+        'onTap': () {
+          // Navigate to Inventory
+        },
+        'color': Colors.green[600]!,
+      },
+      {
+        'title': 'Reports',
+        'icon': Icons.bar_chart,
+        'onTap': () {
+          // Navigate to Reports
+        },
+        'color': Colors.orange[600]!,
+      },
+      {
+        'title': 'Customers',
+        'icon': Icons.people_outline,
+        'onTap': () {
+          // Navigate to Customers
+        },
+        'color': Colors.purple[600]!,
+      },
+    ];
 
-  Widget _buildActionItem(
-      String label, IconData icon, Color color, BuildContext context, Widget screen) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: color.withOpacity(0.1),
-            spreadRadius: 2,
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(20),
-          onTap: () {
-              Navigator.push(
-            context, MaterialPageRoute(builder: (context) =>screen));
-          },
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: color.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Icon(icon, size: 40, color: color),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                label,
-                style: GoogleFonts.poppins(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.grey[800],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSalesOverview() {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
-            spreadRadius: 2,
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Sales Overview',
-                style: GoogleFonts.poppins(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.grey[800],
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: Colors.blue[50],
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Text(
-                  'This Week',
-                  style: GoogleFonts.poppins(
-                    fontSize: 14,
-                    color: Colors.blue,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 24),
-          Row(
-            children: [
-              Expanded(child: _buildSalesStat('Today', '\$1,250', 12.5, true)),
-              const SizedBox(width: 16),
-              Expanded(child: _buildSalesStat('Week', '\$8,750', -2.3, false)),
-              const SizedBox(width: 16),
-              Expanded(child: _buildSalesStat('Month', '\$32,500', 8.7, true)),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSalesStat(
-      String period, String amount, double change, bool isPositive) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.grey[50],
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey[200]!, width: 1),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            period,
-            style: GoogleFonts.poppins(
-              color: Colors.grey[600],
-              fontSize: 16,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            amount,
-            style: GoogleFonts.poppins(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: Colors.grey[800],
-            ),
-          ),
-          const SizedBox(height: 8),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(
-              color: isPositive ? Colors.green[50] : Colors.red[50],
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  isPositive ? Icons.trending_up : Icons.trending_down,
-                  size: 18,
-                  color: isPositive ? Colors.green : Colors.red,
-                ),
-                const SizedBox(width: 4),
-                Text(
-                  '${change.abs()}%',
-                  style: GoogleFonts.poppins(
-                    fontSize: 14,
-                    color: isPositive ? Colors.green : Colors.red,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildInventoryOverview() {
-    return Container(
-      decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
-            spreadRadius: 2,
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+            offset: const Offset(0, 2),
+            blurRadius: 4,
+            color: Colors.black.withOpacity(0.1),
           ),
         ],
       ),
-      padding: const EdgeInsets.all(24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Inventory Overview',
+            'Quick Actions',
             style: GoogleFonts.poppins(
-              fontSize: 22,
-              fontWeight: FontWeight.bold,
-              color: Colors.grey[800],
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
             ),
           ),
-          const SizedBox(height: 24),
-          Row(
-            children: [
-              Expanded(
-                child: _buildInventoryStat(
-                    'Bikes', '24', Icons.motorcycle_outlined, Colors.blue),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: _buildInventoryStat(
-                    'Parts', '543', Icons.settings_outlined, Colors.orange),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: _buildInventoryStat('Accessories', '128',
-                    Icons.category_outlined, Colors.green),
-              ),
-            ],
+          const SizedBox(height: 16),
+          GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 4,
+              crossAxisSpacing: 16,
+              mainAxisSpacing: 16,
+              childAspectRatio: 1.0,
+            ),
+            itemCount: actions.length,
+            itemBuilder: (context, index) {
+              final action = actions[index];
+              return InkWell(
+                onTap: action['onTap'] as Function(),
+                borderRadius: BorderRadius.circular(12),
+                child: Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: Colors.black.withOpacity(0.2),
+                    ),
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        action['icon'] as IconData,
+                        size: 32,
+                        color: Colors.green,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        action['title'] as String,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: Colors.black,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
           ),
         ],
       ),
     );
   }
 
-  Widget _buildInventoryStat(
-      String category, String count, IconData icon, Color color) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [color.withOpacity(0.1), color.withOpacity(0.05)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: color.withOpacity(0.2), width: 1),
-      ),
-      child: Column(
-        children: [
-          Icon(icon, size: 36, color: color),
-          const SizedBox(height: 12),
-          Text(
-            count,
-            style: GoogleFonts.poppins(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: Colors.grey[800],
-            ),
+  Widget _buildDashboardCards() {
+    return FutureBuilder<List<Stock>>(
+      future: stockFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        if (snapshot.hasError) {
+          return Center(child: Text('Error: ${snapshot.error}'));
+        }
+
+        final stocks = snapshot.data ?? [];
+        final totalValue = stocks.fold<double>(
+          0,
+          (sum, stock) => sum + (stock.quantity * stock.product.sellingPrice),
+        );
+
+        final cards = [
+          {
+            'title': 'Total Inventory Value',
+            'value': '\$${NumberFormat('#,##0.00').format(totalValue)}',
+            'icon': Icons.inventory_2,
+            'color': Colors.blue[600]!,
+          },
+          {
+            'title': 'Low Stock Items',
+            'value': stocks
+                .where((stock) => stock.quantity <= stock.reorderLevel)
+                .length
+                .toString(),
+            'icon': Icons.warning_amber,
+            'color': Colors.orange[600]!,
+          },
+          {
+            'title': 'Total Products',
+            'value': stocks.length.toString(),
+            'icon': Icons.category,
+            'color': Colors.green[600]!,
+          },
+        ];
+
+        return GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 3,
+            crossAxisSpacing: 16,
+            mainAxisSpacing: 16,
+            childAspectRatio: 1.5,
           ),
-          const SizedBox(height: 4),
-          Text(
-            category,
-            style: GoogleFonts.poppins(
-              color: Colors.grey[600],
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ],
-      ),
+          itemCount: cards.length,
+          itemBuilder: (context, index) {
+            final card = cards[index];
+            return Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    offset: const Offset(0, 2),
+                    blurRadius: 4,
+                    color: Colors.black.withOpacity(0.1),
+                  ),
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Icon(
+                          card['icon'] as IconData,
+                          color: Colors.black,
+                          size: 24,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          card['title'] as String,
+                          style: TextStyle(
+                            color: Colors.grey[600],
+                            fontSize: 14,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const Spacer(),
+                  Text(
+                    card['value'] as String,
+                    style: const TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
     );
   }
 
-  Widget _buildRecentTransactions() {
+  Widget _buildRecentActivity() {
+    // Replace with actual transaction data
     return Container(
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
-            spreadRadius: 2,
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+            offset: const Offset(0, 2),
+            blurRadius: 4,
+            color: Colors.black.withOpacity(0.1),
           ),
         ],
       ),
-      padding: const EdgeInsets.all(24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Recent Transactions',
-                style: GoogleFonts.poppins(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.grey[800],
+          Text(
+            'Recent Activity',
+            style: GoogleFonts.poppins(
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 16),
+          ListView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: 5,
+            itemBuilder: (context, index) {
+              return Container(
+                margin: const EdgeInsets.only(bottom: 12),
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.grey[50],
+                  borderRadius: BorderRadius.circular(8),
                 ),
-              ),
-              TextButton(
-                onPressed: () {},
-                child: Text(
-                  'View All',
-                  style: GoogleFonts.poppins(
-                    fontSize: 16,
-                    color: Colors.blue,
-                    fontWeight: FontWeight.w500,
-                  ),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.blue[50],
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Icon(
+                        Icons.shopping_cart,
+                        color: Colors.blue[600],
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Sale #${1001 + index}',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          Text(
+                            '2 items',
+                            style: TextStyle(
+                              color: Colors.grey[600],
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text(
+                          '\$${99.99 + index}',
+                          style: TextStyle(
+                            color: Colors.green[600],
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        Text(
+                          '2 mins ago',
+                          style: TextStyle(
+                            color: Colors.grey[600],
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 20),
-          _buildTransactionItem(
-            'John Doe',
-            'Motorcycle Service',
-            '\$150',
-            DateTime.now(),
-            Colors.orange,
-            Icons.build_outlined,
-          ),
-          const Divider(height: 32, thickness: 1),
-          _buildTransactionItem(
-            'Jane Smith',
-            'Motorbike Sale',
-            '\$2,500',
-            DateTime.now().subtract(const Duration(days: 1)),
-            Colors.green,
-            Icons.monetization_on,
-          ),
-          const Divider(height: 32, thickness: 1),
-          _buildTransactionItem(
-            'Alice Johnson',
-            'Accessory Sale',
-            '\$45',
-            DateTime.now().subtract(const Duration(days: 2)),
-            Colors.blue,
-            Icons.category_outlined,
+              );
+            },
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildTransactionItem(String customerName, String transactionType,
-      String amount, DateTime date, Color color, IconData icon) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Row(
-          children: [
-            Icon(icon, size: 36, color: color),
-            const SizedBox(width: 12),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  customerName,
-                  style: GoogleFonts.poppins(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.grey[800],
-                  ),
-                ),
-                Text(
-                  transactionType,
-                  style: GoogleFonts.poppins(
-                    color: Colors.grey[600],
-                    fontSize: 14,
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            Text(
-              amount,
-              style: GoogleFonts.poppins(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: Colors.grey[800],
-              ),
-            ),
-            Text(
-              DateFormat('MMM d, yyyy').format(date),
-              style: GoogleFonts.poppins(
-                color: Colors.grey[600],
-                fontSize: 12,
-              ),
-            ),
-          ],
-        ),
-      ],
     );
   }
 }

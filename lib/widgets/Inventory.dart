@@ -102,7 +102,7 @@ class _InventoryPageState extends State<InventoryPage>
           child: IconButton(
             onPressed: () => Globals.switchScreens(
               context: context,
-              screen: MotorbikePOSHomePage(),
+              screen: POSHomePage(),
             ),
             icon: const Icon(Icons.home_rounded),
             tooltip: 'Home',

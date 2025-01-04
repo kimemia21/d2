@@ -29,7 +29,7 @@ class FirebaseReq {
               email: loginBody["email"], password: loginBody["password"])
           .then((value) {
         bloc.changeLoading(false);
-        Globals.switchScreens(context: context, screen: MotorbikePOSHomePage());
+        Globals.switchScreens(context: context, screen: POSHomePage());
         print(value);
       });
     } on FirebaseAuthException catch (e) {

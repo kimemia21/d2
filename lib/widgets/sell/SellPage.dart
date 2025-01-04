@@ -1,17 +1,40 @@
+import 'package:application/widgets/Firebase/FirebaseModels/FirebaseStore.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
-class BikePOSPage extends StatefulWidget {
-  const BikePOSPage({Key? key}) : super(key: key);
+class SalePage extends StatefulWidget {
+  const SalePage({Key? key}) : super(key: key);
 
   @override
-  _BikePOSPageState createState() => _BikePOSPageState();
+  _SalePageState createState() => _SalePageState();
 }
 
-class _BikePOSPageState extends State<BikePOSPage> {
+class _SalePageState extends State<SalePage> {
   final formatter = NumberFormat("#,##0.00", "en_US");
   int selectedCategoryIndex = 0;
   List<Map<String, dynamic>> cart = [];
+  late Future<List<Category>> _categories;
+  late Future<List<Stock>> _stock;
+  int isSelected = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    getter();
+  }
+
+  void getter() {
+    getCategories();
+    getProducts();
+  }
+
+  void getCategories() {
+    _categories = FirestoreService().getCategories(isFiltered: false);
+  }
+
+  void getProducts() {
+    _stock = FirestoreService().getStock(isFiltered: false);
+  }
 
   // Sample data
   final List<Map<String, dynamic>> categories = [
@@ -65,8 +88,8 @@ class _BikePOSPageState extends State<BikePOSPage> {
                   _buildTopBar(),
                   // Category Selector
                   _buildCategorySelector(),
-                  // Products Grid
-                  _buildProductsGrid(),
+                  // Product Cards
+                  _buildProductView()
                 ],
               ),
             ),
@@ -142,147 +165,253 @@ class _BikePOSPageState extends State<BikePOSPage> {
   }
 
   Widget _buildCategorySelector() {
-    return Container(
-      height: 80,
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        itemCount: categories.length,
-        itemBuilder: (context, index) {
-          final category = categories[index];
-          final isSelected = selectedCategoryIndex == index;
-          
-          return Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
-            child: Material(
-              color: isSelected ? Colors.blue[600] : Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              child: InkWell(
-                onTap: () => setState(() => selectedCategoryIndex = index),
-                borderRadius: BorderRadius.circular(12),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  alignment: Alignment.center,
-                  child: Row(
-                    children: [
-                      Icon(
-                        category['icon'],
-                        color: isSelected ? Colors.white : Colors.grey[600],
+    return FutureBuilder<List<Category>>(
+      future: FirestoreService().getCategories(isFiltered: false),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        return SizedBox(
+          height: 100,
+          child: ListView(
+            scrollDirection: Axis.horizontal,
+            children: [
+              // All Bikes button
+              Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
+                child: Material(
+                  color: isSelected == 100 ? Colors.blue[600] : Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  child: InkWell(
+                    onTap: () => setState(() => isSelected = 100),
+                    borderRadius: BorderRadius.circular(12),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      alignment: Alignment.center,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.pedal_bike,
+                            color: isSelected == 100
+                                ? Colors.white
+                                : Colors.grey[600],
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            "All Bikes",
+                            style: TextStyle(
+                              color: isSelected == 100
+                                  ? Colors.white
+                                  : Colors.grey[800],
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(width: 8),
+                    ),
+                  ),
+                ),
+              ),
+
+              // Category buttons
+              ...snapshot.data!.asMap().entries.map((entry) {
+                final index = entry.key;
+                final category = entry.value;
+
+                return Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
+                  child: Material(
+                    color:
+                        isSelected == index ? Colors.blue[600] : Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    child: InkWell(
+                      onTap: () {
+                        print(index);
+                        setState(() {
+                          isSelected = index;
+
+                          // _categories =FirestoreService().getCategories(isFiltered: true,filterName: "",filterValue: "")
+                        });
+                      },
+                      borderRadius: BorderRadius.circular(12),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        alignment: Alignment.center,
+                        child: Text(
+                          category.name,
+                          style: TextStyle(
+                            color: isSelected == index
+                                ? Colors.white
+                                : Colors.grey[800],
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              }).toList(),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildProductView() {
+  return FutureBuilder(
+    future: _stock,
+    builder: (context, snapshot) {
+      if (!snapshot.hasData) {
+        return const Center(child: CircularProgressIndicator());
+      }
+
+      return SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          children: snapshot.data!.map((stock) {
+            return SizedBox(
+              width: 300, // Give a fixed width to the card
+              child: _buildProductCard(context, stock),
+            );
+          }).toList(),
+        ),
+      );
+    },
+  );
+}
+
+Widget _buildProductCard(BuildContext context, Stock stock) {
+  final formatter = NumberFormat("#,##0.00", "en_US");
+  final bool isOutOfStock = stock.quantity <= 0;
+
+  return Card(
+    margin: const EdgeInsets.all(6),
+    elevation: 2,
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(12),
+    ),
+    color: isOutOfStock ? Colors.red.shade50 : Colors.white,
+    child: InkWell(
+      onTap: isOutOfStock ? null : () {
+        // Handle add to cart or quick sale
+      },
+      borderRadius: BorderRadius.circular(12),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          mainAxisSize: MainAxisSize.min, // Add this
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Product Image
+                Container(
+                  width: 60,
+                  height: 60,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[100],
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Icon(
+                    Icons.inventory_2_outlined,
+                    color: Colors.grey,
+                    size: 32,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                // Product Details
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
                       Text(
-                        category['name'],
+                        stock.product.name,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        stock.product.categoryName,
                         style: TextStyle(
-                          color: isSelected ? Colors.white : Colors.grey[800],
-                          fontWeight: FontWeight.w600,
+                          color: Colors.grey[600],
+                          fontSize: 12,
                         ),
                       ),
                     ],
                   ),
                 ),
-              ),
-            ),
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _buildProductsGrid() {
-    return Expanded(
-      child: GridView.builder(
-        padding: const EdgeInsets.all(16),
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 3,
-          childAspectRatio: 1,
-          crossAxisSpacing: 16,
-          mainAxisSpacing: 16,
-        ),
-        itemCount: products.length,
-        itemBuilder: (context, index) {
-          final product = products[index];
-          
-          return Card(
-            elevation: 2,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: InkWell(
-              onTap: () => _addToCart(product),
-              borderRadius: BorderRadius.circular(12),
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                // Price and Stock
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Expanded(
-                          child: Text(
-                            product['name'],
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                            ),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: Colors.blue[50],
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Icon(
-                            Icons.pedal_bike,
-                            color: Colors.blue[600],
-                            size: 20,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const Spacer(),
                     Text(
-                      product['description'],
-                      style: TextStyle(
-                        color: Colors.grey[600],
-                        fontSize: 12,
+                      '\$${formatter.format(stock.product.sellingPrice)}',
+                      style: const TextStyle(
+                        color: Colors.green,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
                       ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
                     ),
-                    const SizedBox(height: 8),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          '\$${formatter.format(product['price'])}',
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
+                    const SizedBox(height: 4),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: isOutOfStock ? Colors.red[50] : Colors.green[50],
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        isOutOfStock ? 'Out of Stock' : 'In Stock: ${stock.quantity}',
+                        style: TextStyle(
+                          color: isOutOfStock ? Colors.red : Colors.green,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
                         ),
-                        Text(
-                          'Stock: ${product['stock']}',
-                          style: TextStyle(
-                            color: Colors.grey[600],
-                            fontSize: 12,
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
                   ],
                 ),
-              ),
+              ],
             ),
-          );
-        },
+            if (!isOutOfStock) ...[
+              const SizedBox(height: 12),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  ElevatedButton.icon(
+                    onPressed: () {
+                      // Handle quick sale
+                    },
+                    icon: const Icon(Icons.shopping_cart_outlined, size: 16),
+                    label: const Text('Add to Cart', style: TextStyle(fontSize: 12)),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blue,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ],
+        ),
       ),
-    );
-  }
-
+    ),
+  );
+}
   Widget _buildCart() {
     final total = cart.fold<double>(
       0,
@@ -422,7 +551,8 @@ class _BikePOSPageState extends State<BikePOSPage> {
 
   void _addToCart(Map<String, dynamic> product) {
     setState(() {
-      final existingIndex = cart.indexWhere((item) => item['id'] == product['id']);
+      final existingIndex =
+          cart.indexWhere((item) => item['id'] == product['id']);
       if (existingIndex >= 0) {
         cart[existingIndex]['quantity']++;
       } else {

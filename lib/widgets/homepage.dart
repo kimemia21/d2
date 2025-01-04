@@ -1,3 +1,6 @@
+import 'package:application/widgets/Inventory.dart';
+import 'package:application/widgets/commsRepo/commsRepo.dart';
+import 'package:application/widgets/sell/SellPage.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -95,6 +98,15 @@ class _POSHomePageState extends State<POSHomePage> {
                 ),
                 const SizedBox(height: 4),
                 Text(
+                  currentUser!.email.toString(),
+                  style: GoogleFonts.poppins(
+                    color: Colors.white,
+                    fontSize: 24,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
                   DateFormat('EEEE, MMMM d, y').format(DateTime.now()),
                   style: TextStyle(
                     color: Colors.blue[50],
@@ -124,6 +136,7 @@ class _POSHomePageState extends State<POSHomePage> {
         'title': 'New Sale',
         'icon': Icons.point_of_sale,
         'onTap': () {
+          Globals.switchScreens(context: context, screen: SalePage());
           // Navigate to New Sale
         },
         'color': Colors.blue[600]!,
@@ -132,6 +145,7 @@ class _POSHomePageState extends State<POSHomePage> {
         'title': 'Inventory',
         'icon': Icons.inventory_2_outlined,
         'onTap': () {
+             Globals.switchScreens(context: context, screen: InventoryPage());
           // Navigate to Inventory
         },
         'color': Colors.green[600]!,

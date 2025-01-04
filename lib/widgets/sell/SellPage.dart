@@ -15,6 +15,7 @@ class _SalePageState extends State<SalePage> {
   List<Map<String, dynamic>> cart = [];
   late Future<List<Category>> _categories;
   late Future<List<Stock>> _stock;
+  late Future<List<Brand>> _brand;
   int isSelected = 0;
 
   @override
@@ -26,6 +27,7 @@ class _SalePageState extends State<SalePage> {
   void getter() {
     getCategories();
     getProducts();
+    getBrands();
   }
 
   void getCategories() {
@@ -34,6 +36,10 @@ class _SalePageState extends State<SalePage> {
 
   void getProducts() {
     _stock = FirestoreService().getStock(isFiltered: false);
+  }
+
+  void getBrands() {
+    _brand = FirestoreService().getAllBrands();
   }
 
   // Sample data
@@ -83,11 +89,13 @@ class _SalePageState extends State<SalePage> {
             child: Container(
               color: Colors.grey[100],
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Top Bar
                   _buildTopBar(),
                   // Category Selector
-                  _buildCategorySelector(),
+                  _buildBrandSelector(),
+                  _buildCategoryDropDown(),
                   // Product Cards
                   _buildProductView()
                 ],
@@ -126,7 +134,7 @@ class _SalePageState extends State<SalePage> {
               Icon(Icons.pedal_bike, size: 32, color: Colors.blue[600]),
               const SizedBox(width: 12),
               Text(
-                'Bike POS',
+                'D2 POS',
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
@@ -137,22 +145,22 @@ class _SalePageState extends State<SalePage> {
           ),
           const Spacer(),
           // Search Bar
-          Container(
-            width: 300,
-            height: 40,
-            decoration: BoxDecoration(
-              color: Colors.grey[100],
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: TextField(
-              decoration: InputDecoration(
-                hintText: 'Search products...',
-                prefixIcon: Icon(Icons.search, color: Colors.grey[600]),
-                border: InputBorder.none,
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-              ),
-            ),
-          ),
+          // Container(
+          //   width: 300,
+          //   height: 40,
+          //   decoration: BoxDecoration(
+          //     color: Colors.grey[100],
+          //     borderRadius: BorderRadius.circular(8),
+          //   ),
+          //   child: TextField(
+          //     decoration: InputDecoration(
+          //       hintText: 'Search products...',
+          //       prefixIcon: Icon(Icons.search, color: Colors.grey[600]),
+          //       border: InputBorder.none,
+          //       contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+          //     ),
+          //   ),
+          // ),
           const SizedBox(width: 16),
           // Settings Button
           IconButton(
@@ -164,9 +172,9 @@ class _SalePageState extends State<SalePage> {
     );
   }
 
-  Widget _buildCategorySelector() {
-    return FutureBuilder<List<Category>>(
-      future: FirestoreService().getCategories(isFiltered: false),
+  Widget _buildBrandSelector() {
+    return FutureBuilder<List<Brand>>(
+      future: _brand,
       builder: (context, snapshot) {
         if (!snapshot.hasData) {
           return const Center(child: CircularProgressIndicator());
@@ -262,156 +270,192 @@ class _SalePageState extends State<SalePage> {
     );
   }
 
-  Widget _buildProductView() {
-  return FutureBuilder(
-    future: _stock,
-    builder: (context, snapshot) {
-      if (!snapshot.hasData) {
-        return const Center(child: CircularProgressIndicator());
-      }
-
-      return SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: Row(
-          children: snapshot.data!.map((stock) {
-            return SizedBox(
-              width: 300, // Give a fixed width to the card
-              child: _buildProductCard(context, stock),
+  Widget _buildCategoryDropDown() {
+    return Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: FutureBuilder<List<Category>>(
+          future: _categories,
+          builder: (context, snapshot) {
+            if (!snapshot.hasData) {
+              return const Center(child: CircularProgressIndicator());
+            }
+      
+            return DropdownButton<String>(
+              value: snapshot.data![selectedCategoryIndex].id,
+              onChanged: (String? newValue) {
+                setState(() {
+                  selectedCategoryIndex = snapshot.data!
+                      .indexWhere((category) => category.id == newValue);
+                });
+              },
+              items: snapshot.data!
+                  .map<DropdownMenuItem<String>>((Category category) {
+                return DropdownMenuItem<String>(
+                  value: category.id,
+                  child: Text(category.name),
+                );
+              }).toList(),
             );
-          }).toList(),
-        ),
-      );
-    },
-  );
-}
+          }),
+    );
+  }
 
-Widget _buildProductCard(BuildContext context, Stock stock) {
-  final formatter = NumberFormat("#,##0.00", "en_US");
-  final bool isOutOfStock = stock.quantity <= 0;
+  Widget _buildProductView() {
+    return FutureBuilder(
+      future: _stock,
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) {
+          return const Center(child: CircularProgressIndicator());
+        }
 
-  return Card(
-    margin: const EdgeInsets.all(6),
-    elevation: 2,
-    shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(12),
-    ),
-    color: isOutOfStock ? Colors.red.shade50 : Colors.white,
-    child: InkWell(
-      onTap: isOutOfStock ? null : () {
-        // Handle add to cart or quick sale
+        return SingleChildScrollView(
+          scrollDirection: Axis.vertical,
+          child: Column(
+            children: snapshot.data!.map((stock) {
+              return SizedBox(
+                width: MediaQuery.of(context).size.width * 0.7,
+                child: _buildProductCard(context, stock),
+              );
+            }).toList(),
+          ),
+        );
       },
-      borderRadius: BorderRadius.circular(12),
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          mainAxisSize: MainAxisSize.min, // Add this
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Product Image
-                Container(
-                  width: 60,
-                  height: 60,
-                  decoration: BoxDecoration(
-                    color: Colors.grey[100],
-                    borderRadius: BorderRadius.circular(8),
+    );
+  }
+
+  Widget _buildProductCard(BuildContext context, Stock stock) {
+    final formatter = NumberFormat("#,##0.00", "en_US");
+    final bool isOutOfStock = stock.quantity <= 0;
+
+    return Card(
+      margin: const EdgeInsets.all(6),
+      elevation: 2,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+      color: isOutOfStock ? Colors.red.shade50 : Colors.white,
+      child: InkWell(
+        onTap: isOutOfStock
+            ? null
+            : () {
+                // Handle add to cart or quick sale
+              },
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Column(
+            mainAxisSize: MainAxisSize.min, // Add this
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Product Image
+                  Container(
+                    width: 60,
+                    height: 60,
+                    decoration: BoxDecoration(
+                      color: Colors.grey[100],
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Icon(
+                      Icons.inventory_2_outlined,
+                      color: Colors.grey,
+                      size: 32,
+                    ),
                   ),
-                  child: const Icon(
-                    Icons.inventory_2_outlined,
-                    color: Colors.grey,
-                    size: 32,
+                  const SizedBox(width: 12),
+                  // Product Details
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          stock.product.name,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          stock.product.categoryName,
+                          style: TextStyle(
+                            color: Colors.grey[600],
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                const SizedBox(width: 12),
-                // Product Details
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  // Price and Stock
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
                       Text(
-                        stock.product.name,
+                        '\$${formatter.format(stock.product.sellingPrice)}',
                         style: const TextStyle(
-                          fontSize: 16,
+                          color: Colors.green,
                           fontWeight: FontWeight.bold,
+                          fontSize: 16,
                         ),
                       ),
                       const SizedBox(height: 4),
-                      Text(
-                        stock.product.categoryName,
-                        style: TextStyle(
-                          color: Colors.grey[600],
-                          fontSize: 12,
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color:
+                              isOutOfStock ? Colors.red[50] : Colors.green[50],
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          isOutOfStock
+                              ? 'Out of Stock'
+                              : 'In Stock: ${stock.quantity}',
+                          style: TextStyle(
+                            color: isOutOfStock ? Colors.red : Colors.green,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                          ),
                         ),
                       ),
                     ],
                   ),
-                ),
-                // Price and Stock
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
+                ],
+              ),
+              if (!isOutOfStock) ...[
+                const SizedBox(height: 12),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
                   children: [
-                    Text(
-                      '\$${formatter.format(stock.product.sellingPrice)}',
-                      style: const TextStyle(
-                        color: Colors.green,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: isOutOfStock ? Colors.red[50] : Colors.green[50],
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Text(
-                        isOutOfStock ? 'Out of Stock' : 'In Stock: ${stock.quantity}',
-                        style: TextStyle(
-                          color: isOutOfStock ? Colors.red : Colors.green,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
+                    ElevatedButton.icon(
+                      onPressed: () {
+                        // Handle quick sale
+                      },
+                      icon: const Icon(Icons.shopping_cart_outlined, size: 16),
+                      label: const Text('Sell', style: TextStyle(fontSize: 12)),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.blue,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
                         ),
                       ),
                     ),
                   ],
                 ),
               ],
-            ),
-            if (!isOutOfStock) ...[
-              const SizedBox(height: 12),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  ElevatedButton.icon(
-                    onPressed: () {
-                      // Handle quick sale
-                    },
-                    icon: const Icon(Icons.shopping_cart_outlined, size: 16),
-                    label: const Text('Add to Cart', style: TextStyle(fontSize: 12)),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blue,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 8,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
             ],
-          ],
+          ),
         ),
       ),
-    ),
-  );
-}
+    );
+  }
+
   Widget _buildCart() {
     final total = cart.fold<double>(
       0,

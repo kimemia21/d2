@@ -4,6 +4,29 @@ import 'package:application/widgets/nodata/nodata.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+class Cart {
+  String productId;
+  Stock stock;
+  int quantity;
+  Cart({required this.productId, required this.stock, required this.quantity});
+}
+
+void addToCart(List<Cart> sale, Cart instance) {
+ 
+  final existingCart = sale.firstWhere(
+    (cart) => cart.productId == instance.productId,
+    orElse: () => instance,
+  );
+
+  if (existingCart == instance) {
+   
+    sale.add(instance);
+  } else {
+   
+    existingCart.quantity += 1;
+  }
+}
+
 class SalePage extends StatefulWidget {
   const SalePage({Key? key}) : super(key: key);
 
@@ -18,6 +41,7 @@ class _SalePageState extends State<SalePage> {
   late Future<List<Category>> _categories;
   late Future<List<Stock>> _stock;
   late Future<List<Brand>> _brand;
+  List<Cart> sale = [];
   int isSelected = 0;
 
   @override
@@ -356,10 +380,12 @@ class _SalePageState extends State<SalePage> {
         return SingleChildScrollView(
           scrollDirection: Axis.vertical,
           child: Column(
-            children: snapshot.data!.map((stock) {
+            children: snapshot.data!.asMap().entries.map((entry) {
+              int index = entry.key; // Get the index
+              var stock = entry.value; // Get the value (stock)
               return SizedBox(
                 width: MediaQuery.of(context).size.width * 0.7,
-                child: _buildProductCard(context, stock),
+                child: _buildProductCard(context, stock, index),
               );
             }).toList(),
           ),
@@ -368,7 +394,7 @@ class _SalePageState extends State<SalePage> {
     );
   }
 
-  Widget _buildProductCard(BuildContext context, Stock stock) {
+  Widget _buildProductCard(BuildContext context, Stock stock, int index) {
     final formatter = NumberFormat("#,##0.00", "en_US");
     final bool isOutOfStock = stock.quantity <= 0;
 
@@ -548,6 +574,14 @@ class _SalePageState extends State<SalePage> {
                   children: [
                     ElevatedButton.icon(
                       onPressed: () {
+                        setState(() {
+                          final Cart instance = Cart(
+                              productId: stock.productId,
+                              stock: stock,
+                              quantity: 1);
+                          addToCart(sale, instance);
+                          print(sale);
+                        });
                         // Handle quick sale
                       },
                       icon: const Icon(Icons.shopping_cart_outlined, size: 18),
@@ -588,7 +622,7 @@ class _SalePageState extends State<SalePage> {
       context: context,
       builder: (context) => Dialog(
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(10),
         ),
         child: Container(
           width: double.minPositive,
@@ -652,14 +686,6 @@ class _SalePageState extends State<SalePage> {
                           ),
                         ),
                         const SizedBox(height: 4),
-                        Text(
-                          stock.product.name,
-                          style: const TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
                         Container(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 8,
@@ -677,6 +703,14 @@ class _SalePageState extends State<SalePage> {
                             ),
                           ),
                         ),
+                        Text(
+                          stock.product.name,
+                          style: const TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
                       ],
                     ),
                   ),
@@ -817,14 +851,16 @@ class _SalePageState extends State<SalePage> {
         Expanded(
           child: ListView.builder(
             padding: const EdgeInsets.all(16),
-            itemCount: cart.length,
+            itemCount: sale.length,
             itemBuilder: (context, index) {
-              final item = cart[index];
+              final item = sale[index];
+              print(sale);
               return Card(
                 margin: const EdgeInsets.only(bottom: 8),
                 child: ListTile(
-                  title: Text(item['name']),
-                  subtitle: Text('\$${formatter.format(item['price'])}'),
+                  title: Text(item.stock.product.name),
+                  subtitle: Text(
+                      '\$${formatter.format(item.stock.product.sellingPrice)}'),
                   trailing: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
@@ -832,11 +868,18 @@ class _SalePageState extends State<SalePage> {
                         icon: const Icon(Icons.remove),
                         onPressed: () => _updateQuantity(index, -1),
                       ),
-                      Text('${item['quantity']}'),
+                      Text('${item.stock.quantity}'),
                       IconButton(
                         icon: const Icon(Icons.add),
                         onPressed: () => _updateQuantity(index, 1),
                       ),
+                      IconButton(
+                          icon: const Icon(Icons.delete),
+                          onPressed: () {
+                            setState(() {
+                              sale.removeAt(index);
+                            });
+                          }),
                     ],
                   ),
                 ),

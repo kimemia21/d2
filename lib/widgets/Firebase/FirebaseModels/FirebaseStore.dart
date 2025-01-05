@@ -464,6 +464,8 @@ class FirestoreService {
     return saleRef.id;
   }
 
+
+
   // Report generation
   Future<void> generateReport(
     String reportType,

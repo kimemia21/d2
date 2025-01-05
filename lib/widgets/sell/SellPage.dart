@@ -12,19 +12,37 @@ class Cart {
 }
 
 void addToCart(List<Cart> sale, Cart instance) {
- 
   final existingCart = sale.firstWhere(
     (cart) => cart.productId == instance.productId,
     orElse: () => instance,
   );
 
   if (existingCart == instance) {
-   
     sale.add(instance);
   } else {
-   
     existingCart.quantity += 1;
   }
+}
+
+void removeFromCart(List<Cart> sale, Cart instance) {
+  final existingCart = sale.firstWhere(
+    (cart) => cart.productId == instance.productId,
+    orElse: () => instance,
+  );
+
+  if (existingCart == instance) {
+    existingCart.quantity -= 1;
+  } else {
+    throw Exception("Cart item not found");
+  }
+}
+
+double calculateCartTotal(List<Cart> cartItems) {
+  return cartItems.fold(0.0, (total, cartItem) {
+    double itemPrice = cartItem.stock.product.sellingPrice;
+    print("${total + (itemPrice * cartItem.quantity)}");
+    return total + (itemPrice * cartItem.quantity);
+  });
 }
 
 class SalePage extends StatefulWidget {
@@ -43,6 +61,7 @@ class _SalePageState extends State<SalePage> {
   late Future<List<Brand>> _brand;
   List<Cart> sale = [];
   int isSelected = 0;
+  double total = 0.0;
 
   @override
   void initState() {
@@ -580,6 +599,8 @@ class _SalePageState extends State<SalePage> {
                               stock: stock,
                               quantity: 1);
                           addToCart(sale, instance);
+                          // calculateCartTotal(sale);
+                          total = calculateCartTotal(sale);
                           print(sale);
                         });
                         // Handle quick sale
@@ -811,11 +832,257 @@ class _SalePageState extends State<SalePage> {
     );
   }
 
-  Widget _buildCart() {
-    final total = cart.fold<double>(
-      0,
-      (sum, item) => sum + (item['price'] * item['quantity']),
+  Widget buildCartItem(BuildContext context, Cart item, int index) {
+    final formatter = NumberFormat("#,##0.00", "en_US");
+    final product = item.stock.product;
+
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.1),
+            spreadRadius: 1,
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        child: Material(
+          color: Colors.transparent,
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Row(
+              children: [
+                // Product Image/Icon Section
+                Container(
+                  width: 60,
+                  height: 60,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[100],
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(
+                        Icons.shopping_cart_outlined,
+                        color: Colors.grey,
+                        size: 24,
+                      ),
+                      // Text(
+                      //   '#${product.id}',
+                      //   style: TextStyle(
+                      //     color: Colors.grey[600],
+                      //     fontSize: 10,
+                      //   ),
+                      // ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 12),
+                // Product Details Section
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        product.name,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      // Brand and Category Row
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.purple[50],
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(
+                                  Icons.business_outlined,
+                                  size: 12,
+                                  color: Colors.purple,
+                                ),
+                                const SizedBox(width: 3),
+                                Text(
+                                  product.brandName ?? 'N/A',
+                                  style: const TextStyle(
+                                    color: Colors.purple,
+                                    fontSize: 10,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.blue[50],
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(
+                                  Icons.category_outlined,
+                                  size: 12,
+                                  color: Colors.blue,
+                                ),
+                                const SizedBox(width: 3),
+                                Text(
+                                  product.categoryName ?? 'N/A',
+                                  style: const TextStyle(
+                                    color: Colors.blue,
+                                    fontSize: 10,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      // Price Row
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.green[50],
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              '\$${formatter.format(product.sellingPrice)}',
+                              style: TextStyle(
+                                color: Colors.green[700],
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Total: \$${formatter.format(product.sellingPrice * item.quantity)}',
+                            style: TextStyle(
+                              color: Colors.grey[600],
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                // Quantity Controls
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.grey[50],
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Text("Quantity"),
+                      ),
+
+                      IconButton(
+                        icon: const Icon(Icons.remove_circle_outline),
+                        onPressed: () {
+                          setState(() {
+                            removeFromCart(sale, item);
+                            total = calculateCartTotal(sale);
+                          });
+
+                          // Decrease quantity
+                        },
+                        iconSize: 20,
+                        color: Colors.blue,
+                        constraints: const BoxConstraints(
+                          minWidth: 30,
+                          minHeight: 30,
+                        ),
+                      ),
+                      Container(
+                        constraints: const BoxConstraints(minWidth: 30),
+                        child: Text(
+                          '${item.quantity}',
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      // IconButton(
+                      //   icon: const Icon(Icons.add_circle_outline),
+                      //   onPressed: () {
+                      //     // Increase quantity
+                      //   },
+                      //   iconSize: 20,
+                      //   color: Colors.blue,
+                      //   constraints: const BoxConstraints(
+                      //     minWidth: 30,
+                      //     minHeight: 30,
+                      //   ),
+                      // ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                // Delete Button
+                IconButton(
+                  icon: const Icon(
+                    Icons.delete_outline,
+                    color: Colors.red,
+                  ),
+                  onPressed: () {
+                    setState(() {
+                      sale.removeAt(index);
+                      total = calculateCartTotal(sale);
+                    });
+
+                    // Remove item from cart
+                  },
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
+  }
+
+  Widget _buildCart() {
+    // final total = cart.fold<double>(
+    //   0,
+    //   (sum, item) => sum + (item['price'] * item['quantity']),
+    // );
 
     return Column(
       children: [
@@ -853,37 +1120,7 @@ class _SalePageState extends State<SalePage> {
             padding: const EdgeInsets.all(16),
             itemCount: sale.length,
             itemBuilder: (context, index) {
-              final item = sale[index];
-              print(sale);
-              return Card(
-                margin: const EdgeInsets.only(bottom: 8),
-                child: ListTile(
-                  title: Text(item.stock.product.name),
-                  subtitle: Text(
-                      '\$${formatter.format(item.stock.product.sellingPrice)}'),
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.remove),
-                        onPressed: () => _updateQuantity(index, -1),
-                      ),
-                      Text('${item.stock.quantity}'),
-                      IconButton(
-                        icon: const Icon(Icons.add),
-                        onPressed: () => _updateQuantity(index, 1),
-                      ),
-                      IconButton(
-                          icon: const Icon(Icons.delete),
-                          onPressed: () {
-                            setState(() {
-                              sale.removeAt(index);
-                            });
-                          }),
-                    ],
-                  ),
-                ),
-              );
+              return buildCartItem(context, sale[index], index);
             },
           ),
         ),
@@ -914,7 +1151,7 @@ class _SalePageState extends State<SalePage> {
                     ),
                   ),
                   Text(
-                    '\$${formatter.format(total)}',
+                    total.toString(),
                     style: const TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
@@ -937,12 +1174,16 @@ class _SalePageState extends State<SalePage> {
                   child: const Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.payment),
+                      Icon(
+                        Icons.payment,
+                        color: Colors.white,
+                      ),
                       SizedBox(width: 8),
                       Text(
                         'Process Payment',
                         style: TextStyle(
                           fontSize: 16,
+                          color: Colors.white,
                           fontWeight: FontWeight.bold,
                         ),
                       ),

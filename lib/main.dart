@@ -2,6 +2,7 @@ import 'package:application/firebase_options.dart';
 import 'package:application/widgets/Authentication/login.dart';
 import 'package:application/widgets/commsRepo/commsRepo.dart';
 import 'package:application/widgets/homepage.dart';
+import 'package:application/widgets/sell/Mpesa.dart';
 import 'package:application/widgets/sell/SellPage.dart';
 import 'package:application/widgets/state/AppBloc.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -41,9 +42,13 @@ class MyApp extends StatelessWidget {
 
                 if (snapshot.hasData) {
                   return POSHomePage();
+                  //  MpesaDemo(title: "mpesa");
+                  // POSHomePage();
                 }
 
-                return LoginScreen();
+                return  LoginScreen();
+                // MpesaDemo(title: "Mpesa");
+                LoginScreen();
                 //  const
                 //  LoginScreen()
               },

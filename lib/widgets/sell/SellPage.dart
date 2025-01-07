@@ -1,8 +1,15 @@
+import 'package:application/main.dart';
 import 'package:application/widgets/Firebase/FirebaseModels/FirebaseStore.dart';
 import 'package:application/widgets/Globals.dart';
+import 'package:application/widgets/commsRepo/commsRepo.dart';
 import 'package:application/widgets/nodata/nodata.dart';
+import 'package:application/widgets/sell/Mpesa.dart';
+import 'package:application/widgets/state/AppBloc.dart';
+import 'package:flutter/foundation.dart' as Debug;
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:loading_animation_widget/loading_animation_widget.dart';
+import 'package:provider/provider.dart';
 
 class Cart {
   String productId;
@@ -1164,9 +1171,10 @@ class _SalePageState extends State<SalePage> {
                 width: double.infinity,
                 height: 50,
                 child: ElevatedButton(
-                  onPressed: () => showPaymentDialog(context: context,totalAmount: total,onPaymentComplete:(method, phoneNumber, amount){
-
-                  }),
+                  onPressed: () => showPaymentDialog(
+                      context: context,
+                      totalAmount: total,
+                      onPaymentComplete: (method, phoneNumber, amount) {}),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.blue[600],
                     shape: RoundedRectangleBorder(
@@ -1223,359 +1231,376 @@ class _SalePageState extends State<SalePage> {
     });
   }
 
-void showPaymentDialog({
-  required BuildContext context,
-  required double totalAmount,
-  required Function(String method, String? phoneNumber, double amount) onPaymentComplete,
-}) {
-  final formatter = NumberFormat("#,##0.00", "en_US");
-  String selectedMethod = 'cash';
-  final phoneController = TextEditingController();
-  final formKey = GlobalKey<FormState>();
+  void showPaymentDialog({
+    required BuildContext context,
+    required double totalAmount,
+    required Function(String method, String? phoneNumber, double amount)
+        onPaymentComplete,
+  }) {
+    final formatter = NumberFormat("#,##0.00", "en_US");
+    String selectedMethod = 'cash';
+    final phoneController = TextEditingController();
+    final formKey = GlobalKey<FormState>();
+    if (Debug.kDebugMode) {
+      phoneController.text = "0769922984";
+    }
 
-  showDialog(
-    context: context,
-    barrierDismissible: false,
-    builder: (context) => StatefulBuilder(
-      builder: (context, setState) => Dialog(
-        backgroundColor: Colors.transparent,
-        child: Container(
-          width: MediaQuery.of(context).size.width * 0.8,
-          constraints: BoxConstraints(
-            maxWidth: 600,
-            maxHeight: MediaQuery.of(context).size.height * 0.8,
-          ),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(24),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.1),
-                blurRadius: 20,
-                spreadRadius: 5,
-              ),
-            ],
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Header Section
-              Container(
-                padding: const EdgeInsets.all(24),
-                decoration: BoxDecoration(
-                  color: Colors.blue[50],
-                  borderRadius: const BorderRadius.only(
-                    topLeft: Radius.circular(24),
-                    topRight: Radius.circular(24),
-                  ),
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => Dialog(
+          backgroundColor: Colors.transparent,
+          child: Container(
+            width: MediaQuery.of(context).size.width * 0.8,
+            constraints: BoxConstraints(
+              maxWidth: 600,
+              maxHeight: MediaQuery.of(context).size.height * 0.8,
+            ),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(24),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 20,
+                  spreadRadius: 5,
                 ),
-                child: Column(
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text(
-                          'Payment Details',
-                          style: TextStyle(
-                            fontSize: 28,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black87,
-                          ),
-                        ),
-                        IconButton(
-                          onPressed: () => Navigator.pop(context),
-                          icon: const Icon(Icons.close),
-                          style: IconButton.styleFrom(
-                            backgroundColor: Colors.white,
-                            padding: const EdgeInsets.all(8),
-                          ),
-                        ),
-                      ],
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Header Section
+                Container(
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    color: Colors.blue[50],
+                    borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(24),
+                      topRight: Radius.circular(24),
                     ),
-                    const SizedBox(height: 16),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 24,
-                        vertical: 16,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(16),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.05),
-                            blurRadius: 10,
-                          ),
-                        ],
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
+                  ),
+                  child: Column(
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           const Text(
-                            'Total Amount: ',
+                            'Payment Details',
                             style: TextStyle(
-                              fontSize: 20,
-                              color: Colors.black54,
+                              fontSize: 28,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black87,
                             ),
                           ),
-                          Text(
-                            '\$${formatter.format(totalAmount)}',
-                            style: TextStyle(
-                              fontSize: 32,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.green[700],
+                          IconButton(
+                            onPressed: () => Navigator.pop(context),
+                            icon: const Icon(Icons.close),
+                            style: IconButton.styleFrom(
+                              backgroundColor: Colors.white,
+                              padding: const EdgeInsets.all(8),
                             ),
                           ),
                         ],
                       ),
-                    ),
-                  ],
+                      const SizedBox(height: 16),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 24,
+                          vertical: 16,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.05),
+                              blurRadius: 10,
+                            ),
+                          ],
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Text(
+                              'Total Amount: ',
+                              style: TextStyle(
+                                fontSize: 20,
+                                color: Colors.black54,
+                              ),
+                            ),
+                            Text(
+                              '\$${formatter.format(totalAmount)}',
+                              style: TextStyle(
+                                fontSize: 32,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.green[700],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
 
-              // Content Section
-              Flexible(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(24),
-                  child: Form(
-                    key: formKey,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Select Payment Method',
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.black87,
+                // Content Section
+                Flexible(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.all(24),
+                    child: Form(
+                      key: formKey,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Select Payment Method',
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.black87,
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: 16),
-                        // Payment Methods
-                        Container(
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(color: Colors.grey.withOpacity(0.2)),
-                          ),
-                          child: Column(
-                            children: [
-                              _buildPaymentOption(
-                                icon: Icons.payments_outlined,
-                                title: 'Cash Payment',
-                                subtitle: 'Pay with cash at checkout',
-                                value: 'cash',
-                                groupValue: selectedMethod,
-                                onChanged: (value) {
-                                  setState(() => selectedMethod = value!);
-                                },
-                              ),
-                              Divider(color: Colors.grey[200], height: 1),
-                              _buildPaymentOption(
-                                icon: Icons.phone_android,
-                                title: 'M-Pesa',
-                                subtitle: 'Pay using M-Pesa mobile money',
-                                value: 'mpesa',
-                                groupValue: selectedMethod,
-                                onChanged: (value) {
-                                  setState(() => selectedMethod = value!);
-                                },
-                              ),
-                            ],
-                          ),
-                        ),
-                        if (selectedMethod == 'mpesa') ...[
-                          const SizedBox(height: 24),
-                          AnimatedContainer(
-                            duration: const Duration(milliseconds: 300),
+                          const SizedBox(height: 16),
+                          // Payment Methods
+                          Container(
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(
+                                  color: Colors.grey.withOpacity(0.2)),
+                            ),
                             child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Text(
-                                  'M-Pesa Details',
-                                  style: TextStyle(
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.w600,
-                                    color: Colors.black87,
-                                  ),
+                                _buildPaymentOption(
+                                  icon: Icons.payments_outlined,
+                                  title: 'Cash Payment',
+                                  subtitle: 'Pay with cash at checkout',
+                                  value: 'cash',
+                                  groupValue: selectedMethod,
+                                  onChanged: (value) {
+                                    setState(() => selectedMethod = value!);
+                                  },
                                 ),
-                                const SizedBox(height: 16),
-                                TextFormField(
-                                  controller: phoneController,
-                                  decoration: InputDecoration(
-                                    labelText: 'Phone Number',
-                                    hintText: 'Enter M-Pesa phone number',
-                                    prefixIcon: const Icon(Icons.phone),
-                                    border: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(12),
-                                      borderSide: BorderSide(
-                                        color: Colors.grey[300]!,
-                                      ),
-                                    ),
-                                    enabledBorder: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(12),
-                                      borderSide: BorderSide(
-                                        color: Colors.grey[300]!,
-                                      ),
-                                    ),
-                                    focusedBorder: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(12),
-                                      borderSide: BorderSide(
-                                        color: Colors.blue[400]!,
-                                        width: 2,
-                                      ),
-                                    ),
-                                    filled: true,
-                                    fillColor: Colors.grey[50],
-                                  ),
-                                  keyboardType: TextInputType.phone,
-                                  validator: (value) {
-                                    if (value == null || value.isEmpty) {
-                                      return 'Please enter phone number';
-                                    }
-                                    return null;
+                                Divider(color: Colors.grey[200], height: 1),
+                                _buildPaymentOption(
+                                  icon: Icons.phone_android,
+                                  title: 'M-Pesa',
+                                  subtitle: 'Pay using M-Pesa mobile money',
+                                  value: 'mpesa',
+                                  groupValue: selectedMethod,
+                                  onChanged: (value) {
+                                    setState(() => selectedMethod = value!);
                                   },
                                 ),
                               ],
                             ),
                           ),
+                          if (selectedMethod == 'mpesa') ...[
+                            const SizedBox(height: 24),
+                            AnimatedContainer(
+                              duration: const Duration(milliseconds: 300),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    'M-Pesa Details',
+                                    style: TextStyle(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.black87,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 16),
+                                  TextFormField(
+                                    controller: phoneController,
+                                    decoration: InputDecoration(
+                                      labelText: 'Phone Number',
+                                      hintText: 'Enter M-Pesa phone number',
+                                      prefixIcon: const Icon(Icons.phone),
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                        borderSide: BorderSide(
+                                          color: Colors.grey[300]!,
+                                        ),
+                                      ),
+                                      enabledBorder: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                        borderSide: BorderSide(
+                                          color: Colors.grey[300]!,
+                                        ),
+                                      ),
+                                      focusedBorder: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                        borderSide: BorderSide(
+                                          color: Colors.blue[400]!,
+                                          width: 2,
+                                        ),
+                                      ),
+                                      filled: true,
+                                      fillColor: Colors.grey[50],
+                                    ),
+                                    keyboardType: TextInputType.phone,
+                                    validator: (value) {
+                                      if (value == null || value.isEmpty) {
+                                        return 'Please enter phone number';
+                                      }
+                                      return null;
+                                    },
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
                         ],
-                      ],
+                      ),
                     ),
                   ),
                 ),
-              ),
 
-              // Footer Section
-              Container(
-                padding: const EdgeInsets.all(24),
-                decoration: BoxDecoration(
-                  color: Colors.grey[50],
-                  border: Border(
-                    top: BorderSide(
-                      color: Colors.grey[200]!,
+                // Footer Section
+                Container(
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[50],
+                    border: Border(
+                      top: BorderSide(
+                        color: Colors.grey[200]!,
+                      ),
                     ),
                   ),
-                ),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton(
-                        onPressed: () => Navigator.pop(context),
-                        style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          side: BorderSide(color: Colors.grey[400]!),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () => Navigator.pop(context),
+                          style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            side: BorderSide(color: Colors.grey[400]!),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
                           ),
-                        ),
-                        child: const Text('Cancel'),
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: ElevatedButton(
-                        onPressed: () {
-                          if (selectedMethod == 'mpesa' &&
-                              !formKey.currentState!.validate()) {
-                            return;
-                          }
-                          onPaymentComplete(
-                            selectedMethod,
-                            selectedMethod == 'mpesa'
-                                ? phoneController.text
-                                : null,
-                            totalAmount,
-                          );
-                          Navigator.pop(context);
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.blue,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        child: const Text(
-                          'Confirm Payment',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                          ),
+                          child: const Text('Cancel'),
                         ),
                       ),
-                    ),
-                  ],
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: context.watch<Appbloc>().isloading
+                            ? LoadingAnimationWidget.fourRotatingDots(
+                                color: Colors.green,
+                                size: 30,
+                              )
+                            : ElevatedButton(
+                                onPressed: () {
+                                  if (selectedMethod == 'mpesa' &&
+                                      !formKey.currentState!.validate()) {
+                                    return;
+                                  }
+                                  onPaymentComplete(
+                                    selectedMethod,
+                                    selectedMethod == 'mpesa'
+                                        ? phoneController.text
+                                        : null,
+                                    totalAmount,
+                                  );
+                                  MpesaService().initiatePayment(
+                                      context: context,
+                                      phoneNumber: phoneController.text.trim(),
+                                      amount: totalAmount,
+                                      reference: currentUser!.uid.toString());
+
+                                  // Navigator.pop(context);
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.blue,
+                                  foregroundColor: Colors.white,
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 16),
+                                  elevation: 0,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                ),
+                                child: const Text(
+                                  'Confirm Payment',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
-    ),
-  );
-}
+    );
+  }
 
-Widget _buildPaymentOption({
-  required IconData icon,
-  required String title,
-  required String subtitle,
-  required String value,
-  required String groupValue,
-  required Function(String?) onChanged,
-}) {
-  final isSelected = value == groupValue;
-  return Container(
-    decoration: BoxDecoration(
-      color: isSelected ? Colors.blue.withOpacity(0.05) : Colors.white,
-      borderRadius: BorderRadius.circular(16),
-    ),
-    child: RadioListTile<String>(
-      title: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: isSelected ? Colors.blue[100] : Colors.grey[100],
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(
-              icon,
-              color: isSelected ? Colors.blue[700] : Colors.grey[600],
-            ),
-          ),
-          const SizedBox(width: 16),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: const TextStyle(
-                  fontWeight: FontWeight.w600,
-                  fontSize: 16,
-                ),
-              ),
-              Text(
-                subtitle,
-                style: TextStyle(
-                  color: Colors.grey[600],
-                  fontSize: 14,
-                ),
-              ),
-            ],
-          ),
-        ],
+  Widget _buildPaymentOption({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required String value,
+    required String groupValue,
+    required Function(String?) onChanged,
+  }) {
+    final isSelected = value == groupValue;
+    return Container(
+      decoration: BoxDecoration(
+        color: isSelected ? Colors.blue.withOpacity(0.05) : Colors.white,
+        borderRadius: BorderRadius.circular(16),
       ),
-      value: value,
-      groupValue: groupValue,
-      onChanged: onChanged,
-      activeColor: Colors.blue[700],
-      contentPadding: const EdgeInsets.symmetric(
-        horizontal: 16,
-        vertical: 8,
+      child: RadioListTile<String>(
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: isSelected ? Colors.blue[100] : Colors.grey[100],
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(
+                icon,
+                color: isSelected ? Colors.blue[700] : Colors.grey[600],
+              ),
+            ),
+            const SizedBox(width: 16),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 16,
+                  ),
+                ),
+                Text(
+                  subtitle,
+                  style: TextStyle(
+                    color: Colors.grey[600],
+                    fontSize: 14,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+        value: value,
+        groupValue: groupValue,
+        onChanged: onChanged,
+        activeColor: Colors.blue[700],
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 8,
+        ),
       ),
-    ),
-  );
-}
+    );
+  }
 }

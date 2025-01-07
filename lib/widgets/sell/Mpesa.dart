@@ -6,6 +6,7 @@ import 'package:application/widgets/commsRepo/commsRepo.dart';
 import 'package:application/widgets/state/AppBloc.dart';
 import 'package:flutter/src/widgets/framework.dart';
 import 'package:http/http.dart' as http;
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 class MpesaService {
@@ -20,7 +21,7 @@ class MpesaService {
   static const String _baseUrl = 'http://localhost:3000';
 
   // Get OAuth token
-  Future<String> _getAccessToken() async {
+  Future<String> getAccessToken() async {
     try {
       final credentials =
           base64Encode(utf8.encode('$consumerKey:$consumerSecret'));
@@ -50,14 +51,16 @@ class MpesaService {
   }
 
   // Generate password
-  String _generatePassword() {
-    final timestamp =
-        DateTime.now().toString().substring(0, 8).replaceAll('-', '');
-    final String password = base64Encode(utf8.encode('$shortCode$timestamp'));
+  String generatePassword() {
+    final String password =
+        base64Encode(utf8.encode('$shortCode$passKey${generateTimestamp()}'));
     return password;
   }
 
-  // Initiate STK Push
+  String generateTimestamp() {
+    return DateFormat('yyyyMMddHHmmss').format(DateTime.now());
+  }
+
   Future<Map<String, dynamic>> initiatePayment({
     required String phoneNumber,
     required double amount,
@@ -67,19 +70,18 @@ class MpesaService {
     Appbloc bloc = context.read<Appbloc>();
     try {
       bloc.changeLoading(true);
-      final token = await _getAccessToken();
-      final timestamp =
-          DateTime.now().toString().substring(0, 8).replaceAll('-', '');
+      final token = await getAccessToken();
 
       // Format phone number
-      phoneNumber = phoneNumber.replaceAll(RegExp(r'^0|^\+254'), '254');
+      phoneNumber = phoneNumber;
 
       final payload = {
         'BusinessShortCode': shortCode,
-        'Password': _generatePassword(),
-        'Timestamp': timestamp,
-        'TransactionType': 'CustomerPayBillOnline',
-        'Amount': amount.round(),
+        'Password': generatePassword(),
+        'Timestamp': generateTimestamp(),
+        'TransactionType': 'CustomerBuyGoodsOnline',
+        // 'CustomerPayBillOnline',
+        'Amount': 1.round(),
         'PartyA': phoneNumber,
         'PartyB': shortCode,
         'PhoneNumber': phoneNumber,
@@ -100,17 +102,20 @@ class MpesaService {
           .timeout(const Duration(seconds: 30));
 
       if (response.statusCode == 200) {
-        
-      bloc.changeLoading(false);
+        bloc.changeLoading(false);
+
+        final data = jsonDecode(response.body);
+
+        final CheckoutRequestID = data["CheckoutRequestID"];
+     
+
         return jsonDecode(response.body);
       } else {
-        
-      bloc.changeLoading(false);
+        bloc.changeLoading(false);
         throw Exception(
             'STK push failed. Status: ${response.statusCode}, Body: ${response.body}');
       }
     } catch (e) {
-      
       bloc.changeLoading(false);
       throw Exception('Error processing payment: $e');
     }
@@ -120,13 +125,13 @@ class MpesaService {
   Future<Map<String, dynamic>> checkTransactionStatus(
       String checkoutRequestId) async {
     try {
-      final token = await _getAccessToken();
+      final token = await getAccessToken();
       final timestamp =
           DateTime.now().toString().substring(0, 8).replaceAll('-', '');
 
       final body = {
         'BusinessShortCode': shortCode,
-        'Password': _generatePassword(),
+        'Password': generatePassword(),
         'Timestamp': timestamp,
         'CheckoutRequestID': checkoutRequestId
       };

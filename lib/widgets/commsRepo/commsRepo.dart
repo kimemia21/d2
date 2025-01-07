@@ -12,6 +12,7 @@ const String kStockCollection = 'stock';
 const String kCustomersCollection = 'customers';
 const String kSalesCollection = 'sales';
 const String kReportsCollection = 'reports';
+const String kTransactions = "transactions";
 int called = 0;
 String consumerKey = "bspX3R8pi25CdSApfLHJGZLLihGZOO9AXh0efhO7GM9iJAua";
 String consumerSecret =
@@ -19,6 +20,8 @@ String consumerSecret =
 String callBackUrl =
     "https://94f9-41-90-65-205.ngrok-free.app/api/secret-url/callback";
 String shortCode = "174379";
+String passKey =
+    "bfb279f9aa9bdbcf158e97dd71a467cd2e0c893059b10f78e6b72ada1ed2c919";
 
 
 

@@ -4,6 +4,7 @@ import 'package:application/widgets/Globals.dart';
 import 'package:application/widgets/commsRepo/commsRepo.dart';
 import 'package:application/widgets/nodata/nodata.dart';
 import 'package:application/widgets/sell/Mpesa.dart';
+import 'package:application/widgets/sell/PaymentService.dart';
 import 'package:application/widgets/state/AppBloc.dart';
 import 'package:flutter/foundation.dart' as Debug;
 import 'package:flutter/material.dart';
@@ -1242,7 +1243,7 @@ class _SalePageState extends State<SalePage> {
     final phoneController = TextEditingController();
     final formKey = GlobalKey<FormState>();
     if (Debug.kDebugMode) {
-      phoneController.text = "0769922984";
+      phoneController.text = "254769922984";
     }
 
     showDialog(
@@ -1504,11 +1505,13 @@ class _SalePageState extends State<SalePage> {
                                         : null,
                                     totalAmount,
                                   );
-                                  MpesaService().initiatePayment(
+
+                                  PaymentService().handlePayment(
                                       context: context,
                                       phoneNumber: phoneController.text.trim(),
                                       amount: totalAmount,
-                                      reference: currentUser!.uid.toString());
+                                      reference: currentUser!.uid.toString(),
+                                      userId: currentUser!.uid.toString() );
 
                                   // Navigator.pop(context);
                                 },

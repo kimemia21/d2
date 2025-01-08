@@ -845,7 +845,7 @@ class _SalePageState extends State<SalePage> {
     final product = item.stock.product;
 
     return Container(
-      margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+      margin: const EdgeInsets.symmetric(vertical: 2, horizontal: 2),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
@@ -868,8 +868,8 @@ class _SalePageState extends State<SalePage> {
               children: [
                 // Product Image/Icon Section
                 Container(
-                  width: 60,
-                  height: 60,
+                  width: 40,
+                  height: 40,
                   decoration: BoxDecoration(
                     color: Colors.grey[100],
                     borderRadius: BorderRadius.circular(8),
@@ -892,7 +892,7 @@ class _SalePageState extends State<SalePage> {
                     ],
                   ),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: 4),
                 // Product Details Section
                 Expanded(
                   child: Column(
@@ -1010,12 +1010,12 @@ class _SalePageState extends State<SalePage> {
                     borderRadius: BorderRadius.circular(8),
                   ),
                   padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Padding(
-                        padding: const EdgeInsets.all(8.0),
+                        padding: const EdgeInsets.all(4.0),
                         child: Text("Quantity"),
                       ),
 
@@ -1220,6 +1220,7 @@ class _SalePageState extends State<SalePage> {
       }
     });
   }
+  
 
   void _updateQuantity(int index, int change) {
     setState(() {
